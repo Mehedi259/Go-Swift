@@ -19,11 +19,11 @@ class _CourierAvailabilityScreenState extends State<CourierAvailabilityScreen> {
   Widget _body() {
     switch (_nav) {
       case 1:
-        return const CourierHistoryScreen();
+        return const CourierHistoryScreen(embedded: true);
       case 2:
         return _earningsTab();
       case 3:
-        return const CourierProfileScreen();
+        return const CourierProfileScreen(embedded: true);
       default:
         return _homeTab();
     }
