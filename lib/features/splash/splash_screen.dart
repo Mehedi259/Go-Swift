@@ -57,58 +57,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Logo circle
-                        Container(
-                          width: 160,
-                          height: 160,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const RadialGradient(
-                              colors: [Color(0xFF1C3050), Color(0xFF0A0F1A)],
-                            ),
-                            border: Border.all(color: AppColors.cyan.withOpacity(0.3), width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.cyan.withOpacity(0.2),
-                                blurRadius: 40,
-                                spreadRadius: 10,
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.bolt, color: AppColors.cyan, size: 48),
-                              Text('GO', style: GoogleFonts.outfit(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                              )),
-                              Text('SWIFT', style: GoogleFonts.outfit(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.cyan,
-                                letterSpacing: 4,
-                              )),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        // Brand name
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('GO ', style: GoogleFonts.outfit(
-                              fontSize: 40,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                            )),
-                            Text('SWIFT', style: GoogleFonts.outfit(
-                              fontSize: 40,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.cyan,
-                            )),
-                          ],
+                        Image.asset(
+                          'assets/images/AppLogo.png',
+                          width: 200,
+                          fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 8),
                         // BAHAMAS badge
