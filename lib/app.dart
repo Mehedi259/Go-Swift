@@ -33,7 +33,6 @@ import 'package:go_swift/features/customer/properties/property_details_screen.da
 import 'package:go_swift/features/customer/properties/property_booking_screen.dart';
 import 'package:go_swift/features/customer/properties/property_rating_screen.dart';
 import 'package:go_swift/features/customer/history/booking_history_screen.dart';
-import 'package:go_swift/features/customer/history/cancelled_bookings_screen.dart' show CancelledBookingsScreen;
 import 'package:go_swift/features/customer/favorites/favorites_screen.dart';
 import 'package:go_swift/features/customer/notifications/notifications_screen.dart';
 import 'package:go_swift/features/customer/profile/customer_profile_screen.dart' show CustomerProfileScreen;
@@ -125,7 +124,6 @@ class GoSwiftApp extends StatelessWidget {
         '/customer/properties/booking': (c) => const PropertyBookingScreen(),
         '/customer/properties/rating': (c) => const PropertyRatingScreen(),
         '/customer/history': (c) => const BookingHistoryScreen(),
-        '/customer/history/cancelled': (c) => const CancelledBookingsScreen(),
         '/customer/favorites': (c) => const FavoritesScreen(),
         '/customer/notifications': (c) => const NotificationsScreen(),
         '/customer/profile': (c) => const CustomerProfileScreen(),
