@@ -42,7 +42,7 @@ class CustomerRegisterScreen extends StatelessWidget {
           ]),
           const SizedBox(height: 6),
           Row(children: [const Icon(Icons.verified_user_outlined, size: 12, color: AppColors.textSecondary), const SizedBox(width: 6),
-            Text('Used for SMS driver alerts and ride verifications in the Bahamas.', style: AppTextStyles.bodySmall)]),
+            Expanded(child: Text('Used for SMS driver alerts and ride verifications in the Bahamas.', style: AppTextStyles.bodySmall))]),
           const SizedBox(height: 20),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('PASSWORD', style: AppTextStyles.labelSmall), Text('Min. 8 characters', style: AppTextStyles.bodySmall)]),
