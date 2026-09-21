@@ -86,6 +86,7 @@ class _ChooseAccountTypeScreenState extends State<ChooseAccountTypeScreen> {
                       isSelected: _selected == 0,
                       onSelect: () => setState(() => _selected = 0),
                       onContinue: () => Navigator.pushNamed(context, '/customer/login'),
+                      imagePath: 'assets/images/usercard.png',
                     ),
                     const SizedBox(height: 16),
 
@@ -105,6 +106,7 @@ class _ChooseAccountTypeScreenState extends State<ChooseAccountTypeScreen> {
                       onSelect: () => setState(() => _selected = 1),
                       onContinue: () => Navigator.pushNamed(context, '/provider/service-category'),
                       isPrimary: false,
+                      imagePath: 'assets/images/service provider card.png',
                     ),
                     const SizedBox(height: 24),
 
@@ -152,6 +154,7 @@ class _PortalCard extends StatelessWidget {
   final VoidCallback onSelect;
   final VoidCallback onContinue;
   final bool isPrimary;
+  final String imagePath;
 
   const _PortalCard({
     required this.icon,
@@ -164,6 +167,7 @@ class _PortalCard extends StatelessWidget {
     required this.onSelect,
     required this.onContinue,
     this.isPrimary = true,
+    required this.imagePath,
   });
 
   @override
@@ -210,34 +214,15 @@ class _PortalCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            // Image placeholder
+            // Image
             Container(
-              height: 100,
+              height: 120,
+              width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1A2B40), Color(0xFF0F1D2E)],
-                ),
-              ),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.directions_car, color: AppColors.cyan, size: 32),
-                    const SizedBox(width: 12),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(width: 60, height: 6, decoration: BoxDecoration(color: AppColors.cyan.withOpacity(0.3), borderRadius: BorderRadius.circular(3))),
-                        const SizedBox(height: 6),
-                        Container(width: 80, height: 6, decoration: BoxDecoration(color: AppColors.textMuted, borderRadius: BorderRadius.circular(3))),
-                        const SizedBox(height: 6),
-                        Container(width: 50, height: 6, decoration: BoxDecoration(color: AppColors.textMuted, borderRadius: BorderRadius.circular(3))),
-                      ],
-                    ),
-                  ],
+                image: DecorationImage(
+                  image: AssetImage(imagePath),
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
