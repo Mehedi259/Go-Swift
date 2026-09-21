@@ -38,6 +38,14 @@ import 'package:go_swift/features/customer/favorites/favorites_screen.dart';
 import 'package:go_swift/features/customer/notifications/notifications_screen.dart';
 import 'package:go_swift/features/customer/profile/customer_profile_screen.dart' show CustomerProfileScreen;
 import 'package:go_swift/features/customer/profile/change_password_screen.dart';
+import 'package:go_swift/features/customer/profile/personal_info_screen.dart';
+import 'package:go_swift/features/customer/profile/payment_methods_screen.dart';
+import 'package:go_swift/features/customer/profile/saved_addresses_screen.dart';
+import 'package:go_swift/features/customer/profile/notification_settings_screen.dart';
+import 'package:go_swift/features/customer/profile/language_region_screen.dart';
+import 'package:go_swift/features/customer/profile/appearance_screen.dart';
+import 'package:go_swift/features/customer/profile/privacy_policy_screen.dart';
+import 'package:go_swift/features/customer/profile/terms_of_service_screen.dart';
 import 'package:go_swift/features/customer/support/support_screen.dart';
 import 'package:go_swift/features/provider/driver/driver_availability_screen.dart';
 import 'package:go_swift/features/provider/driver/driver_ride_requests_screen.dart';
@@ -122,6 +130,14 @@ class GoSwiftApp extends StatelessWidget {
         '/customer/notifications': (c) => const NotificationsScreen(),
         '/customer/profile': (c) => const CustomerProfileScreen(),
         '/customer/profile/change-password': (c) => const ChangePasswordScreen(),
+        '/customer/profile/personal-info': (c) => const PersonalInfoScreen(),
+        '/customer/profile/payment-methods': (c) => const PaymentMethodsScreen(),
+        '/customer/profile/saved-addresses': (c) => const SavedAddressesScreen(),
+        '/customer/profile/notification-settings': (c) => const NotificationSettingsScreen(),
+        '/customer/profile/language-region': (c) => const LanguageRegionScreen(),
+        '/customer/profile/appearance': (c) => const AppearanceScreen(),
+        '/customer/profile/privacy-policy': (c) => const PrivacyPolicyScreen(),
+        '/customer/profile/terms-of-service': (c) => const TermsOfServiceScreen(),
         '/customer/support': (c) => const SupportScreen(),
         // Provider - Driver
         '/provider/driver/hub': (c) => const DriverAvailabilityScreen(),
