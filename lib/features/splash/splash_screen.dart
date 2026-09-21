@@ -57,10 +57,41 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset(
-                          'assets/images/AppLogo.png',
-                          width: 200,
-                          fit: BoxFit.contain,
+                        Container(
+                          width: 160,
+                          height: 160,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.cyan.withOpacity(0.3), width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.cyan.withOpacity(0.2),
+                                blurRadius: 40,
+                                spreadRadius: 10,
+                              ),
+                            ],
+                            image: const DecorationImage(
+                              image: AssetImage('assets/images/AppLogo.png'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        // Brand name
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('GO ', style: GoogleFonts.outfit(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            )),
+                            Text('SWIFT', style: GoogleFonts.outfit(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.cyan,
+                            )),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         // BAHAMAS badge
