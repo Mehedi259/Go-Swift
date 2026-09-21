@@ -6,10 +6,8 @@ import 'package:go_swift/features/auth/customer_register_screen.dart';
 import 'package:go_swift/features/auth/code_verification_screen.dart';
 import 'package:go_swift/features/auth/service_category_screen.dart';
 import 'package:go_swift/features/auth/driver_register_screen.dart';
+// All other provider register screens are in courier_register_screen.dart
 import 'package:go_swift/features/auth/courier_register_screen.dart';
-import 'package:go_swift/features/auth/rental_provider_register_screen.dart';
-import 'package:go_swift/features/auth/restaurant_register_screen.dart';
-import 'package:go_swift/features/auth/property_owner_register_screen.dart';
 import 'package:go_swift/features/customer/hub/customer_hub_screen.dart';
 import 'package:go_swift/features/customer/ride/ride_booking_screen.dart';
 import 'package:go_swift/features/customer/ride/ride_waiting_screen.dart';
@@ -24,7 +22,7 @@ import 'package:go_swift/features/customer/food/food_cart_screen.dart';
 import 'package:go_swift/features/customer/food/food_checkout_screen.dart';
 import 'package:go_swift/features/customer/food/food_order_status_screen.dart';
 import 'package:go_swift/features/customer/courier/courier_request_screen.dart';
-import 'package:go_swift/features/customer/courier/courier_delivery_status_screen.dart';
+import 'package:go_swift/features/customer/courier/courier_delivery_status_screen.dart' show CourierDeliveryStatusScreen;
 import 'package:go_swift/features/customer/courier/courier_rating_screen.dart';
 import 'package:go_swift/features/customer/car_rental/car_rental_search_screen.dart';
 import 'package:go_swift/features/customer/car_rental/vehicle_details_screen.dart';
@@ -35,10 +33,10 @@ import 'package:go_swift/features/customer/properties/property_details_screen.da
 import 'package:go_swift/features/customer/properties/property_booking_screen.dart';
 import 'package:go_swift/features/customer/properties/property_rating_screen.dart';
 import 'package:go_swift/features/customer/history/booking_history_screen.dart';
-import 'package:go_swift/features/customer/history/cancelled_bookings_screen.dart';
+import 'package:go_swift/features/customer/history/cancelled_bookings_screen.dart' show CancelledBookingsScreen;
 import 'package:go_swift/features/customer/favorites/favorites_screen.dart';
 import 'package:go_swift/features/customer/notifications/notifications_screen.dart';
-import 'package:go_swift/features/customer/profile/customer_profile_screen.dart';
+import 'package:go_swift/features/customer/profile/customer_profile_screen.dart' show CustomerProfileScreen;
 import 'package:go_swift/features/customer/profile/change_password_screen.dart';
 import 'package:go_swift/features/customer/support/support_screen.dart';
 import 'package:go_swift/features/provider/driver/driver_availability_screen.dart';
@@ -50,23 +48,24 @@ import 'package:go_swift/features/provider/driver/driver_profile_screen.dart';
 import 'package:go_swift/features/provider/driver/driver_documents_screen.dart';
 import 'package:go_swift/features/provider/driver/driver_ratings_screen.dart';
 import 'package:go_swift/features/provider/courier/courier_availability_screen.dart';
-import 'package:go_swift/features/provider/courier/courier_requests_screen.dart';
-import 'package:go_swift/features/provider/courier/courier_active_delivery_screen.dart';
-import 'package:go_swift/features/provider/courier/courier_history_screen.dart';
-import 'package:go_swift/features/provider/courier/courier_profile_screen.dart';
+import 'package:go_swift/features/provider/courier/courier_requests_screen.dart' show CourierRequestsScreen;
+import 'package:go_swift/features/provider/courier/courier_active_delivery_screen.dart' show CourierActiveDeliveryScreen;
+import 'package:go_swift/features/provider/courier/courier_history_screen.dart' show CourierHistoryScreen;
+import 'package:go_swift/features/provider/courier/courier_profile_screen.dart' show CourierProfileScreen;
 import 'package:go_swift/features/provider/restaurant/menu_management_screen.dart';
 import 'package:go_swift/features/provider/restaurant/orders_list_screen.dart';
-import 'package:go_swift/features/provider/restaurant/order_management_screen.dart';
-import 'package:go_swift/features/provider/restaurant/restaurant_profile_screen.dart';
+import 'package:go_swift/features/provider/restaurant/order_management_screen.dart' show OrderManagementScreen;
+import 'package:go_swift/features/provider/restaurant/restaurant_profile_screen.dart' show RestaurantProfileScreen;
 import 'package:go_swift/features/provider/car_rental/vehicle_listings_screen.dart';
-import 'package:go_swift/features/provider/car_rental/rental_booking_management_screen.dart';
+import 'package:go_swift/features/provider/car_rental/rental_booking_management_screen.dart' show RentalBookingManagementScreen;
 import 'package:go_swift/features/provider/car_rental/active_rental_management_screen.dart';
-import 'package:go_swift/features/provider/car_rental/rental_earnings_screen.dart';
+import 'package:go_swift/features/provider/car_rental/rental_earnings_screen.dart' show RentalEarningsScreen;
 import 'package:go_swift/features/provider/car_rental/rental_provider_profile_screen.dart';
 import 'package:go_swift/features/provider/property_owner/property_listings_screen.dart';
 import 'package:go_swift/features/provider/property_owner/create_listing_screen.dart';
 import 'package:go_swift/features/provider/property_owner/booking_requests_screen.dart';
 import 'package:go_swift/features/provider/property_owner/past_bookings_screen.dart';
+import 'package:go_swift/features/provider/property_owner/property_earnings_screen.dart' show PropertyEarningsScreen, PropertyOwnerProfileScreen;
 import 'core/theme/app_theme.dart';
 
 class GoSwiftApp extends StatelessWidget {
@@ -155,6 +154,8 @@ class GoSwiftApp extends StatelessWidget {
         '/provider/property/create': (c) => const CreateListingScreen(),
         '/provider/property/requests': (c) => const BookingRequestsScreen(),
         '/provider/property/past-bookings': (c) => const PastBookingsScreen(),
+        '/provider/property/earnings': (c) => const PropertyEarningsScreen(),
+        '/provider/property/owner-profile': (c) => const PropertyOwnerProfileScreen(),
       },
     );
   }

@@ -101,7 +101,7 @@ class _HomeTab extends StatelessWidget {
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Text('Track Active Ride', style: AppTextStyles.buttonText),
                     const SizedBox(width: 8), const Icon(Icons.arrow_forward, size: 18, color: AppColors.background)]))),
-            ])),
+            ]),
           )),
 
           // Services
