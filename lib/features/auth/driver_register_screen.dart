@@ -31,10 +31,20 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
               const SizedBox(height: 8),
               Text("Drive with Nassau & Paradise Island's premier luxury mobility network.", style: AppTextStyles.bodyMedium),
               const SizedBox(height: 16),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Step 1 of 3: Account &\nCredentials', style: AppTextStyles.bodySmall.copyWith(color: AppColors.cyan)), const SizedBox(height: 4),
-                  Row(children: [_stepTab('1. ACCOUNT', true), _stepTab('2.DOCUMENTS', false), _stepTab('3. VEHICLE', false)])]),
-                Text('33%\nCompleted', style: AppTextStyles.bodySmall.copyWith(color: AppColors.gold)),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Step 1 of 3: Account &\nCredentials', style: AppTextStyles.bodySmall.copyWith(color: AppColors.cyan)),
+                    const SizedBox(height: 8),
+                    Wrap(spacing: 6, runSpacing: 6, children: [
+                      _stepTab('1. ACCOUNT', true),
+                      _stepTab('2. DOCUMENTS', false),
+                      _stepTab('3. VEHICLE', false),
+                    ]),
+                  ]),
+                ),
+                const SizedBox(width: 12),
+                Text('33%\nCompleted', style: AppTextStyles.bodySmall.copyWith(color: AppColors.gold), textAlign: TextAlign.right),
               ]),
               const SizedBox(height: 8),
               LinearProgressIndicator(value: 0.33, backgroundColor: AppColors.border, color: AppColors.cyan),
