@@ -109,7 +109,7 @@ class AppTextStyles {
   static TextStyle get buttonText => GoogleFonts.outfit(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: AppColors.background,
+        color: Colors.white,
         letterSpacing: 0.3,
       );
 

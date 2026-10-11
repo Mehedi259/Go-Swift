@@ -16,9 +16,10 @@ class ActiveHistoryCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface.withOpacity(0.4),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,17 +32,20 @@ class ActiveHistoryCard extends StatelessWidget {
                 children: [
                   Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
                   const SizedBox(width: 8),
-                  Text(data['status'] as String, style: AppTextStyles.labelSmall.copyWith(color: color, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                  Text(
+                    data['status'] as String,
+                    style: AppTextStyles.labelSmall.copyWith(color: color, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                  ),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(6)),
-                child: Text(data['id'] as String, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+                decoration: BoxDecoration(color: AppColors.cardTouchpoint, borderRadius: BorderRadius.circular(6)),
+                child: Text(data['id'] as String, style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Title Row
           Row(
@@ -51,9 +55,8 @@ class ActiveHistoryCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: AppColors.badgeTeal,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: color.withOpacity(0.3)),
                 ),
                 child: Icon(data['icon'] as IconData, color: color, size: 24),
               ),
@@ -64,11 +67,16 @@ class ActiveHistoryCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: Text(data['title'] as String, style: AppTextStyles.titleMedium.copyWith(color: Colors.white, fontSize: 16))),
+                        Expanded(
+                          child: Text(
+                            data['title'] as String,
+                            style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
                         if (data['rating'] != null) ...[
                           const Icon(Icons.star, color: AppColors.gold, size: 14),
                           const SizedBox(width: 4),
-                          Text(data['rating'].toString(), style: AppTextStyles.labelSmall.copyWith(color: AppColors.gold)),
+                          Text(data['rating'].toString(), style: AppTextStyles.labelSmall.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
                         ],
                       ],
                     ),
@@ -79,14 +87,15 @@ class ActiveHistoryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Details Box
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.background.withOpacity(0.5),
+              color: AppColors.cardTouchpoint,
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
             ),
             child: _buildDetailsBox(type),
           ),
@@ -102,9 +111,9 @@ class ActiveHistoryCard extends StatelessWidget {
                     margin: const EdgeInsets.only(right: 8),
                     height: 44,
                     decoration: BoxDecoration(
-                      color: isPrimary ? color : AppColors.surface,
+                      color: isPrimary ? AppColors.primaryTeal : AppColors.cyanPill,
                       borderRadius: BorderRadius.circular(22),
-                      border: isPrimary ? null : Border.all(color: AppColors.border),
+                      boxShadow: isPrimary ? AppColors.cardShadow : null,
                     ),
                     child: Material(
                       color: Colors.transparent,
@@ -115,19 +124,20 @@ class ActiveHistoryCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             if (action['icon'] != null) ...[
-                              Icon(action['icon'] as IconData, color: isPrimary ? AppColors.background : AppColors.textPrimary, size: 16),
+                              Icon(action['icon'] as IconData, color: isPrimary ? Colors.white : AppColors.primaryTeal, size: 16),
                               const SizedBox(width: 8),
                             ],
                             Text(
                               action['label'] as String,
                               style: AppTextStyles.titleMedium.copyWith(
-                                color: isPrimary ? AppColors.background : AppColors.textPrimary,
+                                color: isPrimary ? Colors.white : AppColors.primaryTeal,
                                 fontSize: 14,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                             if (action['trailingIcon'] != null) ...[
                               const SizedBox(width: 8),
-                              Icon(action['trailingIcon'] as IconData, color: isPrimary ? AppColors.background : AppColors.textPrimary, size: 16),
+                              Icon(action['trailingIcon'] as IconData, color: isPrimary ? Colors.white : AppColors.primaryTeal, size: 16),
                             ],
                           ],
                         ),
@@ -152,35 +162,34 @@ class ActiveHistoryCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.access_time, color: AppColors.cyan, size: 14),
+                  const Icon(Icons.access_time, color: AppColors.primaryTeal, size: 14),
                   const SizedBox(width: 6),
-                  Text('ARRIVING IN 4 MINS', style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
+                  Text('ARRIVING IN 4 MINS', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
                 ],
               ),
-              Text('78% Completed', style: AppTextStyles.labelSmall.copyWith(color: Colors.white)),
+              Text('78% Completed', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           // Progress Bar
           Container(
-            height: 4,
+            height: 6,
             width: double.infinity,
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(3)),
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: 0.78,
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.cyan,
-                  borderRadius: BorderRadius.circular(2),
-                  boxShadow: [BoxShadow(color: AppColors.cyan.withOpacity(0.5), blurRadius: 4)],
+                  color: AppColors.primaryTeal,
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          _locationRow(AppColors.cyan, 'Odyssey Aviation FBO Terminal', 'Pickup'),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
+          _locationRow(AppColors.primaryTeal, 'Odyssey Aviation FBO Terminal', 'Pickup'),
+          const SizedBox(height: 8),
           _locationRow(AppColors.gold, 'Albany Marina & Resort', 'VIP Dock', isCyanText: true),
         ],
       );
@@ -188,14 +197,14 @@ class ActiveHistoryCard extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Yellowfin Tuna Tartare, Wagyu Beef Filet  2 items', style: AppTextStyles.bodySmall.copyWith(color: Colors.white)),
-          const SizedBox(height: 12),
+          Text('Yellowfin Tuna Tartare, Wagyu Beef Filet  2 items', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(Icons.pedal_bike, color: AppColors.cyan, size: 16),
+              const Icon(Icons.pedal_bike, color: AppColors.primaryTeal, size: 16),
               const SizedBox(width: 8),
               Expanded(child: Text('Devon Rolle (Electric Chilled Box)', style: AppTextStyles.bodySmall)),
-              Text('12 - 15 mins', style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
+              Text('12 - 15 mins', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 8),
@@ -218,28 +227,28 @@ class ActiveHistoryCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.check_circle_outline, color: AppColors.cyan, size: 16),
+                  const Icon(Icons.check_circle_outline, color: AppColors.primaryTeal, size: 16),
                   const SizedBox(width: 8),
-                  Text('Passed Cable Beach\nCheckpoint', style: AppTextStyles.bodySmall.copyWith(color: Colors.white)),
+                  Text('Passed Cable Beach\nCheckpoint', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                 ],
               ),
-              Text('ETA 18\nMINS', textAlign: TextAlign.right, style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
+              Text('ETA 18\nMINS', textAlign: TextAlign.right, style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
             ],
           ),
-          const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(color: AppColors.border, height: 1)),
+          const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(color: AppColors.border, height: 1)),
           Row(
             children: [
               Text('From:', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
               const SizedBox(width: 12),
-              Expanded(child: Text('Lyford Cay Club Concierge Desk', style: AppTextStyles.bodySmall.copyWith(color: Colors.white), textAlign: TextAlign.right)),
+              Expanded(child: Text('Lyford Cay Club Concierge Desk', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary), textAlign: TextAlign.right)),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Row(
             children: [
               Text('To:', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
               const SizedBox(width: 12),
-              Expanded(child: Text('Parliament Square, Nassau Chamber', style: AppTextStyles.bodySmall.copyWith(color: Colors.white), textAlign: TextAlign.right)),
+              Expanded(child: Text('Parliament Square, Nassau Chamber', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary), textAlign: TextAlign.right)),
             ],
           ),
         ],
@@ -248,14 +257,14 @@ class ActiveHistoryCard extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Black Cod Miso, Yellowtail Jalapeño, Rol  3 items', style: AppTextStyles.bodySmall.copyWith(color: Colors.white)),
-          const SizedBox(height: 12),
+          Text('Black Cod Miso, Yellowtail Jalapeño, Rol  3 items', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(Icons.soup_kitchen, color: AppColors.textSecondary, size: 16),
+              const Icon(Icons.soup_kitchen, color: AppColors.primaryTeal, size: 16),
               const SizedBox(width: 8),
               Expanded(child: Text('Chef Escort: Kendal Cartwright\n(Dual-Thermal Safe)', style: AppTextStyles.bodySmall)),
-              Text('ETA 25 - 30\nmins', textAlign: TextAlign.right, style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
+              Text('ETA 25 - 30\nmins', textAlign: TextAlign.right, style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 8),
@@ -275,17 +284,17 @@ class ActiveHistoryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.key, color: AppColors.cyan, size: 16),
+              const Icon(Icons.key, color: AppColors.primaryTeal, size: 16),
               const SizedBox(width: 8),
-              Expanded(child: Text('Odyssey FBO -> Coral\nHarbour', style: AppTextStyles.bodySmall.copyWith(color: Colors.white))),
+              Expanded(child: Text('Odyssey FBO -> Coral\nHarbour', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600))),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Scheduled Return:', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
-              Text('Nov 18, 12:00 PM (Albany Bay)', style: AppTextStyles.bodySmall.copyWith(color: Colors.white)),
+              Text('Nov 18, 12:00 PM (Albany Bay)', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -298,9 +307,9 @@ class ActiveHistoryCard extends StatelessWidget {
     return Row(
       children: [
         Container(width: 8, height: 8, decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle)),
-        const SizedBox(width: 12),
-        Expanded(child: Text(title, style: AppTextStyles.bodySmall.copyWith(color: Colors.white))),
-        Text(trailing, style: AppTextStyles.labelSmall.copyWith(color: isCyanText ? AppColors.cyan : AppColors.textSecondary)),
+        const SizedBox(width: 10),
+        Expanded(child: Text(title, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary))),
+        Text(trailing, style: AppTextStyles.labelSmall.copyWith(color: isCyanText ? AppColors.primaryTeal : AppColors.textSecondary, fontWeight: FontWeight.bold)),
       ],
     );
   }

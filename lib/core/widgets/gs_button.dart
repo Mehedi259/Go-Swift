@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
-// Primary Cyan Gradient Button
+// Primary & Secondary Action Buttons
 class GSButton extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
@@ -26,25 +26,31 @@ class GSButton extends StatelessWidget {
       child: Container(
         height: isSmall ? 44 : 56,
         decoration: BoxDecoration(
-          gradient: isSecondary ? null : AppColors.cyanGradient,
-          color: isSecondary ? AppColors.surface : null,
+          color: isSecondary ? AppColors.cyanPill : AppColors.cyan,
           borderRadius: BorderRadius.circular(28),
-          border: isSecondary
-              ? Border.all(color: AppColors.border)
-              : null,
+          boxShadow: isSecondary
+              ? null
+              : [
+                  BoxShadow(
+                    color: AppColors.cyan.withOpacity(0.22),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               label,
-              style: isSecondary
-                  ? AppTextStyles.buttonText.copyWith(color: AppColors.textPrimary)
-                  : AppTextStyles.buttonText,
+              style: AppTextStyles.buttonText.copyWith(
+                color: isSecondary ? AppColors.cyan : Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             if (icon != null) ...[
               const SizedBox(width: 8),
-              Icon(icon, size: 18, color: isSecondary ? AppColors.textPrimary : AppColors.background),
+              Icon(icon, size: 18, color: isSecondary ? AppColors.cyan : Colors.white),
             ],
           ],
         ),
@@ -75,8 +81,7 @@ class GSTagButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          gradient: color == null ? AppColors.cyanGradient : null,
-          color: color,
+          color: color ?? AppColors.cyanPill,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
@@ -85,13 +90,13 @@ class GSTagButton extends StatelessWidget {
             Text(
               label,
               style: AppTextStyles.labelMedium.copyWith(
-                color: textColor ?? AppColors.background,
+                color: textColor ?? AppColors.cyan,
                 fontWeight: FontWeight.w700,
               ),
             ),
             if (onTap != null) ...[
               const SizedBox(width: 4),
-              Icon(Icons.arrow_forward, size: 14, color: textColor ?? AppColors.background),
+              Icon(Icons.arrow_forward, size: 14, color: textColor ?? AppColors.cyan),
             ],
           ],
         ),

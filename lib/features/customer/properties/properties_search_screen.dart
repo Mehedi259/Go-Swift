@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/widgets/gs_button.dart';
 import '../../../core/widgets/gs_card.dart';
+import '../../../core/widgets/gs_bottom_nav.dart';
 
 class PropertiesSearchScreen extends StatelessWidget {
   const PropertiesSearchScreen({super.key});
@@ -16,72 +16,240 @@ class PropertiesSearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: Column(children: [
-        Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 0), child: Row(children: [
-          GestureDetector(onTap: () => Navigator.pop(context), child: Container(width: 40, height: 40, decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)), child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20))),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Rooms & Properties', style: AppTextStyles.headlineLarge), Text('LUXURY VILLA & RESORT CONCIERGE', style: AppTextStyles.cyanLabel)])),
-        ])),
-        // Search & filter
-        Padding(padding: const EdgeInsets.fromLTRB(20, 12, 20, 12), child: Column(children: [
-          Row(children: [
-            Expanded(child: TextFormField(style: AppTextStyles.bodyLarge, decoration: const InputDecoration(hintText: 'Search properties, villas, resorts...', prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 20), contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12)))),
-            const SizedBox(width: 8),
-            Container(width: 44, height: 44, decoration: BoxDecoration(gradient: AppColors.cyanGradient, borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.tune, color: AppColors.background, size: 20)),
-          ]),
-          const SizedBox(height: 8),
-          SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
-            _filterChip('All Properties', true), const SizedBox(width: 8),
-            _filterChip('Oceanfront', false), const SizedBox(width: 8),
-            _filterChip('Private Pool', false), const SizedBox(width: 8),
-            _filterChip('Beachfront', false),
-          ])),
-        ])),
-        Expanded(child: ListView.builder(padding: const EdgeInsets.symmetric(horizontal: 20), itemCount: _properties.length, itemBuilder: (c, i) => _PropertyCard(p: _properties[i]))),
-      ])),
-      bottomNavigationBar: _nav(context),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Rooms & Properties', style: AppTextStyles.headlineLarge),
+                        Text('LUXURY VILLA & RESORT CONCIERGE', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Search & filter
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Search properties, villas, resorts...',
+                            prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryTeal,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.tune, color: Colors.white, size: 20),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _filterChip('All Properties', true),
+                        const SizedBox(width: 8),
+                        _filterChip('Oceanfront', false),
+                        const SizedBox(width: 8),
+                        _filterChip('Private Pool', false),
+                        const SizedBox(width: 8),
+                        _filterChip('Beachfront', false),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: _properties.length,
+                itemBuilder: (c, i) => _PropertyCard(p: _properties[i]),
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: GSBottomNav(
+        currentIndex: 0,
+        onTap: (idx) {
+          if (idx == 0) Navigator.pop(context);
+        },
+      ),
     );
   }
 
-  Widget _filterChip(String l, bool active) => Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), decoration: BoxDecoration(gradient: active ? AppColors.cyanGradient : null, color: active ? null : AppColors.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: active ? Colors.transparent : AppColors.border)),
-    child: Text(l, style: AppTextStyles.bodySmall.copyWith(color: active ? AppColors.background : AppColors.textPrimary, fontWeight: FontWeight.w600)));
-
-  Widget _nav(BuildContext context) => Container(decoration: const BoxDecoration(color: AppColors.card, border: Border(top: BorderSide(color: AppColors.border, width: 0.5))),
-    child: SafeArea(top: false, child: Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-      _ni(Icons.home, 'Home', true, () => Navigator.pop(context)),
-      _ni(Icons.receipt_long_outlined, 'History', false, () {}),
-      _ni(Icons.favorite_border, 'Favorites', false, () {}),
-      _ni(Icons.headset_mic_outlined, 'Support', false, () {}),
-      _ni(Icons.person_outline, 'Profile', false, () {}),
-    ]))));
-
-  Widget _ni(IconData icon, String label, bool active, VoidCallback onTap) => GestureDetector(onTap: onTap, behavior: HitTestBehavior.opaque, child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(icon, color: active ? AppColors.cyan : AppColors.textMuted, size: 24), const SizedBox(height: 4), Text(label, style: AppTextStyles.caption.copyWith(color: active ? AppColors.cyan : AppColors.textMuted))]));
+  Widget _filterChip(String l, bool active) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+    decoration: BoxDecoration(
+      color: active ? AppColors.primaryTeal : Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: active ? AppColors.primaryTeal : AppColors.border),
+      boxShadow: AppColors.cardShadow,
+    ),
+    child: Text(
+      l,
+      style: AppTextStyles.bodySmall.copyWith(
+        color: active ? Colors.white : AppColors.textPrimary,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
 }
 
 class _PropertyCard extends StatelessWidget {
   final Map<String, dynamic> p;
   const _PropertyCard({required this.p});
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: () => Navigator.pushNamed(context, '/customer/properties/details'),
-      child: Container(margin: const EdgeInsets.only(bottom: 20), decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border, width: 0.5)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(height: 160, decoration: const BoxDecoration(borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)), gradient: LinearGradient(colors: [Color(0xFF1A2B40), Color(0xFF0A1520)])),
-            child: Stack(children: [
-              Center(child: Icon(Icons.villa, color: AppColors.textMuted, size: 48)),
-              Positioned(top: 10, left: 10, child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: AppColors.background.withOpacity(0.8), borderRadius: BorderRadius.circular(8)), child: Text(p['badge'] as String, style: AppTextStyles.labelSmall.copyWith(color: AppColors.gold)))),
-              Positioned(top: 10, right: 10, child: Container(width: 32, height: 32, decoration: BoxDecoration(color: AppColors.background.withOpacity(0.8), shape: BoxShape.circle), child: const Icon(Icons.favorite_border, color: AppColors.textPrimary, size: 16))),
-              Positioned(bottom: 10, right: 10, child: GSRatingRow(rating: p['rating'] as double, reviews: p['reviews'] as int)),
-            ])),
-          Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(p['type'] as String, style: AppTextStyles.cyanLabel),
-            const SizedBox(height: 4),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Expanded(child: Text(p['name'] as String, style: AppTextStyles.headlineSmall)), Text(p['price'] as String, style: AppTextStyles.titleLarge.copyWith(color: AppColors.gold))]),
-            const SizedBox(height: 4),
-            Row(children: [const Icon(Icons.location_on_outlined, size: 12, color: AppColors.textSecondary), const SizedBox(width: 4), Expanded(child: Text(p['location'] as String, style: AppTextStyles.bodySmall))]),
-            const SizedBox(height: 8),
-            Row(children: [const Icon(Icons.bed_outlined, size: 14, color: AppColors.textSecondary), const SizedBox(width: 4), Text('${p['beds']} beds', style: AppTextStyles.bodySmall), const SizedBox(width: 12), const Icon(Icons.bathroom_outlined, size: 14, color: AppColors.textSecondary), const SizedBox(width: 4), Text('${p['baths']} baths', style: AppTextStyles.bodySmall), const SizedBox(width: 12), const Icon(Icons.pool, size: 14, color: AppColors.cyan), const SizedBox(width: 4), Text('Private Pool', style: AppTextStyles.bodySmall.copyWith(color: AppColors.cyan))]),
-          ])),
-        ])));
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/customer/properties/details'),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 160,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+                gradient: LinearGradient(
+                  colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)],
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Center(child: Icon(Icons.villa, color: AppColors.primaryTeal.withValues(alpha: 0.5), size: 54)),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: Text(p['badge'] as String, style: AppTextStyles.labelSmall.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        shape: BoxShape.circle,
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: const Icon(Icons.favorite_border, color: AppColors.primaryTeal, size: 16),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: GSRatingRow(rating: p['rating'] as double, reviews: p['reviews'] as int),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(p['type'] as String, style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(child: Text(p['name'] as String, style: AppTextStyles.headlineSmall)),
+                      Text(p['price'] as String, style: AppTextStyles.titleLarge.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Expanded(child: Text(p['location'] as String, style: AppTextStyles.bodySmall)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.bed_outlined, size: 16, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text('${p['beds']} beds', style: AppTextStyles.bodySmall),
+                      const SizedBox(width: 14),
+                      const Icon(Icons.bathroom_outlined, size: 16, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text('${p['baths']} baths', style: AppTextStyles.bodySmall),
+                      const SizedBox(width: 14),
+                      const Icon(Icons.pool, size: 16, color: AppColors.primaryTeal),
+                      const SizedBox(width: 4),
+                      Text('Private Pool', style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

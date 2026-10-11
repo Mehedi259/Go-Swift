@@ -16,8 +16,15 @@ class GSBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: AppColors.card,
-        border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border, width: 0.8)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x060B2238),
+            blurRadius: 10,
+            offset: Offset(0, -3),
+          ),
+        ],
       ),
       child: SafeArea(
         top: false,
@@ -75,7 +82,7 @@ class _NavItem extends StatelessWidget {
             label,
             style: AppTextStyles.caption.copyWith(
               color: isActive ? AppColors.cyan : AppColors.textMuted,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
         ],
@@ -84,11 +91,11 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-// Provider Bottom Nav (3 items)
+// Provider Bottom Nav
 class GSProviderBottomNav extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
-  final List<_ProviderNavItem> items;
+  final List<ProviderNavItem> items;
 
   const GSProviderBottomNav({
     super.key,
@@ -101,8 +108,15 @@ class GSProviderBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: AppColors.card,
-        border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border, width: 0.8)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x060B2238),
+            blurRadius: 10,
+            offset: Offset(0, -3),
+          ),
+        ],
       ),
       child: SafeArea(
         top: false,
@@ -128,6 +142,7 @@ class GSProviderBottomNav extends StatelessWidget {
                       e.value.label,
                       style: AppTextStyles.caption.copyWith(
                         color: isActive ? AppColors.cyan : AppColors.textMuted,
+                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                       ),
                     ),
                   ],
@@ -141,9 +156,9 @@ class GSProviderBottomNav extends StatelessWidget {
   }
 }
 
-class _ProviderNavItem {
+class ProviderNavItem {
   final IconData icon;
   final IconData activeIcon;
   final String label;
-  const _ProviderNavItem({required this.icon, required this.activeIcon, required this.label});
+  const ProviderNavItem({required this.icon, required this.activeIcon, required this.label});
 }

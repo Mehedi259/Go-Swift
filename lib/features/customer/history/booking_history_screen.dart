@@ -15,15 +15,13 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   int _activeTab = 0; // 0: Active, 1: Past, 2: Cancelled
   int _selectedFilter = 0;
 
-  final _filters = ['All Bookings', 'Rides & VIP Transit', 'Dining'];
-
   final _activeData = [
     {
       'type': 'ride',
       'status': 'IN PROGRESS • EN ROUTE',
       'id': '#BS-RD-8492',
       'icon': Icons.directions_car,
-      'color': const Color(0xFF00D4FF),
+      'color': AppColors.primaryTeal,
       'title': 'Cadillac Escalade-V Sovereign',
       'subtitle': 'Chauffeur Marcus Vance • Black Edition',
       'rating': 5.0,
@@ -37,7 +35,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       'status': 'COURIER DISPATCHED • IN TRANSIT',
       'id': '#BS-FD-8924',
       'icon': Icons.restaurant,
-      'color': const Color(0xFFF5A623),
+      'color': const Color(0xFFC78400),
       'title': 'Dune at The Ocean Club',
       'subtitle': 'Paradise Island • White-Glove Butler Route',
       'actions': [
@@ -49,7 +47,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       'status': 'ESCORT IN PROGRESS • SECURE COURIER',
       'id': '#BS-CR-3158',
       'icon': Icons.shield_outlined,
-      'color': const Color(0xFF8E8E93),
+      'color': AppColors.primaryTeal,
       'title': 'Tamper-Evident Legal Dossier',
       'subtitle': 'Courier Liam Pinder • Escorted Transit (< 5 lbs)',
       'actions': [
@@ -87,7 +85,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       'id': '#BS-RD-8492',
       'date': 'Yesterday,\nNov 14',
       'icon': Icons.directions_car,
-      'color': const Color(0xFF00D4FF),
+      'color': AppColors.primaryTeal,
       'status': 'Completed',
     },
     {
@@ -105,7 +103,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       'id': '#BS-CR-3158',
       'date': 'Nov 10, 2:15\nPM',
       'icon': Icons.local_shipping,
-      'color': const Color(0xFF00D4FF),
+      'color': AppColors.primaryTeal,
       'status': 'Completed',
     },
     {
@@ -123,7 +121,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       'id': '#BS-STAY-4071',
       'date': 'Sep 18 - Sep 22',
       'icon': Icons.home_work_outlined,
-      'color': const Color(0xFFF5A623),
+      'color': const Color(0xFFC78400),
       'status': 'Completed',
     },
   ];
@@ -167,24 +165,47 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                   if (!widget.embedded) ...[
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.border),
+                          boxShadow: AppColors.cardShadow,
+                        ),
+                        child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+                      ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 14),
                   ],
-                  Text('History', style: AppTextStyles.headlineMedium.copyWith(color: Colors.white)),
+                  Text('History', style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textPrimary)),
                 ],
               ),
               Row(
                 children: [
-                  const Icon(Icons.notifications_none, color: AppColors.textSecondary, size: 24),
-                  const SizedBox(width: 16),
+                  GestureDetector(
+                    onTap: () => Navigator.pushNamed(context, '/customer/notifications'),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: const Icon(Icons.notifications_none_outlined, color: AppColors.textPrimary, size: 22),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.cyan)),
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.primaryTeal, width: 1.5)),
                     clipBehavior: Clip.antiAlias,
                     child: Image.asset('assets/images/user_avatar.jpg', fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(color: AppColors.surface),
+                      errorBuilder: (context, error, stackTrace) => Container(color: AppColors.badgeTeal),
                     ),
                   ),
                 ],
@@ -192,23 +213,25 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
             ],
           ),
         ),
-        
+
         // Header Texts
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 _activeTab == 0 ? 'Active History' : _activeTab == 1 ? 'Past History' : 'Cancelled History',
-                style: AppTextStyles.headlineMedium.copyWith(color: Colors.white, fontSize: 24),
+                style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textPrimary, fontSize: 24),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
-                _activeTab == 0 ? 'Archived concierge itineraries, VIP dispatches, and tax-ready settled waybills.'
-                : _activeTab == 1 ? 'Archived luxury transit, maritime deliveries, and concierge ledgers.'
-                : 'Refunded reservations, voided dispatches, and zero-fee escrows.',
-                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                _activeTab == 0
+                    ? 'Archived concierge itineraries, VIP dispatches, and tax-ready settled waybills.'
+                    : _activeTab == 1
+                        ? 'Archived luxury transit, maritime deliveries, and concierge ledgers.'
+                        : 'Refunded reservations, voided dispatches, and zero-fee escrows.',
+                style: AppTextStyles.bodyMedium,
               ),
             ],
           ),
@@ -220,7 +243,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           child: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.cardTouchpoint,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -232,7 +255,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
         // Sub-filters
         SingleChildScrollView(
@@ -248,12 +271,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
         // List
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             itemCount: _activeTab == 0 ? _activeData.length : _activeTab == 1 ? _pastData.length : _cancelledData.length,
             itemBuilder: (c, i) {
               if (_activeTab == 0) {
@@ -269,7 +292,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       ],
     );
 
-    return widget.embedded ? content : Scaffold(body: SafeArea(child: content));
+    return widget.embedded ? content : Scaffold(backgroundColor: AppColors.background, body: SafeArea(child: content));
   }
 
   Widget _buildSegment(int index, String label, String count) {
@@ -280,35 +303,35 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.background : Colors.transparent,
+            color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isSelected ? AppColors.border : Colors.transparent),
+            boxShadow: isSelected ? AppColors.cardShadow : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (isSelected && index == 0) ...[
-                Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.cyan, shape: BoxShape.circle)),
-                const SizedBox(width: 6),
-              ] else if (isSelected && index == 1) ...[
-                Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.textSecondary, shape: BoxShape.circle)),
-                const SizedBox(width: 6),
-              ] else if (isSelected && index == 2) ...[
-                Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.cyan, shape: BoxShape.circle)),
+              if (isSelected) ...[
+                Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primaryTeal, shape: BoxShape.circle)),
                 const SizedBox(width: 6),
               ],
               Text(
                 label,
                 style: AppTextStyles.labelSmall.copyWith(
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  color: isSelected ? AppColors.primaryTeal : AppColors.textSecondary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: isSelected ? AppColors.surface : AppColors.background, borderRadius: BorderRadius.circular(10)),
-                child: Text(count, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.cyanPill : Colors.white.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  count,
+                  style: AppTextStyles.caption.copyWith(color: isSelected ? AppColors.primaryTeal : AppColors.textSecondary, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -324,34 +347,35 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.cyan : AppColors.surface,
+          color: isSelected ? AppColors.cyanPill : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? AppColors.cyan : AppColors.border),
+          border: Border.all(color: isSelected ? AppColors.primaryTeal : AppColors.border),
+          boxShadow: AppColors.cardShadow,
         ),
         child: Row(
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 16, color: isSelected ? AppColors.background : AppColors.textSecondary),
+              Icon(icon, size: 16, color: isSelected ? AppColors.primaryTeal : AppColors.textSecondary),
               const SizedBox(width: 8),
             ],
             Text(
               label,
               style: AppTextStyles.bodyMedium.copyWith(
-                color: isSelected ? AppColors.background : AppColors.textSecondary,
+                color: isSelected ? AppColors.primaryTeal : AppColors.textPrimary,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
             if (count != null) ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.all(5),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.background.withOpacity(0.2) : AppColors.background,
-                  shape: BoxShape.circle,
+                  color: isSelected ? AppColors.primaryTeal : AppColors.cardTouchpoint,
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   count.toString(),
-                  style: TextStyle(color: isSelected ? AppColors.background : AppColors.cyan, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: isSelected ? Colors.white : AppColors.primaryTeal, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/widgets/gs_button.dart';
-import '../../../core/widgets/gs_card.dart';
 
 class CarRentalSearchScreen extends StatelessWidget {
   const CarRentalSearchScreen({super.key});
@@ -17,58 +15,219 @@ class CarRentalSearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: AppColors.background, leading: GestureDetector(onTap: () => Navigator.pop(context), child: Container(margin: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)), child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20))),
-        title: Row(children: [Text('GO ', style: AppTextStyles.titleLarge.copyWith(color: Colors.white)), Text('SWIFT', style: AppTextStyles.titleLarge.copyWith(color: AppColors.cyan)), const SizedBox(width: 8), Text('Car Rental', style: AppTextStyles.titleLarge)])),
-      body: Column(children: [
-        Padding(padding: const EdgeInsets.fromLTRB(20, 0, 20, 16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const SizedBox(height: 8),
-          Text('PRIVATE FLEET MANAGEMENT', style: AppTextStyles.cyanLabel),
-          const SizedBox(height: 4),
-          Text('Reserve Your Vehicle', style: AppTextStyles.displayMedium),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: TextFormField(style: AppTextStyles.bodyMedium, decoration: const InputDecoration(hintText: 'Pick-up Location', prefixIcon: Icon(Icons.location_on_outlined, color: AppColors.textSecondary, size: 18), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)))),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+              boxShadow: AppColors.cardShadow,
+            ),
+            child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+          ),
+        ),
+        title: Row(
+          children: [
+            Text('GO ', style: AppTextStyles.titleLarge.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w900)),
+            Text('SWIFT', style: AppTextStyles.titleLarge.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w900)),
             const SizedBox(width: 8),
-            Container(width: 44, height: 44, decoration: BoxDecoration(gradient: AppColors.cyanGradient, borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.search, color: AppColors.background, size: 20)),
-          ]),
-          const SizedBox(height: 8),
-          Row(children: [
-            Expanded(child: _dateField('Pick-up Date', 'April 21, 2026')),
-            const SizedBox(width: 8),
-            Expanded(child: _dateField('Return Date', 'April 25, 2026')),
-          ]),
-        ])),
-        Expanded(child: ListView.builder(padding: const EdgeInsets.symmetric(horizontal: 20), itemCount: _cars.length, itemBuilder: (c, i) => _CarCard(car: _cars[i]))),
-      ]),
+            Text('Car Rental', style: AppTextStyles.titleLarge),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.badgeTeal,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text('PRIVATE FLEET MANAGEMENT', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 8),
+                Text('Reserve Your Vehicle', style: AppTextStyles.displayMedium),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Pick-up Location',
+                          prefixIcon: Icon(Icons.location_on_outlined, color: AppColors.primaryTeal, size: 20),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryTeal,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.search, color: Colors.white, size: 22),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: _dateField('Pick-up Date', 'April 21, 2026')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _dateField('Return Date', 'April 25, 2026')),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: _cars.length,
+              itemBuilder: (c, i) => _CarCard(car: _cars[i]),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _dateField(String label, String val) => Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: AppTextStyles.caption), Text(val, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary))]));
+  Widget _dateField(String label, String val) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.border),
+      boxShadow: AppColors.cardShadow,
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+        const SizedBox(height: 2),
+        Text(val, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+      ],
+    ),
+  );
 }
 
 class _CarCard extends StatelessWidget {
   final Map<String, dynamic> car;
   const _CarCard({required this.car});
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: () => Navigator.pushNamed(context, '/customer/car-rental/vehicle'),
-      child: Container(margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border, width: 0.5)),
-        child: Column(children: [
-          Container(height: 120, decoration: const BoxDecoration(borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)), gradient: LinearGradient(colors: [Color(0xFF1A2B40), Color(0xFF0A1520)])),
-            child: Stack(children: [
-              Center(child: Icon(Icons.directions_car, color: AppColors.textMuted, size: 48)),
-              if ((car['badge'] as String).isNotEmpty) Positioned(top: 10, left: 10, child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: AppColors.background.withOpacity(0.8), borderRadius: BorderRadius.circular(8)), child: Text(car['badge'] as String, style: AppTextStyles.labelSmall.copyWith(color: AppColors.gold)))),
-              Positioned(top: 10, right: 10, child: Container(width: 32, height: 32, decoration: BoxDecoration(color: AppColors.background.withOpacity(0.8), shape: BoxShape.circle), child: const Icon(Icons.favorite_border, color: AppColors.textPrimary, size: 16))),
-            ])),
-          Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(car['name'] as String, style: AppTextStyles.headlineSmall), Text(car['type'] as String, style: AppTextStyles.cyanLabel)])),
-              Text(car['price'] as String, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold)),
-            ]),
-            const SizedBox(height: 8),
-            Row(children: [const Icon(Icons.people_outline, size: 14, color: AppColors.textSecondary), const SizedBox(width: 4), Text('${car['seats']} seats', style: AppTextStyles.bodySmall), const SizedBox(width: 12), const Icon(Icons.luggage, size: 14, color: AppColors.textSecondary), const SizedBox(width: 4), Text('${car['bags']} bags', style: AppTextStyles.bodySmall), const Spacer(), const Icon(Icons.star, size: 14, color: AppColors.gold), const SizedBox(width: 4), Text('4.97', style: AppTextStyles.bodySmall.copyWith(color: AppColors.gold))]),
-          ])),
-        ])));
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/customer/car-rental/vehicle'),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Column(
+          children: [
+            Container(
+              height: 120,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+                gradient: LinearGradient(
+                  colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)],
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Center(child: Icon(Icons.directions_car, color: AppColors.primaryTeal.withValues(alpha: 0.5), size: 54)),
+                  if ((car['badge'] as String).isNotEmpty)
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.95),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: AppColors.cardShadow,
+                        ),
+                        child: Text(car['badge'] as String, style: AppTextStyles.labelSmall.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        shape: BoxShape.circle,
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: const Icon(Icons.favorite_border, color: AppColors.primaryTeal, size: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(car['name'] as String, style: AppTextStyles.headlineSmall),
+                            const SizedBox(height: 2),
+                            Text(car['type'] as String, style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
+                          ],
+                        ),
+                      ),
+                      Text(car['price'] as String, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.people_outline, size: 16, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text('${car['seats']} seats', style: AppTextStyles.bodySmall),
+                      const SizedBox(width: 14),
+                      const Icon(Icons.luggage, size: 16, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text('${car['bags']} bags', style: AppTextStyles.bodySmall),
+                      const Spacer(),
+                      const Icon(Icons.star, size: 14, color: AppColors.gold),
+                      const SizedBox(width: 4),
+                      Text('4.97', style: AppTextStyles.bodySmall.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

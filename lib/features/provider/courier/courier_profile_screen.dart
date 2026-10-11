@@ -13,13 +13,11 @@ class CourierProfileScreen extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF0A1520), Color(0xFF0D1117)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              border: Border(bottom: BorderSide(color: AppColors.border)),
+              boxShadow: AppColors.cardShadow,
             ),
             child: Column(
               children: [
@@ -35,6 +33,7 @@ class CourierProfileScreen extends StatelessWidget {
                           color: AppColors.surface,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: AppColors.border),
+                          boxShadow: AppColors.cardShadow,
                         ),
                         child: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 20),
                       ),
@@ -42,33 +41,36 @@ class CourierProfileScreen extends StatelessWidget {
                   ),
                 if (embedded) const SizedBox(height: 20),
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: 84,
+                  height: 84,
                   decoration: BoxDecoration(
-                    color: AppColors.cyan,
+                    color: AppColors.cyanLight,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.cyan.withOpacity(0.4), width: 3),
+                    border: Border.all(color: AppColors.cyan, width: 2.5),
                   ),
-                  child: const Icon(Icons.person, color: AppColors.background, size: 40),
+                  child: const Icon(Icons.delivery_dining, color: AppColors.cyan, size: 44),
                 ),
                 const SizedBox(height: 12),
                 Text('Marcus Rolle', style: AppTextStyles.headlineMedium),
-                Text('Bonded Courier  •  #BC-182', style: AppTextStyles.cyanLabel),
+                const SizedBox(height: 2),
+                Text('Bonded Courier • #BC-182', style: AppTextStyles.cyanLabel),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.star, color: AppColors.gold, size: 14),
+                    const Icon(Icons.star, color: AppColors.gold, size: 16),
                     const SizedBox(width: 4),
-                    Text('4.92 rating  •  2,450 deliveries', style: AppTextStyles.bodySmall),
+                    Text('4.92 rating  •  2,450 deliveries', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 Row(
                   children: [
-                    Expanded(child: _stat('2,450', 'Deliveries')),
-                    Expanded(child: _stat('\$12,400', 'Earned')),
-                    Expanded(child: _stat('4.92', 'Rating')),
+                    Expanded(child: _statPill('2,450', 'Deliveries')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _statPill('\$12,400', 'Earned')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _statPill('4.92 ★', 'Rating')),
                   ],
                 ),
               ],
@@ -80,12 +82,12 @@ class CourierProfileScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Courier Details', style: AppTextStyles.headlineSmall),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 _infoTile(Icons.shield_outlined, 'Bonded Status', 'Active  •  Insured up to \$50,000'),
                 _infoTile(Icons.directions_bike, 'Vehicle', 'Yamaha NMAX 155  •  BS-124-MC'),
                 _infoTile(Icons.payment, 'Payout Account', 'Bank of Bahamas  •  ••••8921'),
                 _infoTile(Icons.location_on_outlined, 'Service Zone', 'Nassau  •  Paradise Island'),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 GSButton(label: 'Edit Profile', isSecondary: true, onTap: () {}),
                 const SizedBox(height: 12),
                 GSButton(
@@ -93,6 +95,7 @@ class CourierProfileScreen extends StatelessWidget {
                   isSecondary: true,
                   onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/choose-account', (_) => false),
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -103,8 +106,10 @@ class CourierProfileScreen extends StatelessWidget {
     return embedded
         ? content
         : Scaffold(
+            backgroundColor: AppColors.background,
             appBar: AppBar(
               backgroundColor: AppColors.background,
+              elevation: 0,
               leading: GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
@@ -113,41 +118,64 @@ class CourierProfileScreen extends StatelessWidget {
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.border),
+                    boxShadow: AppColors.cardShadow,
                   ),
                   child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
                 ),
               ),
               title: Text('Courier Profile', style: AppTextStyles.titleLarge),
+              centerTitle: false,
             ),
             body: content,
           );
   }
 
-  Widget _stat(String v, String l) => Column(
-        children: [
-          Text(v, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold)),
-          Text(l, style: AppTextStyles.bodySmall),
-        ],
+  Widget _statPill(String v, String l) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: AppColors.cardTouchpoint,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          children: [
+            Text(v, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 2),
+            Text(l, style: AppTextStyles.bodySmall),
+          ],
+        ),
       );
 
   Widget _infoTile(IconData icon, String label, String val) => Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.card,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border, width: 0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppColors.cardShadow,
         ),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.textSecondary, size: 20),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: AppTextStyles.bodySmall),
-                Text(val, style: AppTextStyles.titleMedium),
-              ],
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.cardTouchpoint,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: AppColors.cyan, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: AppTextStyles.bodySmall),
+                  const SizedBox(height: 2),
+                  Text(val, style: AppTextStyles.titleMedium),
+                ],
+              ),
             ),
           ],
         ),

@@ -19,8 +19,9 @@ class GSAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       elevation: 0,
+      scrolledUnderElevation: 0,
       leading: showBack
           ? GestureDetector(
               onTap: () => Navigator.pop(context),
@@ -30,6 +31,7 @@ class GSAppBar extends StatelessWidget implements PreferredSizeWidget {
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.border),
+                  boxShadow: AppColors.softShadow,
                 ),
                 child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
               ),
@@ -46,7 +48,7 @@ class GSAppBar extends StatelessWidget implements PreferredSizeWidget {
                 color: AppColors.cyan,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.bolt, color: AppColors.background, size: 18),
+              child: const Icon(Icons.bolt, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 8),
           ],
@@ -61,7 +63,7 @@ class GSAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(60);
 }
 
-// Mock map widget for tracking screens
+// Light Map widget for tracking screens
 class GSMapWidget extends StatelessWidget {
   final String origin;
   final String destination;
@@ -80,19 +82,18 @@ class GSMapWidget extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFF1A2332),
+        color: const Color(0xFFEAF3F9),
         border: Border.all(color: AppColors.border),
+        boxShadow: AppColors.cardShadow,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
-            // Map background simulation
             CustomPaint(
               size: Size(double.infinity, height),
               painter: _MapPainter(),
             ),
-            // Route line overlay
             Positioned.fill(
               child: CustomPaint(
                 painter: _RoutePainter(),
@@ -105,8 +106,9 @@ class GSMapWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.background.withOpacity(0.9),
+                  color: Colors.white.withOpacity(0.95),
                   borderRadius: BorderRadius.circular(20),
+                  boxShadow: AppColors.softShadow,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -125,15 +127,16 @@ class GSMapWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.background.withOpacity(0.9),
+                  color: Colors.white.withOpacity(0.95),
                   borderRadius: BorderRadius.circular(8),
+                  boxShadow: AppColors.softShadow,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.hotel, size: 14, color: AppColors.gold),
                     const SizedBox(width: 6),
-                    Text(destination.toUpperCase(), style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary)),
+                    Text(destination.toUpperCase(), style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -161,11 +164,12 @@ class GSMapWidget extends StatelessWidget {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
+        boxShadow: AppColors.softShadow,
       ),
-      child: Icon(icon, size: 18, color: AppColors.textSecondary),
+      child: Icon(icon, size: 18, color: AppColors.cyan),
     );
   }
 }
@@ -173,35 +177,30 @@ class GSMapWidget extends StatelessWidget {
 class _MapPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final bgPaint = Paint()..color = const Color(0xFF1A2332);
+    final bgPaint = Paint()..color = const Color(0xFFEAF3F9);
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
 
-    // Draw grid lines (streets simulation)
     final streetPaint = Paint()
-      ..color = const Color(0xFF243048)
+      ..color = Colors.white
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
 
-    // Horizontal streets
     for (double y = 20; y < size.height; y += 35) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), streetPaint);
     }
-    // Vertical streets
     for (double x = 20; x < size.width; x += 40) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), streetPaint);
     }
 
-    // Highway - thicker
     final hwyPaint = Paint()
-      ..color = const Color(0xFF2D3F5C)
-      ..strokeWidth = 12;
+      ..color = const Color(0xFFD3E4F0)
+      ..strokeWidth = 10;
     canvas.drawLine(Offset(0, size.height * 0.6), Offset(size.width, size.height * 0.4), hwyPaint);
 
-    // Origin marker
-    final originPaint = Paint()..color = const Color(0xFF00D4FF);
-    canvas.drawCircle(Offset(size.width * 0.25, size.height * 0.55), 12, originPaint);
-    canvas.drawCircle(Offset(size.width * 0.25, size.height * 0.55), 8, Paint()..color = const Color(0xFF0D1117));
-    canvas.drawCircle(Offset(size.width * 0.25, size.height * 0.55), 5, originPaint);
+    final originPaint = Paint()..color = AppColors.cyan;
+    canvas.drawCircle(Offset(size.width * 0.25, size.height * 0.55), 10, originPaint);
+    canvas.drawCircle(Offset(size.width * 0.25, size.height * 0.55), 7, Paint()..color = Colors.white);
+    canvas.drawCircle(Offset(size.width * 0.25, size.height * 0.55), 4, originPaint);
   }
 
   @override
@@ -212,8 +211,8 @@ class _RoutePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final routePaint = Paint()
-      ..color = const Color(0xFF00D4FF)
-      ..strokeWidth = 3
+      ..color = AppColors.cyan
+      ..strokeWidth = 4
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
@@ -226,10 +225,9 @@ class _RoutePainter extends CustomPainter {
     );
     canvas.drawPath(path, routePaint);
 
-    // Destination star
-    final destPaint = Paint()..color = const Color(0xFFF5A623);
+    final destPaint = Paint()..color = AppColors.gold;
     canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.25), 10, destPaint);
-    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.25), 6, Paint()..color = const Color(0xFFFFFFFF));
+    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.25), 6, Paint()..color = Colors.white);
   }
 
   @override

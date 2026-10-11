@@ -8,14 +8,21 @@ class AppearanceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
+        elevation: 0,
         title: Text('Appearance', style: AppTextStyles.titleLarge),
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Container(
             margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+              boxShadow: AppColors.cardShadow,
+            ),
             child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
           ),
         ),
@@ -27,11 +34,11 @@ class AppearanceScreen extends StatelessWidget {
           children: [
             Text('Theme', style: AppTextStyles.headlineSmall),
             const SizedBox(height: 12),
+            _selectionTile(Icons.light_mode, 'Bahamian Sovereign Light', true),
+            const SizedBox(height: 10),
             _selectionTile(Icons.phone_iphone, 'System Default', false),
-            const SizedBox(height: 8),
-            _selectionTile(Icons.light_mode, 'Light Mode', false),
-            const SizedBox(height: 8),
-            _selectionTile(Icons.dark_mode, 'Dark Mode', true),
+            const SizedBox(height: 10),
+            _selectionTile(Icons.dark_mode, 'Dark Mode', false),
           ],
         ),
       ),
@@ -42,16 +49,20 @@ class AppearanceScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isSelected ? AppColors.cyan : AppColors.border, width: isSelected ? 1 : 0.5),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isSelected ? AppColors.primaryTeal : AppColors.border,
+          width: isSelected ? 2 : 1,
+        ),
+        boxShadow: isSelected ? AppColors.softShadow : AppColors.cardShadow,
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.textSecondary, size: 20),
+          Icon(icon, color: isSelected ? AppColors.primaryTeal : AppColors.textSecondary, size: 22),
           const SizedBox(width: 16),
-          Expanded(child: Text(label, style: AppTextStyles.titleMedium)),
-          if (isSelected) const Icon(Icons.check_circle, color: AppColors.cyan, size: 20),
+          Expanded(child: Text(label, style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal))),
+          if (isSelected) const Icon(Icons.check_circle, color: AppColors.primaryTeal, size: 22),
         ],
       ),
     );

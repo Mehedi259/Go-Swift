@@ -40,11 +40,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0A0F1A), Color(0xFF0D1117), Color(0xFF0A1520)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+          gradient: AppColors.backgroundGradient,
         ),
         child: SafeArea(
           child: Column(
@@ -58,18 +54,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          width: 160,
-                          height: 160,
+                          width: 150,
+                          height: 150,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.cyan.withOpacity(0.3), width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.cyan.withOpacity(0.2),
-                                blurRadius: 40,
-                                spreadRadius: 10,
-                              ),
-                            ],
+                            color: Colors.white,
+                            border: Border.all(color: AppColors.primaryTeal.withValues(alpha: 0.25), width: 2),
+                            boxShadow: AppColors.softShadow,
                             image: const DecorationImage(
                               image: AssetImage('assets/images/AppLogo.png'),
                               fit: BoxFit.cover,
@@ -84,39 +75,39 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                             Text('GO ', style: GoogleFonts.outfit(
                               fontSize: 40,
                               fontWeight: FontWeight.w900,
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                             )),
                             Text('SWIFT', style: GoogleFonts.outfit(
                               fontSize: 40,
                               fontWeight: FontWeight.w900,
-                              color: AppColors.cyan,
+                              color: AppColors.primaryTeal,
                             )),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         // BAHAMAS badge
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.gold.withOpacity(0.15),
+                            color: AppColors.badgeGold,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppColors.gold.withOpacity(0.4)),
+                            border: Border.all(color: const Color(0xFFF3C78E)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.gold, shape: BoxShape.circle)),
+                              Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFFB87800), shape: BoxShape.circle)),
                               const SizedBox(width: 8),
-                              Text('BAHAMAS', style: AppTextStyles.labelSmall.copyWith(color: AppColors.gold, letterSpacing: 3)),
+                              Text('BAHAMAS', style: AppTextStyles.labelSmall.copyWith(color: const Color(0xFF8A5300), letterSpacing: 3, fontWeight: FontWeight.w700)),
                               const SizedBox(width: 8),
-                              Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.gold, shape: BoxShape.circle)),
+                              Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFFB87800), shape: BoxShape.circle)),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
                         Text('SOVEREIGN MOBILITY & CONCIERGE',
-                            style: AppTextStyles.cyanLabel.copyWith(letterSpacing: 2)),
-                        const SizedBox(height: 16),
+                            style: AppTextStyles.cyanLabel.copyWith(letterSpacing: 2, color: AppColors.primaryTeal)),
+                        const SizedBox(height: 14),
                         Text(
                           'Private Chauffeured Transit ✦ Yacht Charters ✦\nBespoke Air Liaison',
                           textAlign: TextAlign.center,
@@ -134,18 +125,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppColors.border),
+                    boxShadow: AppColors.cardShadow,
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.verified_user_outlined, color: AppColors.textSecondary, size: 18),
-                      const SizedBox(width: 10),
+                      const Icon(Icons.verified_user_outlined, color: AppColors.primaryTeal, size: 20),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'LICENSED BY THE ROAD TRAFFIC DEPARTMENT OF THE BAHAMAS',
-                          style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
+                          style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ],

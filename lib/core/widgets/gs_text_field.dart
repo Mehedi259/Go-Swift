@@ -38,8 +38,10 @@ class _GSTextFieldState extends State<GSTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label.toUpperCase(), style: AppTextStyles.labelSmall),
-        const SizedBox(height: 8),
+        if (widget.label.isNotEmpty) ...[
+          Text(widget.label.toUpperCase(), style: AppTextStyles.labelSmall),
+          const SizedBox(height: 8),
+        ],
         TextFormField(
           controller: widget.controller,
           obscureText: widget.isPassword && _obscure,
@@ -48,6 +50,8 @@ class _GSTextFieldState extends State<GSTextField> {
           style: AppTextStyles.bodyLarge,
           decoration: InputDecoration(
             hintText: widget.hint,
+            filled: true,
+            fillColor: AppColors.surface,
             prefixIcon: widget.prefixIcon != null
                 ? Icon(widget.prefixIcon, color: AppColors.textSecondary, size: 20)
                 : null,
@@ -64,6 +68,18 @@ class _GSTextFieldState extends State<GSTextField> {
             suffix: widget.suffixText != null
                 ? Text(widget.suffixText!, style: AppTextStyles.cyanLabel)
                 : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.cyan, width: 1.5),
+            ),
           ),
         ),
       ],

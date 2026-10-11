@@ -35,7 +35,8 @@ class GSServiceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(color: AppColors.border, width: 0.8),
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,10 +47,10 @@ class GSServiceCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: badgeColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: AppColors.cyan, size: 22),
+                child: Icon(icon, color: badgeColor, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -60,11 +61,11 @@ class GSServiceCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: badgeColor.withOpacity(0.15),
+                        color: badgeColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: badgeColor.withOpacity(0.3)),
+                        border: Border.all(color: badgeColor.withOpacity(0.25)),
                       ),
-                      child: Text(badge, style: AppTextStyles.labelSmall.copyWith(color: badgeColor)),
+                      child: Text(badge, style: AppTextStyles.labelSmall.copyWith(color: badgeColor, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -73,7 +74,7 @@ class GSServiceCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(description, style: AppTextStyles.bodyMedium),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Row(
             children: [
               Icon(subtitleIcon, size: 14, color: AppColors.textSecondary),
@@ -84,18 +85,18 @@ class GSServiceCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    gradient: AppColors.cyanGradient,
+                    color: AppColors.cyanPill,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(buttonLabel, style: AppTextStyles.labelMedium.copyWith(
-                        color: AppColors.background,
+                        color: AppColors.cyan,
                         fontWeight: FontWeight.w700,
                       )),
                       const SizedBox(width: 4),
-                      const Icon(Icons.arrow_forward, size: 14, color: AppColors.background),
+                      const Icon(Icons.arrow_forward, size: 14, color: AppColors.cyan),
                     ],
                   ),
                 ),
@@ -168,16 +169,16 @@ class GSStatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withOpacity(0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 6),
-          Text(label, style: AppTextStyles.labelSmall.copyWith(color: color)),
+          Text(label, style: AppTextStyles.labelSmall.copyWith(color: color, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -196,9 +197,9 @@ class GSRatingRow extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.star, size: 14, color: AppColors.gold),
+        const Icon(Icons.star, size: 14, color: AppColors.gold),
         const SizedBox(width: 4),
-        Text('$rating', style: AppTextStyles.titleMedium.copyWith(color: AppColors.gold)),
+        Text('$rating', style: AppTextStyles.titleMedium.copyWith(color: AppColors.gold, fontWeight: FontWeight.w700)),
         const SizedBox(width: 4),
         Text('($reviews+)', style: AppTextStyles.bodySmall),
       ],

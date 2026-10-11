@@ -6,8 +6,10 @@ import 'package:go_swift/features/auth/customer_register_screen.dart';
 import 'package:go_swift/features/auth/code_verification_screen.dart';
 import 'package:go_swift/features/auth/service_category_screen.dart';
 import 'package:go_swift/features/auth/driver_register_screen.dart';
-// All other provider register screens are in courier_register_screen.dart
 import 'package:go_swift/features/auth/courier_register_screen.dart';
+import 'package:go_swift/features/auth/rental_provider_register_screen.dart';
+import 'package:go_swift/features/auth/restaurant_register_screen.dart';
+import 'package:go_swift/features/auth/property_owner_register_screen.dart';
 import 'package:go_swift/features/customer/hub/customer_hub_screen.dart';
 import 'package:go_swift/features/customer/ride/ride_booking_screen.dart';
 import 'package:go_swift/features/customer/ride/ride_waiting_screen.dart';
@@ -83,7 +85,7 @@ class GoSwiftApp extends StatelessWidget {
     return MaterialApp(
       title: 'GO SWIFT Bahamas',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
+      theme: AppTheme.light,
       initialRoute: '/',
       routes: {
         '/': (c) => const SplashScreen(),

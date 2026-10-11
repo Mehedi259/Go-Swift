@@ -1,23 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 
 class AppTheme {
-  static ThemeData get dark => ThemeData(
-        brightness: Brightness.dark,
+  static ThemeData get light => ThemeData(
+        brightness: Brightness.light,
         scaffoldBackgroundColor: AppColors.background,
         primaryColor: AppColors.cyan,
-        colorScheme: const ColorScheme.dark(
+        colorScheme: const ColorScheme.light(
           primary: AppColors.cyan,
           secondary: AppColors.gold,
           surface: AppColors.surface,
           error: AppColors.red,
         ),
-        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+        textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
         appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.background,
+          backgroundColor: Colors.transparent,
           elevation: 0,
+          scrolledUnderElevation: 0,
           centerTitle: false,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness: Brightness.light,
+          ),
           titleTextStyle: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -46,10 +53,11 @@ class AppTheme {
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.cyan,
-            foregroundColor: AppColors.background,
+            foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
             textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            elevation: 0,
           ),
         ),
         cardTheme: CardThemeData(
@@ -57,11 +65,11 @@ class AppTheme {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.border, width: 0.5),
+            side: const BorderSide(color: AppColors.border, width: 0.8),
           ),
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: AppColors.card,
+          backgroundColor: AppColors.surface,
           selectedItemColor: AppColors.cyan,
           unselectedItemColor: AppColors.textMuted,
           type: BottomNavigationBarType.fixed,
@@ -69,9 +77,12 @@ class AppTheme {
         ),
         dividerTheme: const DividerThemeData(
           color: AppColors.border,
-          thickness: 0.5,
+          thickness: 0.8,
         ),
         iconTheme: const IconThemeData(color: AppColors.textSecondary),
         useMaterial3: true,
       );
+
+  // Both light and dark point to the new light theme
+  static ThemeData get dark => light;
 }

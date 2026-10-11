@@ -18,52 +18,62 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // App Bar equivalent
+        // App Bar
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (!widget.embedded)
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: const Padding(
-                    padding: EdgeInsets.only(top: 4.0),
-                    child: Icon(Icons.arrow_back, color: AppColors.cyan, size: 24),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: AppColors.softShadow,
+                    ),
+                    child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
                   ),
                 ),
-              if (!widget.embedded) const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: widget.embedded ? CrossAxisAlignment.start : CrossAxisAlignment.end,
                   children: [
-                    Text('Notifications', style: AppTextStyles.headlineMedium.copyWith(color: Colors.white)),
-                    const SizedBox(height: 4),
-                    Text('GO SWIFT CONCIERGE', style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
+                    Text('Notifications', style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 2),
+                    Text(
+                      'GO SWIFT CONCIERGE',
+                      style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, letterSpacing: 1.2, fontWeight: FontWeight.bold),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
         ),
-        
+
         // Filters
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           child: Row(
             children: [
               _buildFilterChip(0, 'All', count: 5),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               _buildFilterChip(1, 'Rides', icon: Icons.directions_car_outlined),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               _buildFilterChip(2, 'Food', icon: Icons.restaurant_outlined),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               _buildFilterChip(3, 'Courier', icon: Icons.local_shipping_outlined),
             ],
           ),
         ),
-        
+
         Expanded(
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -75,9 +85,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 body: 'Mercedes-Maybach S580 (Plate BS-7492) is approaching Odyssey Aviation FBO pickup terminal.',
                 time: 'Just now',
                 icon: Icons.directions_car_outlined,
-                color: const Color(0xFF00D4FF),
+                iconColor: AppColors.cyan,
+                iconBgColor: AppColors.cyanLight,
                 badgeText: 'Active Ride',
-                actionText: 'Track Ride',
+                badgeColor: AppColors.cyan,
+                badgeBgColor: AppColors.cyanLight,
+                actionText: 'Track Ride →',
               ),
               _buildNotificationCard(
                 category: 'FOOD & DINING',
@@ -85,11 +98,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 body: 'Dune at The Ocean Club has handed your order #SW-FD-892 to Chauffeur Devon.',
                 time: '14m ago',
                 icon: Icons.restaurant_outlined,
-                color: const Color(0xFF5E5CE6),
+                iconColor: AppColors.gold,
+                iconBgColor: AppColors.goldLight,
                 badgeText: 'In Transit',
-                actionText: 'View Food Status',
+                badgeColor: AppColors.gold,
+                badgeBgColor: AppColors.goldLight,
+                actionText: 'View Food Status →',
               ),
-              
+
               _buildSectionHeader('EARLIER TODAY', '2 Updates'),
               _buildNotificationCard(
                 category: 'COURIER & FREIGHT',
@@ -97,9 +113,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 body: 'Courier Liam collected secure documents from Lyford Cay Club Concierge. En route to Downtown Nassau.',
                 time: '1h ago',
                 icon: Icons.local_shipping_outlined,
-                color: const Color(0xFF8E8E93),
+                iconColor: AppColors.courierBlue,
+                iconBgColor: AppColors.courierBlueLight,
                 badgeText: 'En Route',
-                actionText: 'Live Courier Map',
+                badgeColor: AppColors.courierBlue,
+                badgeBgColor: AppColors.courierBlueLight,
+                actionText: 'Live Courier Map →',
               ),
               _buildNotificationCard(
                 category: 'CAR RENTAL',
@@ -107,11 +126,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 body: 'Porsche 911 Carrera Cabriolet pre-inspection passed. Ready at Lyford Cay Marina Bay #4.',
                 time: '3h ago',
                 icon: Icons.vpn_key_outlined,
-                color: const Color(0xFFB8860B),
+                iconColor: AppColors.fleetTan,
+                iconBgColor: AppColors.fleetTanLight,
                 badgeText: 'Confirmed',
-                actionText: 'View Rental Details',
+                badgeColor: AppColors.fleetTan,
+                badgeBgColor: AppColors.fleetTanLight,
+                actionText: 'View Rental Details →',
               ),
-              
+
               _buildSectionHeader('YESTERDAY', '1 Update'),
               _buildNotificationCard(
                 category: 'PROPERTY & VILLA',
@@ -119,9 +141,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 body: 'The Sovereign Ocean Villa booking #BS-STAY-4071 confirmed by Julian Turnquest. Digital gate access code generated.',
                 time: 'Yesterday',
                 icon: Icons.home_work_outlined,
-                color: const Color(0xFFF5A623),
-                badgeText: null, 
-                actionText: 'View Property\nBooking',
+                iconColor: AppColors.staysTeal,
+                iconBgColor: AppColors.staysTealLight,
+                badgeText: 'Gate Active',
+                badgeColor: AppColors.staysTeal,
+                badgeBgColor: AppColors.staysTealLight,
+                actionText: 'View Property Booking →',
               ),
               const SizedBox(height: 20),
             ],
@@ -129,7 +154,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
       ],
     );
-    return widget.embedded ? content : Scaffold(body: SafeArea(child: content));
+    return widget.embedded ? content : Scaffold(backgroundColor: AppColors.background, body: SafeArea(child: content));
   }
 
   Widget _buildFilterChip(int index, String label, {int? count, IconData? icon}) {
@@ -137,53 +162,41 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return GestureDetector(
       onTap: () => setState(() => _selectedFilter = index),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.cyan.withOpacity(0.15) : AppColors.surface.withOpacity(0.5),
+          color: isSelected ? AppColors.cyanPill : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? AppColors.cyan : AppColors.border),
+          border: Border.all(color: isSelected ? AppColors.cyan.withOpacity(0.3) : AppColors.border, width: 0.8),
+          boxShadow: isSelected ? null : AppColors.softShadow,
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 16, color: isSelected ? Colors.white : AppColors.textSecondary),
-              const SizedBox(width: 8),
+              Icon(icon, size: 16, color: isSelected ? AppColors.cyan : AppColors.textSecondary),
+              const SizedBox(width: 6),
             ],
             Text(
-              label,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              count != null ? '$label $count' : label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
             ),
-            if (count != null) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.all(5),
-                decoration: const BoxDecoration(
-                  color: AppColors.cyan,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  count.toString(),
-                  style: const TextStyle(color: AppColors.background, fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title, String subtitle) {
+  Widget _buildSectionHeader(String title, String countText) {
     return Padding(
-      padding: const EdgeInsets.only(top: 24, bottom: 12),
+      padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary, letterSpacing: 1.0, fontWeight: FontWeight.bold)),
-          Text(subtitle, style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan.withOpacity(0.8), fontWeight: FontWeight.bold)),
+          Text(title, style: AppTextStyles.labelSmall.copyWith(letterSpacing: 1.0, fontWeight: FontWeight.bold)),
+          Text(countText, style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -195,90 +208,89 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     required String body,
     required String time,
     required IconData icon,
-    required Color color,
+    required Color iconColor,
+    required Color iconBgColor,
     String? badgeText,
+    Color? badgeColor,
+    Color? badgeBgColor,
     required String actionText,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface.withOpacity(0.3),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.4), width: 1),
+        border: Border.all(color: AppColors.border, width: 0.8),
+        boxShadow: AppColors.cardShadow,
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: color.withOpacity(0.6)),
-              color: color.withOpacity(0.1),
-            ),
-            child: Icon(icon, color: color, size: 20),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          category,
+                          style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+                        ),
+                        Text(time, style: AppTextStyles.caption),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      title,
+                      style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(body, style: AppTextStyles.bodySmall.copyWith(height: 1.3)),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(child: Text(category, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, letterSpacing: 0.5, fontWeight: FontWeight.bold))),
-                    Text(time, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(title, style: AppTextStyles.titleMedium.copyWith(color: Colors.white, fontSize: 16)),
-                const SizedBox(height: 6),
-                Text(body, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, height: 1.4, fontSize: 13)),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (badgeText != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: color.withOpacity(0.3)),
-                        ),
-                        child: Row(
-                          children: [
-                            if (badgeText == 'Active Ride') ...[
-                              Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                              const SizedBox(width: 6),
-                            ],
-                            Text(badgeText, style: AppTextStyles.labelSmall.copyWith(color: color, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      )
-                    else
-                      Expanded(
-                        child: Text(actionText, style: AppTextStyles.titleMedium.copyWith(color: color, fontSize: 14)),
-                      ),
-                      
-                    if (badgeText != null)
-                      Row(
-                        children: [
-                          Text(actionText, style: AppTextStyles.titleMedium.copyWith(color: Colors.white, fontSize: 14)),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.arrow_forward, color: Colors.white, size: 16),
-                        ],
-                      )
-                    else
-                      Icon(Icons.arrow_forward, color: color, size: 16),
-                  ],
-                ),
-              ],
-            ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: AppColors.borderLight),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (badgeText != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: badgeBgColor ?? AppColors.cyanLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    badgeText,
+                    style: AppTextStyles.labelSmall.copyWith(color: badgeColor ?? AppColors.cyan, fontWeight: FontWeight.bold),
+                  ),
+                )
+              else
+                const SizedBox.shrink(),
+              Text(
+                actionText,
+                style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
         ],
       ),
