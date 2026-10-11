@@ -14,13 +14,17 @@ class CourierProfileScreen extends StatefulWidget {
 }
 
 class _CourierProfileScreenState extends State<CourierProfileScreen> {
+  final ProviderApplicationService _providerService = ProviderApplicationService();
   String _name = 'Marcus Rolle';
-  String _badge = 'Bonded Courier • #BC-182';
+  String _badge = 'Bonded Courier • VAN / TRUCK';
+  String _phone = '+1 (242) 555-0182';
   String _rating = '4.92 ★';
   String _deliveries = '2,450';
   String _earned = '\$12,400';
   String _license = 'BL-94281-NP • Active';
+  String _licenseNumber = 'BL-94281-NP';
   String _zone = 'Nassau • Paradise Island';
+  String _transportMode = 'van';
 
   @override
   void initState() {
@@ -30,17 +34,22 @@ class _CourierProfileScreenState extends State<CourierProfileScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final p = await ProviderApplicationService().getCourierProfile();
+      final p = await _providerService.getCourierProfile();
       if (mounted && p.isNotEmpty) {
         setState(() {
           if (p['legal_name'] != null && (p['legal_name'] as String).isNotEmpty) {
             _name = p['legal_name'];
           }
+          if (p['contact_phone'] != null && (p['contact_phone'] as String).isNotEmpty) {
+            _phone = p['contact_phone'];
+          }
           if (p['transport_mode'] != null) {
-            _badge = 'Bonded Courier • ${p['transport_mode'].toString().toUpperCase()}';
+            _transportMode = p['transport_mode'].toString().toLowerCase();
+            _badge = 'Bonded Courier • ${_transportMode.toUpperCase()}';
           }
           if (p['driver_license_number'] != null) {
-            _license = '${p['driver_license_number']} • Active';
+            _licenseNumber = p['driver_license_number'];
+            _license = '$_licenseNumber • Active';
           }
           if (p['operating_island_zone'] != null) {
             _zone = p['operating_island_zone'];
@@ -67,6 +76,126 @@ class _CourierProfileScreenState extends State<CourierProfileScreen> {
     } catch (_) {}
   }
 
+  void _showEditProfileDialog() {
+    final nameCtrl = TextEditingController(text: _name);
+    final phoneCtrl = TextEditingController(text: _phone);
+    final licenseCtrl = TextEditingController(text: _licenseNumber);
+    final zoneCtrl = TextEditingController(text: _zone);
+    String mode = _transportMode;
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text('Edit Courier Profile', style: AppTextStyles.headlineSmall),
+                const SizedBox(height: 4),
+                Text('Update your bonded courier credentials, contact phone, and operating zone.', style: AppTextStyles.bodySmall),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Full Legal Name', hintText: 'Marcus Rolle'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneCtrl,
+                  decoration: const InputDecoration(labelText: 'Direct Mobile Phone', hintText: '+1 (242) 555-0182'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: licenseCtrl,
+                  decoration: const InputDecoration(labelText: 'Driver / Courier License No.', hintText: 'BL-94281-NP'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: zoneCtrl,
+                  decoration: const InputDecoration(labelText: 'Operating Island Zone', hintText: 'Nassau • Paradise Island'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: mode,
+                  decoration: const InputDecoration(labelText: 'Transport Mode'),
+                  items: const [
+                    DropdownMenuItem(value: 'motorcycle', child: Text('Motorcycle / Scooter')),
+                    DropdownMenuItem(value: 'car', child: Text('Courier Car')),
+                    DropdownMenuItem(value: 'van', child: Text('Cargo Van / SUV')),
+                    DropdownMenuItem(value: 'truck', child: Text('Heavy Transport Truck')),
+                  ],
+                  onChanged: (val) => setModalState(() => mode = val ?? 'van'),
+                ),
+                const SizedBox(height: 24),
+                GSButton(
+                  label: isSaving ? 'Saving Changes...' : 'Save Profile Changes',
+                  onTap: isSaving
+                      ? () {}
+                      : () async {
+                          final name = nameCtrl.text.trim();
+                          if (name.isEmpty) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Name cannot be empty')));
+                            return;
+                          }
+                          setModalState(() => isSaving = true);
+                          try {
+                            await _providerService.updateCourierProfile(
+                              legalName: name,
+                              contactPhone: phoneCtrl.text.trim().isNotEmpty ? phoneCtrl.text.trim() : null,
+                              driverLicenseNumber: licenseCtrl.text.trim().isNotEmpty ? licenseCtrl.text.trim() : null,
+                              operatingIslandZone: zoneCtrl.text.trim().isNotEmpty ? zoneCtrl.text.trim() : null,
+                              transportMode: mode,
+                            );
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            _loadProfile();
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Courier profile updated successfully!'),
+                                  backgroundColor: AppColors.green,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            setModalState(() => isSaving = false);
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text('Error updating: $e'), backgroundColor: AppColors.red),
+                              );
+                            }
+                          }
+                        },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final content = SingleChildScrollView(
@@ -86,16 +215,19 @@ class _CourierProfileScreenState extends State<CourierProfileScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Profile', style: AppTextStyles.headlineLarge),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: AppColors.cardShadow,
+                      GestureDetector(
+                        onTap: _showEditProfileDialog,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
+                            boxShadow: AppColors.cardShadow,
+                          ),
+                          child: const Icon(Icons.edit_outlined, color: AppColors.primaryTeal, size: 20),
                         ),
-                        child: const Icon(Icons.settings_outlined, color: AppColors.textSecondary, size: 20),
                       ),
                     ],
                   ),
@@ -104,11 +236,11 @@ class _CourierProfileScreenState extends State<CourierProfileScreen> {
                   width: 84,
                   height: 84,
                   decoration: BoxDecoration(
-                    color: AppColors.cyanLight,
+                    color: AppColors.badgeTeal,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.cyan, width: 2.5),
+                    border: Border.all(color: AppColors.primaryTeal, width: 2.5),
                   ),
-                  child: const Icon(Icons.delivery_dining, color: AppColors.cyan, size: 44),
+                  child: const Icon(Icons.delivery_dining, color: AppColors.primaryTeal, size: 44),
                 ),
                 const SizedBox(height: 12),
                 Text(_name, style: AppTextStyles.headlineMedium),
@@ -120,7 +252,7 @@ class _CourierProfileScreenState extends State<CourierProfileScreen> {
                   children: [
                     const Icon(Icons.star, color: AppColors.gold, size: 16),
                     const SizedBox(width: 4),
-                    Text('$_rating rating • Bonded Logistics',
+                    Text('$_rating • Bonded & Insured Courier',
                         style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
                   ],
                 ),
@@ -129,7 +261,7 @@ class _CourierProfileScreenState extends State<CourierProfileScreen> {
                   children: [
                     Expanded(child: _statPill(_deliveries, 'Deliveries')),
                     const SizedBox(width: 10),
-                    Expanded(child: _statPill(_earned, 'Earned')),
+                    Expanded(child: _statPill(_earned, 'Earnings')),
                     const SizedBox(width: 10),
                     Expanded(child: _statPill(_rating, 'Rating')),
                   ],
@@ -145,11 +277,12 @@ class _CourierProfileScreenState extends State<CourierProfileScreen> {
                 Text('Courier Details', style: AppTextStyles.headlineSmall),
                 const SizedBox(height: 14),
                 _infoTile(Icons.shield_outlined, 'Bonded Status', 'Active • Insured up to \$50,000'),
+                _infoTile(Icons.phone_outlined, 'Direct Phone', _phone),
                 _infoTile(Icons.badge_outlined, 'License No.', _license),
                 _infoTile(Icons.payment, 'Payout Account', 'Bank of Bahamas • ••••8921'),
                 _infoTile(Icons.location_on_outlined, 'Service Zone', _zone),
                 const SizedBox(height: 24),
-                GSButton(label: 'Edit Profile', isSecondary: true, onTap: () {}),
+                GSButton(label: 'Edit Profile Details', isSecondary: true, onTap: _showEditProfileDialog),
                 const SizedBox(height: 12),
                 GSButton(
                   label: 'Sign Out',
@@ -173,6 +306,12 @@ class _CourierProfileScreenState extends State<CourierProfileScreen> {
               elevation: 0,
               title: Text('Courier Profile', style: AppTextStyles.titleLarge),
               centerTitle: false,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, color: AppColors.primaryTeal),
+                  onPressed: _showEditProfileDialog,
+                ),
+              ],
               leading: GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(

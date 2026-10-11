@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -14,12 +15,56 @@ class RideWaitingScreen extends StatefulWidget {
 
 class _RideWaitingScreenState extends State<RideWaitingScreen> {
   bool _isCancelling = false;
+  Timer? _pollTimer;
+  bool _initialized = false;
+  RideModel? _currentRide;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      final arg = ModalRoute.of(context)?.settings.arguments;
+      if (arg is RideModel) {
+        _currentRide = arg;
+        _startPolling();
+      }
+    }
+  }
+
+  void _startPolling() {
+    if (_currentRide == null) return;
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
+      try {
+        final updated = await RideService().getRideDetail(_currentRide!.id);
+        if (!mounted) return;
+        final s = updated.status.toLowerCase();
+        if (s == 'accepted' || s == 'driver_assigned' || s == 'in_transit' || s == 'in_progress' || s == 'arrived') {
+          _pollTimer?.cancel();
+          Navigator.pushReplacementNamed(
+            context,
+            '/customer/ride/driver-accepted',
+            arguments: updated,
+          );
+        }
+      } catch (_) {}
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _handleCancel(RideModel? ride) async {
-    if (ride != null) {
+    _pollTimer?.cancel();
+    final target = ride ?? _currentRide;
+    if (target != null) {
       setState(() => _isCancelling = true);
       try {
-        await RideService().cancelRide(ride.id, reason: 'Customer requested cancellation');
+        await RideService().cancelRide(target.id, reason: 'Customer requested cancellation');
       } catch (_) {}
     }
     if (mounted) {
@@ -29,7 +74,7 @@ class _RideWaitingScreenState extends State<RideWaitingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ride = ModalRoute.of(context)?.settings.arguments as RideModel?;
+    final ride = (ModalRoute.of(context)?.settings.arguments as RideModel?) ?? _currentRide;
     final pickup = ride?.pickupAddress ?? "Lynden Pindling Int'l Airport (NAS)";
     final destination = ride?.destinationAddress ?? 'The Ocean Club, Four Seasons Resort';
     final fare = ride != null ? '\$${ride.estimatedFare.toStringAsFixed(2)}' : '\$118.50';

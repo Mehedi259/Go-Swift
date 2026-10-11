@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/ride_model.dart';
 
 class ActiveRideScreen extends StatelessWidget {
   const ActiveRideScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final ride = ModalRoute.of(context)?.settings.arguments as RideModel?;
+    final tripCode = ride != null ? '#SW-${ride.id}' : '#SW-8492';
+    final driverName = ride?.driver?.legalName ?? 'Captain Terrence Rolle';
+    final vehicleName = ride?.driver != null && ride!.driver!.vehicleMake != null
+        ? '${ride.driver!.vehicleMake} ${ride.driver!.vehicleModel ?? ''}'.trim()
+        : (ride?.requestedVehicleCategory != null ? ride!.requestedVehicleCategory!.replaceAll('_', ' ').toUpperCase() : 'Cadillac Escalade ESV');
+    final licensePlate = ride?.driver?.licensePlate ?? 'BS-942-EX';
+    final rating = ride?.driver?.rating != null ? ride!.driver!.rating!.toStringAsFixed(2) : '4.98';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -50,7 +60,7 @@ class ActiveRideScreen extends StatelessWidget {
                       children: [
                         Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.primaryTeal, shape: BoxShape.circle)),
                         const SizedBox(width: 8),
-                        Text('ACTIVE TRANSIT • TRIP #SW-8492', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
+                        Text('ACTIVE TRANSIT • TRIP $tripCode', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -109,16 +119,16 @@ class ActiveRideScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Captain Terrence Rolle', style: AppTextStyles.headlineSmall),
-                                    Text('Official Licensed VIP Chauffeur #CH-402', style: AppTextStyles.bodySmall),
+                                    Text(driverName, style: AppTextStyles.headlineSmall),
+                                    Text('Official Licensed VIP Chauffeur', style: AppTextStyles.bodySmall),
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
                                         const Icon(Icons.star, size: 14, color: AppColors.gold),
                                         const SizedBox(width: 4),
-                                        Text('4.98', style: AppTextStyles.titleMedium.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
+                                        Text(rating, style: AppTextStyles.titleMedium.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
                                         const SizedBox(width: 8),
-                                        Text('620+ Trips', style: AppTextStyles.bodySmall),
+                                        Text('Verified Chauffeur', style: AppTextStyles.bodySmall),
                                       ],
                                     ),
                                   ],
@@ -162,15 +172,15 @@ class ActiveRideScreen extends StatelessWidget {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('Cadillac Escalade ESV', style: AppTextStyles.titleMedium),
-                                      Text('Onyx Black • Tinted Privacy Glass • Luggage Cap: 6 Bags', style: AppTextStyles.bodySmall),
+                                      Text(vehicleName, style: AppTextStyles.titleMedium),
+                                      Text('Premium VIP Comfort • Tinted Privacy Glass', style: AppTextStyles.bodySmall),
                                     ],
                                   ),
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6), border: Border.all(color: AppColors.border)),
-                                  child: Text('BS-942-EX', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                                  child: Text(licensePlate, style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
                                 ),
                               ],
                             ),
@@ -181,7 +191,7 @@ class ActiveRideScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     // Navigate to completed
                     GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/customer/ride/completed'),
+                      onTap: () => Navigator.pushNamed(context, '/customer/ride/completed', arguments: ride),
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(

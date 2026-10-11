@@ -152,9 +152,9 @@ class AuthService {
     await _api.post(
       ApiEndpoints.changePassword,
       body: {
-        'old_password': oldPassword,
+        'current_password': oldPassword,
         'new_password': newPassword,
-        'confirm_password': confirmPassword,
+        'confirm_new_password': confirmPassword,
       },
     );
   }

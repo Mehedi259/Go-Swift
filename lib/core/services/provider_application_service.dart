@@ -218,6 +218,7 @@ class ProviderApplicationService {
     String? businessLicenseNumber,
     String? islandServiceHub,
     String? averagePrepWindow,
+    String? operatingHours,
     bool? acceptingOrders,
     File? logo,
     File? restaurantPhoto,
@@ -234,6 +235,7 @@ class ProviderApplicationService {
     if (businessLicenseNumber != null) fields['business_license_number'] = businessLicenseNumber;
     if (islandServiceHub != null) fields['island_service_hub'] = islandServiceHub;
     if (averagePrepWindow != null) fields['average_prep_window'] = averagePrepWindow;
+    if (operatingHours != null) fields['operating_hours'] = operatingHours;
     if (acceptingOrders != null) fields['accepting_orders'] = acceptingOrders.toString();
 
     final files = <String, File>{};

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/food_model.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/food_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
@@ -16,6 +18,55 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   bool _isSubmitting = false;
   String _deliveryAddress = 'One Ocean Drive, Paradise Island, Bahamas';
   int _selectedSlot = 0;
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      final user = Provider.of<AuthProvider>(context, listen: false).user;
+      if (user != null && user.streetAddress != null && user.streetAddress!.trim().isNotEmpty) {
+        final city = (user.city != null && user.city!.trim().isNotEmpty) ? ', ${user.city}' : '';
+        _deliveryAddress = '${user.streetAddress}$city';
+      }
+    }
+  }
+
+  void _showEditAddressDialog() {
+    final addrCtrl = TextEditingController(text: _deliveryAddress);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Update Delivery Address', style: AppTextStyles.titleMedium),
+        content: TextField(
+          controller: addrCtrl,
+          maxLines: 2,
+          decoration: const InputDecoration(
+            hintText: 'Enter villa, suite, yacht slip, or street address',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryTeal),
+            onPressed: () {
+              if (addrCtrl.text.trim().isNotEmpty) {
+                setState(() => _deliveryAddress = addrCtrl.text.trim());
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Apply', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _placeOrder() async {
     setState(() => _isSubmitting = true);
@@ -103,29 +154,40 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                 children: [
                   Text('DELIVERY ADDRESS', style: AppTextStyles.labelSmall),
                   const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: AppColors.cardShadow,
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined, color: AppColors.primaryTeal, size: 22),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('The Ocean Club, Four Seasons', style: AppTextStyles.titleMedium),
-                              Text(_deliveryAddress, style: AppTextStyles.bodySmall),
-                            ],
+                  GestureDetector(
+                    onTap: _showEditAddressDialog,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, color: AppColors.primaryTeal, size: 22),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Delivery Destination', style: AppTextStyles.titleMedium),
+                                const SizedBox(height: 2),
+                                Text(_deliveryAddress, style: AppTextStyles.bodySmall),
+                              ],
+                            ),
                           ),
-                        ),
-                        const Icon(Icons.edit_outlined, color: AppColors.textMuted, size: 20),
-                      ],
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.cardTouchpoint,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.edit_outlined, color: AppColors.primaryTeal, size: 18),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),

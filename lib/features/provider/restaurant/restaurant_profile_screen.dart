@@ -50,9 +50,145 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
           if (p['accepting_orders'] != null) {
             _accepting = p['accepting_orders'] == true;
           }
+          if (p['operating_hours'] != null && (p['operating_hours'] as String).isNotEmpty) {
+            _hours = p['operating_hours'];
+          }
         });
       }
     } catch (_) {}
+  }
+
+  void _showEditProfileDialog() {
+    final nameCtrl = TextEditingController(text: _name);
+    final conceptCtrl = TextEditingController(text: _concept);
+    final locationCtrl = TextEditingController(text: _location);
+    final phoneCtrl = TextEditingController(text: _phone);
+    final hoursCtrl = TextEditingController(text: _hours);
+    bool accepting = _accepting;
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (modalContext, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(modalContext).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text('Edit Restaurant Profile', style: AppTextStyles.headlineSmall),
+                const SizedBox(height: 6),
+                Text('Update culinary operations and customer contact info', style: AppTextStyles.bodySmall),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Restaurant Name'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: conceptCtrl,
+                  decoration: const InputDecoration(labelText: 'Cuisine Concept', hintText: 'e.g. Fine French-Asian Dining'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: locationCtrl,
+                  decoration: const InputDecoration(labelText: 'Island Hub / Location', hintText: 'e.g. Ocean Club, Paradise Island'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneCtrl,
+                  decoration: const InputDecoration(labelText: 'Commercial Phone'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: hoursCtrl,
+                  decoration: const InputDecoration(labelText: 'Business Hours', hintText: 'e.g. Open Daily: 11:30 AM – 11:00 PM'),
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  activeColor: AppColors.cyan,
+                  title: Text('Accepting Dispatch Orders', style: AppTextStyles.titleMedium),
+                  subtitle: Text('Toggle availability in the customer food catalog', style: AppTextStyles.bodySmall),
+                  value: accepting,
+                  onChanged: (val) => setModalState(() => accepting = val),
+                ),
+                const SizedBox(height: 20),
+                GSButton(
+                  label: 'Save Changes',
+                  isLoading: isSaving,
+                  onTap: () async {
+                    setModalState(() => isSaving = true);
+                    try {
+                      await _providerService.updateRestaurantProfile(
+                        restaurantName: nameCtrl.text.trim(),
+                        cuisineConcept: conceptCtrl.text.trim(),
+                        islandServiceHub: locationCtrl.text.trim(),
+                        commercialLine: phoneCtrl.text.trim(),
+                        contactPhone: phoneCtrl.text.trim(),
+                        operatingHours: hoursCtrl.text.trim(),
+                        acceptingOrders: accepting,
+                      );
+                      if (mounted) {
+                        setState(() {
+                          _name = nameCtrl.text.trim();
+                          _concept = conceptCtrl.text.trim();
+                          _location = locationCtrl.text.trim();
+                          _phone = phoneCtrl.text.trim();
+                          _hours = hoursCtrl.text.trim();
+                          _accepting = accepting;
+                        });
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Restaurant profile updated successfully!'),
+                            backgroundColor: AppColors.cyan,
+                          ),
+                        );
+                        _loadProfile();
+                      }
+                    } catch (e) {
+                      setModalState(() => isSaving = false);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to update: $e'),
+                            backgroundColor: AppColors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -125,7 +261,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
             _infoTile(Icons.payment, 'Payout Account', 'FirstCaribbean Bank • ••••4102'),
             _infoTile(Icons.receipt_long_outlined, 'Business License / VAT', _vat),
             const SizedBox(height: 24),
-            GSButton(label: 'Edit Restaurant Info', isSecondary: true, onTap: () {}),
+            GSButton(label: 'Edit Restaurant Info', isSecondary: true, onTap: _showEditProfileDialog),
             const SizedBox(height: 12),
             GSButton(
               label: 'Sign Out',

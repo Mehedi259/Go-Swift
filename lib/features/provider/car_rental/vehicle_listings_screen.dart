@@ -43,6 +43,20 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
     } catch (_) {}
 
     try {
+      final bookings = await _rentalService.getFleetBookings();
+      if (mounted && bookings.isNotEmpty) {
+        final earnings = bookings
+            .where((b) => b.status.toLowerCase() != 'cancelled')
+            .fold<double>(0.0, (sum, b) => sum + b.totalPrice);
+        if (earnings > 0) {
+          setState(() {
+            _monthlyEarnings = '\$${earnings.toStringAsFixed(0)}';
+          });
+        }
+      }
+    } catch (_) {}
+
+    try {
       final list = await _rentalService.getFleetVehicles();
       if (mounted) {
         setState(() {

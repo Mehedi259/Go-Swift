@@ -17,6 +17,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _streetController = TextEditingController();
   final _cityController = TextEditingController();
   bool _initialized = false;
 
@@ -29,6 +30,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         _firstNameController.text = user.firstName;
         _lastNameController.text = user.lastName;
         _phoneController.text = user.phone;
+        _streetController.text = user.streetAddress ?? '';
         _cityController.text = user.city ?? '';
       }
       _initialized = true;
@@ -40,6 +42,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _phoneController.dispose();
+    _streetController.dispose();
     _cityController.dispose();
     super.dispose();
   }
@@ -50,6 +53,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     final success = await auth.updateProfile(
       fullName: fullName.isNotEmpty ? fullName : null,
       phoneNumber: _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
+      streetAddress: _streetController.text.trim().isNotEmpty ? _streetController.text.trim() : null,
       city: _cityController.text.trim().isNotEmpty ? _cityController.text.trim() : null,
     );
 
@@ -119,6 +123,13 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
               label: 'Phone Number',
               hint: '+1 (242) 555-0199',
               prefixIcon: Icons.phone_outlined,
+            ),
+            const SizedBox(height: 16),
+            GSTextField(
+              controller: _streetController,
+              label: 'Street Address / Villa',
+              hint: 'e.g. 101 Ocean Club Drive, Villa 4',
+              prefixIcon: Icons.home_outlined,
             ),
             const SizedBox(height: 16),
             GSTextField(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/ride_model.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class RideDriverAcceptedScreen extends StatelessWidget {
@@ -8,6 +9,15 @@ class RideDriverAcceptedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ride = ModalRoute.of(context)?.settings.arguments as RideModel?;
+    final tripCode = ride != null ? '#SW-${ride.id}' : '#SW-8492';
+    final driverName = ride?.driver?.legalName ?? 'Captain Terrence Rolle';
+    final vehicleName = ride?.driver != null && ride!.driver!.vehicleMake != null
+        ? '${ride.driver!.vehicleMake} ${ride.driver!.vehicleModel ?? ''}'.trim()
+        : (ride?.requestedVehicleCategory != null ? ride!.requestedVehicleCategory!.replaceAll('_', ' ').toUpperCase() : 'Cadillac Escalade ESV');
+    final licensePlate = ride?.driver?.licensePlate ?? 'BS-942-EX';
+    final rating = ride?.driver?.rating != null ? ride!.driver!.rating!.toStringAsFixed(2) : '4.98';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -58,7 +68,7 @@ class RideDriverAcceptedScreen extends StatelessWidget {
                         children: [
                           Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
                           const SizedBox(width: 8),
-                          Text('CHAUFFEUR EN ROUTE • TRIP #SW-8492', style: AppTextStyles.labelSmall.copyWith(color: AppColors.green, fontWeight: FontWeight.bold)),
+                          Text('CHAUFFEUR EN ROUTE • TRIP $tripCode', style: AppTextStyles.labelSmall.copyWith(color: AppColors.green, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -95,17 +105,17 @@ class RideDriverAcceptedScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Captain Terrence Rolle', style: AppTextStyles.headlineSmall),
+                                    Text(driverName, style: AppTextStyles.headlineSmall),
                                     const SizedBox(height: 2),
-                                    Text('Official Licensed VIP Chauffeur #CH-402', style: AppTextStyles.bodySmall),
+                                    Text('Official Licensed VIP Chauffeur', style: AppTextStyles.bodySmall),
                                     const SizedBox(height: 6),
                                     Row(
                                       children: [
                                         const Icon(Icons.star, size: 14, color: AppColors.gold),
                                         const SizedBox(width: 4),
-                                        Text('4.98', style: AppTextStyles.titleMedium.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
+                                        Text(rating, style: AppTextStyles.titleMedium.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
                                         const SizedBox(width: 8),
-                                        Text('620+ Trips', style: AppTextStyles.bodySmall),
+                                        Text('Verified Chauffeur', style: AppTextStyles.bodySmall),
                                       ],
                                     ),
                                   ],
@@ -125,15 +135,15 @@ class RideDriverAcceptedScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Cadillac Escalade ESV', style: AppTextStyles.titleMedium),
-                                    Text('Onyx Black • Tinted Privacy Glass • Luggage Cap: 6 Bags', style: AppTextStyles.bodySmall),
+                                    Text(vehicleName, style: AppTextStyles.titleMedium),
+                                    Text('Premium VIP Comfort • Tinted Privacy Glass', style: AppTextStyles.bodySmall),
                                   ],
                                 ),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(color: AppColors.cardTouchpoint, borderRadius: BorderRadius.circular(8)),
-                                child: Text('BS-942-EX', style: AppTextStyles.labelMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                                child: Text(licensePlate, style: AppTextStyles.labelMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
@@ -202,7 +212,7 @@ class RideDriverAcceptedScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    GSButton(label: 'Track Live Ride →', onTap: () => Navigator.pushNamed(context, '/customer/ride/active')),
+                    GSButton(label: 'Track Live Ride →', onTap: () => Navigator.pushNamed(context, '/customer/ride/active', arguments: ride)),
                     const SizedBox(height: 20),
                   ],
                 ),

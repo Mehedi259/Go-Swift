@@ -131,6 +131,30 @@ class CustomerProfileScreen extends StatelessWidget {
                           Text(displayPhone, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary)),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/customer/profile/personal-info'),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.cyanPill,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.primaryTeal.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.edit_outlined, color: AppColors.primaryTeal, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Edit Personal Profile',
+                                style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -314,6 +338,37 @@ class CustomerProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
 
+                // Account & Preferences
+                Row(
+                  children: [
+                    const Icon(Icons.manage_accounts_outlined, color: AppColors.primaryTeal, size: 20),
+                    const SizedBox(width: 10),
+                    Text('Account & Preferences', style: AppTextStyles.titleLarge.copyWith(color: AppColors.textPrimary)),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                _settingTile(
+                  icon: Icons.person_outline,
+                  title: 'Personal Information',
+                  subtitle: 'Name, phone number, and primary island zone',
+                  onTap: () => Navigator.pushNamed(context, '/customer/profile/personal-info'),
+                ),
+                const SizedBox(height: 10),
+                _settingTile(
+                  icon: Icons.location_on_outlined,
+                  title: 'Saved Addresses',
+                  subtitle: 'Manage home, villa, marina, and office locations',
+                  onTap: () => Navigator.pushNamed(context, '/customer/profile/saved-addresses'),
+                ),
+                const SizedBox(height: 10),
+                _settingTile(
+                  icon: Icons.notifications_none_outlined,
+                  title: 'Notifications & Alerts',
+                  subtitle: 'Push notifications for charter rides, food, and delivery',
+                  onTap: () => Navigator.pushNamed(context, '/customer/profile/notification-settings'),
+                ),
+                const SizedBox(height: 24),
+
                 // Security
                 Row(
                   children: [
@@ -417,4 +472,48 @@ class CustomerProfileScreen extends StatelessWidget {
 
     return embedded ? content : Scaffold(backgroundColor: AppColors.background, body: SafeArea(child: content));
   }
+
+  Widget _settingTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppColors.cardShadow,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.cardTouchpoint,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: AppColors.primaryTeal, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, color: AppColors.textSecondary, size: 14),
+            ],
+          ),
+        ),
+      );
 }

@@ -15,6 +15,7 @@ class _RentalProviderProfileScreenState extends State<RentalProviderProfileScree
   final ProviderApplicationService _providerService = ProviderApplicationService();
   String _name = 'Island Prestige Fleet';
   String _subtitle = 'Licensed Fleet Provider • Nassau';
+  String _managerName = '';
   String _license = 'FL-8921-BAH (Verified)';
   String _contact = '+1 (242) 555-0144';
   String _base = 'NAS Airport VIP Parking Lounge';
@@ -34,7 +35,8 @@ class _RentalProviderProfileScreenState extends State<RentalProviderProfileScree
             _name = p['company_or_host_legal_name'];
           }
           if (p['operational_contact_name'] != null) {
-            _subtitle = 'Managed by ${p['operational_contact_name']}';
+            _managerName = p['operational_contact_name'];
+            _subtitle = 'Managed by $_managerName';
           }
           if (p['rental_license_number'] != null) {
             _license = '${p['rental_license_number']} (Verified)';
@@ -48,6 +50,127 @@ class _RentalProviderProfileScreenState extends State<RentalProviderProfileScree
         });
       }
     } catch (_) {}
+  }
+
+  void _showEditProfileDialog() {
+    final nameCtrl = TextEditingController(text: _name);
+    final managerCtrl = TextEditingController(text: _managerName);
+    final phoneCtrl = TextEditingController(text: _contact);
+    final baseCtrl = TextEditingController(text: _base);
+    final licenseCtrl = TextEditingController(text: _license.replaceAll(' (Verified)', ''));
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (modalContext, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(modalContext).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text('Edit Fleet Profile', style: AppTextStyles.headlineSmall),
+                const SizedBox(height: 6),
+                Text('Update rental agency details and primary operating base', style: AppTextStyles.bodySmall),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Fleet / Company Name'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: managerCtrl,
+                  decoration: const InputDecoration(labelText: 'Operational Manager Name', hintText: 'e.g. Sterling Sands'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneCtrl,
+                  decoration: const InputDecoration(labelText: 'Business Contact Phone'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: baseCtrl,
+                  decoration: const InputDecoration(labelText: 'Primary Operating Base', hintText: 'e.g. NAS Airport VIP Lounge'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: licenseCtrl,
+                  decoration: const InputDecoration(labelText: 'Rental License Number', hintText: 'e.g. FL-8921-BAH'),
+                ),
+                const SizedBox(height: 20),
+                GSButton(
+                  label: 'Save Changes',
+                  isLoading: isSaving,
+                  onTap: () async {
+                    setModalState(() => isSaving = true);
+                    try {
+                      await _providerService.updateRentalProfile(
+                        companyOrHostLegalName: nameCtrl.text.trim(),
+                        operationalContactName: managerCtrl.text.trim(),
+                        businessContactNumber: phoneCtrl.text.trim(),
+                        primaryOperatingBase: baseCtrl.text.trim(),
+                        rentalLicenseNumber: licenseCtrl.text.trim(),
+                      );
+                      if (mounted) {
+                        setState(() {
+                          _name = nameCtrl.text.trim();
+                          _managerName = managerCtrl.text.trim();
+                          _subtitle = _managerName.isNotEmpty ? 'Managed by $_managerName' : 'Licensed Fleet Provider • Nassau';
+                          _contact = phoneCtrl.text.trim();
+                          _base = baseCtrl.text.trim();
+                          _license = '${licenseCtrl.text.trim()} (Verified)';
+                        });
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Fleet profile updated successfully!'),
+                            backgroundColor: AppColors.cyan,
+                          ),
+                        );
+                        _loadProfile();
+                      }
+                    } catch (e) {
+                      setModalState(() => isSaving = false);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to update: $e'),
+                            backgroundColor: AppColors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -120,7 +243,7 @@ class _RentalProviderProfileScreenState extends State<RentalProviderProfileScree
             _infoTile(Icons.payment, 'Direct Deposit', 'Scotiabank Bahamas • ••••5512'),
             _infoTile(Icons.location_on_outlined, 'Pickup Hub', _base),
             const SizedBox(height: 24),
-            GSButton(label: 'Edit Fleet Profile', isSecondary: true, onTap: () {}),
+            GSButton(label: 'Edit Fleet Profile', isSecondary: true, onTap: _showEditProfileDialog),
             const SizedBox(height: 12),
             GSButton(
               label: 'Sign Out',

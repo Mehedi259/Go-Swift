@@ -77,7 +77,7 @@ class RideCompletedScreen extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('TRIP #SW-8492', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
+                              Text('TRIP $tripCode', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
                               Text('4:18 PM Apr 20', style: AppTextStyles.bodySmall),
                             ],
                           ),
