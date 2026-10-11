@@ -34,6 +34,8 @@ class CourierDeliveryModel {
   });
 
   String get trackingNumber => '#CS-$id';
+  String get deliveryAddress => dropoffAddress;
+  double get fee => finalFare ?? estimatedFare;
 
   factory CourierDeliveryModel.fromJson(Map<String, dynamic> json) {
     return CourierDeliveryModel(
@@ -48,7 +50,7 @@ class CourierDeliveryModel {
       recipientName: json['recipient_name']?.toString(),
       recipientPhone: json['recipient_phone']?.toString(),
       estimatedFare: double.tryParse(json['estimated_fare']?.toString() ?? '0') ?? 0.0,
-      finalFare: double.tryParse(json['final_fare']?.toString() ?? '0'),
+      finalFare: json['final_fare'] != null ? double.tryParse(json['final_fare'].toString()) : null,
       currency: json['currency']?.toString() ?? 'BSD',
       pickupPin: json['pickup_handover_pin']?.toString(),
       createdAt: json['created_at']?.toString(),
@@ -69,3 +71,6 @@ class CourierFareEstimateModel {
     );
   }
 }
+
+typedef CourierOrderModel = CourierDeliveryModel;
+

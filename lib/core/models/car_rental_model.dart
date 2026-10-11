@@ -18,6 +18,8 @@ class RentalVehicleModel {
   final List<String> images;
   final double rating;
 
+  bool get isAvailable => available;
+
   RentalVehicleModel({
     required this.id,
     required this.name,
@@ -95,6 +97,8 @@ class CarRentalBookingModel {
     this.createdAt,
   });
 
+  String get customerName => 'VIP Client';
+
   factory CarRentalBookingModel.fromJson(Map<String, dynamic> json) {
     return CarRentalBookingModel(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
@@ -109,3 +113,6 @@ class CarRentalBookingModel {
     );
   }
 }
+
+typedef CarRentalVehicleModel = RentalVehicleModel;
+

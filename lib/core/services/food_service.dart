@@ -97,7 +97,7 @@ class FoodService {
     return list.map((e) => FoodOrderModel.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  Future<void> updateOrderStatus(int id, {required String status}) async {
+  Future<void> updateOrderStatus(int id, [String status = 'preparing']) async {
     await _api.post(
       ApiEndpoints.restaurantProviderOrderStatus(id),
       body: {'status': status},
@@ -113,5 +113,58 @@ class FoodService {
       list = response['results'] as List;
     }
     return list.map((e) => FoodItemModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<List<FoodItemModel>> getProviderMenuItems() => getProviderItems();
+
+  Future<FoodOrderModel> getProviderOrderDetail(int id) async {
+    final response = await _api.get(ApiEndpoints.restaurantProviderOrderDetail(id));
+    return FoodOrderModel.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<List<dynamic>> getCategories() async {
+    final response = await _api.get(ApiEndpoints.restaurantProviderCategories);
+    if (response is List) return response;
+    if (response is Map && response['results'] is List) return response['results'] as List;
+    return [];
+  }
+
+  Future<Map<String, dynamic>> createCategory({
+    required String name,
+    String? description,
+    int displayOrder = 0,
+  }) async {
+    final response = await _api.post(
+      ApiEndpoints.restaurantProviderCategories,
+      body: {
+        'name': name,
+        if (description != null) 'description': description,
+        'display_order': displayOrder,
+        'is_active': true,
+      },
+    );
+    return response as Map<String, dynamic>;
+  }
+
+  Future<FoodItemModel> createFoodItem({
+    required String name,
+    required double price,
+    String? description,
+    int? categoryId,
+    List<String>? dietaryTags,
+    bool isAvailable = true,
+  }) async {
+    final response = await _api.post(
+      ApiEndpoints.restaurantProviderItems,
+      body: {
+        'name': name,
+        'price': price,
+        if (description != null) 'description': description,
+        if (categoryId != null) 'category': categoryId,
+        if (dietaryTags != null) 'dietary_tags': dietaryTags,
+        'is_available': isAvailable,
+      },
+    );
+    return FoodItemModel.fromJson(response as Map<String, dynamic>);
   }
 }

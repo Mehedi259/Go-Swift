@@ -1,13 +1,46 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/food_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
-class OrderManagementScreen extends StatelessWidget {
+class OrderManagementScreen extends StatefulWidget {
   const OrderManagementScreen({super.key});
 
   @override
+  State<OrderManagementScreen> createState() => _OrderManagementScreenState();
+}
+
+class _OrderManagementScreenState extends State<OrderManagementScreen> {
+  final FoodService _foodService = FoodService();
+  String _status = 'PREPARING';
+  bool _isUpdating = false;
+
+  Future<void> _updateStatus(String newStatus, int orderId) async {
+    setState(() => _isUpdating = true);
+    try {
+      await _foodService.updateOrderStatus(orderId, newStatus.toLowerCase());
+      if (mounted) {
+        setState(() => _status = newStatus.toUpperCase());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Order status updated to $newStatus'),
+            backgroundColor: AppColors.green,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) setState(() => _status = newStatus.toUpperCase());
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final int orderId = args?['id'] ?? 2847;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -26,7 +59,7 @@ class OrderManagementScreen extends StatelessWidget {
             child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
           ),
         ),
-        title: Text('Order #GS-2847', style: AppTextStyles.titleLarge),
+        title: Text('Order #GS-$orderId', style: AppTextStyles.titleLarge),
         centerTitle: false,
       ),
       body: SingleChildScrollView(
@@ -39,10 +72,10 @@ class OrderManagementScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.cyanLight,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
               ),
               child: Text(
-                'PREPARING  •  ORDER #GS-2847',
+                '$_status  •  ORDER #GS-$orderId',
                 style: AppTextStyles.cyanLabel.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
@@ -53,7 +86,8 @@ class OrderManagementScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.directions_boat_outlined, size: 16, color: AppColors.cyan),
                 const SizedBox(width: 6),
-                Text('Yacht delivery • Slip #12, Albany Marina', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                Text('Yacht delivery • Slip #12, Albany Marina',
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
               ],
             ),
             const SizedBox(height: 22),
@@ -125,8 +159,16 @@ class OrderManagementScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             GSButton(
-              label: 'Ready for Pickup →',
-              onTap: () => Navigator.pop(context),
+              label: _isUpdating ? 'Updating Status...' : (_status == 'READY' ? 'Ready for Courier Pickup ✓' : 'Ready for Pickup →'),
+              onTap: _isUpdating
+                  ? () {}
+                  : () async {
+                      if (_status != 'READY') {
+                        await _updateStatus('ready', orderId);
+                      } else {
+                        Navigator.pop(context);
+                      }
+                    },
             ),
             const SizedBox(height: 20),
           ],

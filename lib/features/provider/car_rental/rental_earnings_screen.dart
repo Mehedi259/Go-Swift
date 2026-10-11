@@ -1,9 +1,42 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/car_rental_service.dart';
 
-class RentalEarningsScreen extends StatelessWidget {
+class RentalEarningsScreen extends StatefulWidget {
   const RentalEarningsScreen({super.key});
+
+  @override
+  State<RentalEarningsScreen> createState() => _RentalEarningsScreenState();
+}
+
+class _RentalEarningsScreenState extends State<RentalEarningsScreen> {
+  final CarRentalService _rentalService = CarRentalService();
+  String _totalMonthly = '\$4,200.00';
+  String _activeRentals = '1';
+  String _confirmedCount = '2';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final s = await _rentalService.getProviderStats();
+      if (mounted && s.isNotEmpty) {
+        setState(() {
+          if (s['confirmed_bookings'] != null) {
+            _activeRentals = '${s['confirmed_bookings']}';
+          }
+          if (s['completed_bookings'] != null) {
+            _confirmedCount = '${s['completed_bookings']}';
+          }
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,15 +79,15 @@ class RentalEarningsScreen extends StatelessWidget {
                   Text('Total Earnings This Month', style: AppTextStyles.bodyMedium),
                   const SizedBox(height: 6),
                   Text(
-                    '\$4,200.00',
+                    _totalMonthly,
                     style: AppTextStyles.price.copyWith(color: AppColors.gold, fontSize: 36),
                   ),
                   const SizedBox(height: 18),
                   Row(
                     children: [
-                      Expanded(child: _statPill('Active Rentals', '1', AppColors.green)),
+                      Expanded(child: _statPill('Active Rentals', _activeRentals, AppColors.green)),
                       const SizedBox(width: 12),
-                      Expanded(child: _statPill('Payout Pending', '\$1,140.00', AppColors.cyan)),
+                      Expanded(child: _statPill('Completed', _confirmedCount, AppColors.cyan)),
                     ],
                   ),
                 ],
@@ -111,19 +144,18 @@ class RentalEarningsScreen extends StatelessWidget {
     );
   }
 
-  Widget _statPill(String l, String v, Color color) => Container(
-        padding: const EdgeInsets.all(14),
+  Widget _statPill(String label, String value, Color color) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
         decoration: BoxDecoration(
           color: AppColors.cardTouchpoint,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.border),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l, style: AppTextStyles.bodySmall),
-            const SizedBox(height: 4),
-            Text(v, style: AppTextStyles.headlineSmall.copyWith(color: color, fontWeight: FontWeight.bold)),
+            Text(value, style: AppTextStyles.titleLarge.copyWith(color: color, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 2),
+            Text(label, style: AppTextStyles.bodySmall),
           ],
         ),
       );

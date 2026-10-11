@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/ride_model.dart';
+import '../../../core/services/provider_application_service.dart';
+import '../../../core/services/ride_service.dart';
 import 'driver_earnings_screen.dart';
 import 'driver_ride_history_screen.dart';
 import 'driver_ratings_screen.dart';
@@ -8,216 +11,276 @@ import 'driver_profile_screen.dart';
 
 class DriverAvailabilityScreen extends StatefulWidget {
   const DriverAvailabilityScreen({super.key});
-  @override State<DriverAvailabilityScreen> createState() => _DriverAvailabilityScreenState();
+  @override
+  State<DriverAvailabilityScreen> createState() => _DriverAvailabilityScreenState();
 }
 
 class _DriverAvailabilityScreenState extends State<DriverAvailabilityScreen> {
   bool _online = true;
   int _nav = 0;
+  String _driverName = 'Captain Terrence Rolle';
+  String _driverTitle = 'VIP Chauffeur • #CH-402';
+  String _todayEarnings = '\$284.00';
+  String _tripsCount = '8';
+  List<RideModel> _incomingRequests = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final profile = await ProviderApplicationService().getRideProfile();
+      if (mounted && profile.isNotEmpty) {
+        setState(() {
+          if (profile['legal_name'] != null && (profile['legal_name'] as String).isNotEmpty) {
+            _driverName = profile['legal_name'];
+          }
+          if (profile['vehicle_category'] != null) {
+            _driverTitle = 'VIP Chauffeur • ${profile['vehicle_category'].toString().toUpperCase()}';
+          }
+          if (profile['online_accepting_requests'] != null) {
+            _online = profile['online_accepting_requests'] == true;
+          }
+        });
+      }
+    } catch (_) {}
+
+    try {
+      final rides = await RideService().getAvailableRides();
+      if (mounted) {
+        setState(() {
+          _incomingRequests = rides;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _toggleOnline() async {
+    final nextState = !_online;
+    setState(() => _online = nextState);
+    try {
+      await ProviderApplicationService().updateRideProfile(onlineAcceptingRequests: nextState);
+    } catch (_) {}
+  }
 
   Widget _body() {
     switch (_nav) {
-      case 1: return const DriverEarningsScreen(embedded: true);
-      case 2: return const DriverRideHistoryScreen(embedded: true);
-      case 3: return const DriverRatingsScreen(embedded: true);
-      case 4: return const DriverProfileScreen(embedded: true);
-      default: return _homeTab();
+      case 1:
+        return const DriverEarningsScreen(embedded: true);
+      case 2:
+        return const DriverRideHistoryScreen(embedded: true);
+      case 3:
+        return const DriverRatingsScreen(embedded: true);
+      case 4:
+        return const DriverProfileScreen(embedded: true);
+      default:
+        return _homeTab();
     }
   }
 
   Widget _homeTab() => SingleChildScrollView(
-    child: Column(
-      children: [
-        // Hero card
-        Container(
-          margin: const EdgeInsets.all(20),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border),
-            boxShadow: AppColors.cardShadow,
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          children: [
+            // Hero card
+            Container(
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.border),
+                boxShadow: AppColors.cardShadow,
+              ),
+              child: Column(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Captain Terrence Rolle', style: AppTextStyles.headlineMedium),
-                      const SizedBox(height: 2),
-                      Text('VIP Chauffeur • #CH-402', style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 6),
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.star, color: AppColors.gold, size: 14),
-                          const SizedBox(width: 4),
-                          Text('4.98 • 620+ trips', style: AppTextStyles.bodySmall.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
+                          Text(_driverName, style: AppTextStyles.headlineMedium),
+                          const SizedBox(height: 2),
+                          Text(_driverTitle,
+                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.star, color: AppColors.gold, size: 14),
+                              const SizedBox(width: 4),
+                              Text('4.98 • 620+ trips',
+                                  style: AppTextStyles.bodySmall.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ],
+                      ),
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: AppColors.badgeTeal,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.primaryTeal, width: 2),
+                        ),
+                        child: const Icon(Icons.person, color: AppColors.primaryTeal, size: 34),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 18),
+                  // Online toggle
                   Container(
-                    width: 64,
-                    height: 64,
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.badgeTeal,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primaryTeal, width: 2),
+                      color: AppColors.cardTouchpoint,
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(Icons.person, color: AppColors.primaryTeal, size: 34),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(_online ? 'ONLINE' : 'OFFLINE',
+                                style: AppTextStyles.labelSmall
+                                    .copyWith(color: _online ? AppColors.green : AppColors.textMuted, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 2),
+                            Text(_online ? 'Ready for dispatch' : 'Not accepting rides',
+                                style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary)),
+                          ],
+                        ),
+                        GestureDetector(
+                          onTap: _toggleOnline,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: 64,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: _online ? AppColors.green : AppColors.border,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: AnimatedAlign(
+                              duration: const Duration(milliseconds: 300),
+                              alignment: _online ? Alignment.centerRight : Alignment.centerLeft,
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                margin: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _statBox("Today's Earnings", _todayEarnings, const Color(0xFF8A5300), Icons.attach_money)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _statBox('Trips Today', _tripsCount, AppColors.primaryTeal, Icons.directions_car)),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              // Online toggle
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.cardTouchpoint,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(_online ? 'ONLINE' : 'OFFLINE', style: AppTextStyles.labelSmall.copyWith(color: _online ? AppColors.green : AppColors.textMuted, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 2),
-                        Text(_online ? 'Ready for dispatch' : 'Not accepting rides', style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary)),
-                      ],
-                    ),
-                    GestureDetector(
-                      onTap: () => setState(() => _online = !_online),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        width: 64,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: _online ? AppColors.green : AppColors.border,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: AnimatedAlign(
-                          duration: const Duration(milliseconds: 300),
-                          alignment: _online ? Alignment.centerRight : Alignment.centerLeft,
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            margin: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
+            ),
+            // Ride requests
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(child: _statBox("Today's Earnings", '\$284.00', const Color(0xFF8A5300), Icons.attach_money)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _statBox('Trips Today', '8', AppColors.primaryTeal, Icons.directions_car)),
+                  Text('Incoming Requests', style: AppTextStyles.headlineSmall),
+                  GestureDetector(
+                    onTap: () => Navigator.pushNamed(context, '/provider/driver/requests'),
+                    child: Text('View All', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
+                  ),
                 ],
               ),
-            ],
-          ),
-        ),
-        // Ride requests
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Incoming Requests', style: AppTextStyles.headlineSmall),
-              GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/provider/driver/requests'),
-                child: Text('View All', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _RideRequestCard(
+                ride: _incomingRequests.isNotEmpty ? _incomingRequests.first : null,
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: _RideRequestCard(),
-        ),
-        const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text('Quick Actions', style: AppTextStyles.headlineSmall),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 2.5,
-            children: [
-              _quickAction(Icons.receipt_long_outlined, 'Ride History', () => Navigator.pushNamed(context, '/provider/driver/history')),
-              _quickAction(Icons.attach_money, 'Earnings', () => Navigator.pushNamed(context, '/provider/driver/earnings')),
-              _quickAction(Icons.badge_outlined, 'Documents', () => Navigator.pushNamed(context, '/provider/driver/documents')),
-              _quickAction(Icons.star_outline, 'My Ratings', () => Navigator.pushNamed(context, '/provider/driver/ratings')),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-      ],
-    ),
-  );
-
-  Widget _statBox(String label, String val, Color color, IconData icon) => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: AppColors.cardTouchpoint,
-      borderRadius: BorderRadius.circular(14),
-    ),
-    child: Row(
-      children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
-            Text(val, style: AppTextStyles.headlineSmall.copyWith(color: color, fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Quick Actions', style: AppTextStyles.headlineSmall),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 2.5,
+                children: [
+                  _quickAction(Icons.receipt_long_outlined, 'Ride History', () => Navigator.pushNamed(context, '/provider/driver/history')),
+                  _quickAction(Icons.attach_money, 'Earnings', () => Navigator.pushNamed(context, '/provider/driver/earnings')),
+                  _quickAction(Icons.badge_outlined, 'Documents', () => Navigator.pushNamed(context, '/provider/driver/documents')),
+                  _quickAction(Icons.star_outline, 'My Ratings', () => Navigator.pushNamed(context, '/provider/driver/ratings')),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
-      ],
-    ),
-  );
+      );
+
+  Widget _statBox(String label, String val, Color color, IconData icon) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.cardTouchpoint,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                Text(val, style: AppTextStyles.headlineSmall.copyWith(color: color, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ],
+        ),
+      );
 
   Widget _quickAction(IconData icon, String label, VoidCallback onTap) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppColors.cardShadow,
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.primaryTeal, size: 20),
-          const SizedBox(width: 10),
-          Text(label, style: AppTextStyles.titleMedium),
-          const Spacer(),
-          const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 16),
-        ],
-      ),
-    ),
-  );
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppColors.cardShadow,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.primaryTeal, size: 20),
+              const SizedBox(width: 10),
+              Text(label, style: AppTextStyles.titleMedium),
+              const Spacer(),
+              const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 16),
+            ],
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -266,45 +329,57 @@ class _DriverAvailabilityScreenState extends State<DriverAvailabilityScreen> {
   }
 
   Widget _driverNav() => Container(
-    decoration: const BoxDecoration(
-      color: Colors.white,
-      border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
-    ),
-    child: SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _ni(Icons.home_outlined, Icons.home, 'Home', 0),
-            _ni(Icons.attach_money, Icons.attach_money, 'Earnings', 1),
-            _ni(Icons.receipt_long_outlined, Icons.receipt_long, 'History', 2),
-            _ni(Icons.star_outline, Icons.star, 'Ratings', 3),
-            _ni(Icons.person_outline, Icons.person, 'Profile', 4),
-          ],
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
         ),
-      ),
-    ),
-  );
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _ni(Icons.home_outlined, Icons.home, 'Home', 0),
+                _ni(Icons.attach_money, Icons.attach_money, 'Earnings', 1),
+                _ni(Icons.receipt_long_outlined, Icons.receipt_long, 'History', 2),
+                _ni(Icons.star_outline, Icons.star, 'Ratings', 3),
+                _ni(Icons.person_outline, Icons.person, 'Profile', 4),
+              ],
+            ),
+          ),
+        ),
+      );
 
   Widget _ni(IconData icon, IconData activeIcon, String label, int idx) => GestureDetector(
-    onTap: () => setState(() => _nav = idx),
-    behavior: HitTestBehavior.opaque,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(_nav == idx ? activeIcon : icon, color: _nav == idx ? AppColors.primaryTeal : AppColors.textMuted, size: 24),
-        const SizedBox(height: 4),
-        Text(label, style: AppTextStyles.caption.copyWith(color: _nav == idx ? AppColors.primaryTeal : AppColors.textMuted, fontWeight: _nav == idx ? FontWeight.bold : FontWeight.normal)),
-      ],
-    ),
-  );
+        onTap: () => setState(() => _nav = idx),
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_nav == idx ? activeIcon : icon, color: _nav == idx ? AppColors.primaryTeal : AppColors.textMuted, size: 24),
+            const SizedBox(height: 4),
+            Text(label,
+                style: AppTextStyles.caption.copyWith(
+                    color: _nav == idx ? AppColors.primaryTeal : AppColors.textMuted,
+                    fontWeight: _nav == idx ? FontWeight.bold : FontWeight.normal)),
+          ],
+        ),
+      );
 }
 
 class _RideRequestCard extends StatelessWidget {
+  final RideModel? ride;
+  const _RideRequestCard({this.ride});
+
   @override
   Widget build(BuildContext context) {
+    final tripCode = ride != null ? '#SW-${ride!.id}' : 'TRIP #SW-8521';
+    final pickup = ride?.pickupAddress ?? "Lynden Pindling Int'l Airport (NAS)";
+    final destination = ride?.destinationAddress ?? 'The Ocean Club, Paradise Island';
+    final fare = ride?.estimatedFare != null ? '\$${ride!.estimatedFare}' : '\$118.50';
+    final dist = ride?.distanceKm != null ? '${ride!.distanceKm} km' : '14.2 km';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -323,7 +398,7 @@ class _RideRequestCard extends StatelessWidget {
                 child: Text('NEW REQUEST', style: AppTextStyles.goldLabel.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
               ),
               const Spacer(),
-              Text('TRIP #SW-8521', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
+              Text(tripCode, style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
             ],
           ),
           const SizedBox(height: 14),
@@ -331,7 +406,7 @@ class _RideRequestCard extends StatelessWidget {
             children: [
               const Icon(Icons.location_on_outlined, color: AppColors.primaryTeal, size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text("Lynden Pindling Int'l Airport (NAS)", style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary))),
+              Expanded(child: Text(pickup, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary))),
             ],
           ),
           const SizedBox(height: 6),
@@ -339,15 +414,15 @@ class _RideRequestCard extends StatelessWidget {
             children: [
               const Icon(Icons.flag_outlined, color: AppColors.gold, size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text('The Ocean Club, Paradise Island', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary))),
+              Expanded(child: Text(destination, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary))),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              _chip(Icons.route, '14.2 km'),
+              _chip(Icons.route, dist),
               const SizedBox(width: 8),
-              _chip(Icons.attach_money, '\$118.50'),
+              _chip(Icons.attach_money, fare),
               const SizedBox(width: 8),
               _chip(Icons.access_time, '18 min'),
             ],
@@ -374,7 +449,16 @@ class _RideRequestCard extends StatelessWidget {
               Expanded(
                 flex: 2,
                 child: GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, '/provider/driver/active-ride'),
+                  onTap: () async {
+                    if (ride != null) {
+                      try {
+                        await RideService().acceptRide(ride!.id);
+                      } catch (_) {}
+                    }
+                    if (context.mounted) {
+                      Navigator.pushNamed(context, '/provider/driver/active-ride');
+                    }
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
@@ -396,14 +480,14 @@ class _RideRequestCard extends StatelessWidget {
   }
 
   Widget _chip(IconData icon, String label) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    decoration: BoxDecoration(color: AppColors.cardTouchpoint, borderRadius: BorderRadius.circular(8)),
-    child: Row(
-      children: [
-        Icon(icon, size: 14, color: AppColors.primaryTeal),
-        const SizedBox(width: 4),
-        Text(label, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-      ],
-    ),
-  );
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(color: AppColors.cardTouchpoint, borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          children: [
+            Icon(icon, size: 14, color: AppColors.primaryTeal),
+            const SizedBox(width: 4),
+            Text(label, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      );
 }

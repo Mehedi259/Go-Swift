@@ -126,4 +126,23 @@ class CourierService {
       body: {'status': status},
     );
   }
+
+  Future<Map<String, dynamic>> getProviderStats() async {
+    final response = await _api.get(ApiEndpoints.courierProviderStats);
+    return response as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getProviderReviews() async {
+    final response = await _api.get(ApiEndpoints.courierProviderReviews);
+    if (response is List) return response;
+    if (response is Map && response['results'] is List) return response['results'] as List;
+    return [];
+  }
+
+  Future<void> updateCourierLocation(int id, {required double lat, required double lng}) async {
+    await _api.post(
+      ApiEndpoints.courierProviderLocation(id),
+      body: {'latitude': lat, 'longitude': lng},
+    );
+  }
 }

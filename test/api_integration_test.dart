@@ -211,4 +211,120 @@ void main() {
       }
     });
   });
+
+  group('Provider APIs Integration Coverage (All 5 Categories)', () {
+    test('Category 1: Ride Sharing & Chauffeur endpoints and models', () {
+      expect(ApiEndpoints.providerRideProfile, 'http://184.192.34.206/api/providers/rides/me/');
+      expect(ApiEndpoints.providerRideSubmit, 'http://184.192.34.206/api/providers/rides/me/submit/');
+      expect(ApiEndpoints.driverAvailableRides, 'http://184.192.34.206/api/rides/provider/available/');
+      expect(ApiEndpoints.driverRideHistory, 'http://184.192.34.206/api/rides/provider/history/');
+      expect(ApiEndpoints.driverRideAccept(42), 'http://184.192.34.206/api/rides/provider/rides/42/accept/');
+
+      final ride = RideModel.fromJson({
+        'id': 42,
+        'status': 'accepted',
+        'pickup_address': 'Lynden Pindling International Airport',
+        'destination_address': 'The Ocean Club, Paradise Island',
+        'estimated_fare': '150.00',
+        'customer_full_name': 'Sir Arthur Turnquest',
+      });
+      expect(ride.customerName, 'Sir Arthur Turnquest');
+      expect(ride.estimatedFare, 150.0);
+    });
+
+    test('Category 2: Courier & Bonded Logistics endpoints and models', () {
+      expect(ApiEndpoints.providerCourierProfile, 'http://184.192.34.206/api/providers/courier/me/');
+      expect(ApiEndpoints.providerCourierSubmit, 'http://184.192.34.206/api/providers/courier/me/submit/');
+      expect(ApiEndpoints.courierProviderRequests, 'http://184.192.34.206/api/courier/provider/requests/');
+      expect(ApiEndpoints.courierProviderStats, 'http://184.192.34.206/api/courier/provider/stats/');
+      expect(ApiEndpoints.courierProviderReviews, 'http://184.192.34.206/api/courier/provider/reviews/');
+      expect(ApiEndpoints.courierProviderAccept(101), 'http://184.192.34.206/api/courier/provider/deliveries/101/accept/');
+
+      final courier = CourierDeliveryModel.fromJson({
+        'id': 101,
+        'status': 'dispatched',
+        'pickup_address': 'Central Bank of The Bahamas',
+        'dropoff_address': 'Rosewood Baha Mar',
+        'estimated_fare': '85.00',
+      });
+      expect(courier.deliveryAddress, 'Rosewood Baha Mar');
+      expect(courier.fee, 85.0);
+      expect(courier.trackingNumber, '#CS-101');
+    });
+
+    test('Category 3: Restaurant Partner endpoints and models', () {
+      expect(ApiEndpoints.providerRestaurantProfile, 'http://184.192.34.206/api/providers/restaurants/me/');
+      expect(ApiEndpoints.providerRestaurantSubmit, 'http://184.192.34.206/api/providers/restaurants/me/submit/');
+      expect(ApiEndpoints.restaurantProviderOrders, 'http://184.192.34.206/api/food/provider/orders/');
+      expect(ApiEndpoints.restaurantProviderItems, 'http://184.192.34.206/api/food/provider/items/');
+      expect(ApiEndpoints.restaurantProviderCategories, 'http://184.192.34.206/api/food/provider/categories/');
+
+      final item = FoodItemModel.fromJson({
+        'id': 505,
+        'name': 'Bahamian Spiny Lobster Tail',
+        'price': '85.00',
+        'available_today': true,
+      });
+      expect(item.isAvailable, true);
+      expect(item.price, 85.0);
+
+      final order = FoodOrderModel.fromJson({
+        'id': 202,
+        'status': 'preparing',
+        'total_amount': '210.00',
+      });
+      expect(order.customerName, 'VIP Dining Guest');
+    });
+
+    test('Category 4: Car Rental & Fleet Owner endpoints and models', () {
+      expect(ApiEndpoints.providerRentalProfile, 'http://184.192.34.206/api/providers/rentals/me/');
+      expect(ApiEndpoints.providerRentalSubmit, 'http://184.192.34.206/api/providers/rentals/me/submit/');
+      expect(ApiEndpoints.rentalProviderVehicles, 'http://184.192.34.206/api/car-rentals/provider/vehicles/');
+      expect(ApiEndpoints.rentalProviderBookings, 'http://184.192.34.206/api/car-rentals/provider/bookings/');
+      expect(ApiEndpoints.rentalProviderStats, 'http://184.192.34.206/api/car-rentals/provider/stats/');
+
+      final car = RentalVehicleModel.fromJson({
+        'id': 301,
+        'name': 'Range Rover Autobiography',
+        'make': 'Land Rover',
+        'model': 'Range Rover',
+        'year': 2025,
+        'daily_rate': '450.00',
+        'available': true,
+      });
+      expect(car.isAvailable, true);
+      expect(car.dailyRate, 450.0);
+
+      final booking = CarRentalBookingModel.fromJson({
+        'id': 404,
+        'status': 'confirmed',
+        'start_date': '2026-05-01',
+        'end_date': '2026-05-05',
+        'total_price': '1800.00',
+      });
+      expect(booking.customerName, 'VIP Client');
+    });
+
+    test('Category 5: Property / Accommodation Host endpoints and models', () {
+      expect(ApiEndpoints.providerPropertyProfile, 'http://184.192.34.206/api/providers/properties/me/');
+      expect(ApiEndpoints.providerPropertySubmit, 'http://184.192.34.206/api/providers/properties/me/submit/');
+      expect(ApiEndpoints.propertyProviderListings, 'http://184.192.34.206/api/room-services/provider/listings/');
+      expect(ApiEndpoints.propertyProviderBookings, 'http://184.192.34.206/api/room-services/provider/bookings/');
+      expect(ApiEndpoints.propertyProviderStats, 'http://184.192.34.206/api/room-services/provider/stats/');
+      expect(ApiEndpoints.propertyProviderReviews, 'http://184.192.34.206/api/room-services/provider/reviews/');
+
+      final prop = PropertyListingModel.fromJson({
+        'id': 701,
+        'title': 'The Ocean Club Villa',
+        'island_region': 'Paradise Island',
+        'nightly_base_rate': '1850.00',
+        'bedrooms': 5,
+        'bathrooms': 6,
+        'is_active': true,
+      });
+      expect(prop.title, 'The Ocean Club Villa');
+      expect(prop.pricePerNight, 1850.0);
+      expect(prop.isActive, true);
+    });
+  });
 }

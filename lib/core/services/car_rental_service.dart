@@ -121,7 +121,51 @@ class CarRentalService {
     await _api.post(ApiEndpoints.rentalProviderBookingConfirm(id));
   }
 
+  Future<void> declineBooking(int id) async {
+    await _api.post(ApiEndpoints.rentalProviderBookingDecline(id));
+  }
+
   Future<void> completeBooking(int id) async {
     await _api.post(ApiEndpoints.rentalProviderBookingComplete(id));
+  }
+
+  Future<Map<String, dynamic>> getProviderStats() async {
+    final response = await _api.get(ApiEndpoints.rentalProviderStats);
+    return response as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getProviderReviews() async {
+    final response = await _api.get(ApiEndpoints.rentalProviderReviews);
+    if (response is List) return response;
+    if (response is Map && response['results'] is List) return response['results'] as List;
+    return [];
+  }
+
+  Future<RentalVehicleModel> addVehicle({
+    required String make,
+    required String model,
+    required int year,
+    String category = 'luxury_suv',
+    required double dailyRate,
+    required String licensePlate,
+    String vin = 'BS-VIN-PENDING',
+    int seatingCapacity = 5,
+    String transmission = 'automatic',
+  }) async {
+    final response = await _api.post(
+      ApiEndpoints.rentalProviderVehicles,
+      body: {
+        'make': make,
+        'model': model,
+        'year': year,
+        'category': category,
+        'daily_rate': dailyRate,
+        'license_plate': licensePlate,
+        'vin': vin,
+        'seating_capacity': seatingCapacity,
+        'transmission': transmission,
+      },
+    );
+    return RentalVehicleModel.fromJson(response as Map<String, dynamic>);
   }
 }

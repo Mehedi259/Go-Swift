@@ -22,6 +22,8 @@ class RideModel {
   final DriverProfileModel? driver;
   final String? createdAt;
 
+  String get customerName => customerFullName ?? 'VIP Rider';
+
   RideModel({
     required this.id,
     required this.status,

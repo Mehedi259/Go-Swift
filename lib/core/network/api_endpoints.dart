@@ -90,6 +90,8 @@ class ApiEndpoints {
   static String rentalProviderBookingDecline(int id) => '$baseUrl/car-rentals/provider/bookings/$id/decline/';
   static String rentalProviderBookingComplete(int id) => '$baseUrl/car-rentals/provider/bookings/$id/complete/';
   static const String rentalProviderStats = '$baseUrl/car-rentals/provider/stats/';
+  static const String rentalProviderReviews = '$baseUrl/car-rentals/provider/reviews/';
+  static String rentalProviderVehicleMedia(int id) => '$baseUrl/car-rentals/provider/vehicles/$id/media/';
 
   // ---------------- ROOM SERVICES / PROPERTIES ----------------
   static const String propertyListings = '$baseUrl/room-services/listings/';
@@ -103,18 +105,26 @@ class ApiEndpoints {
   // Property Provider
   static const String propertyProviderListings = '$baseUrl/room-services/provider/listings/';
   static String propertyProviderListingDetail(int id) => '$baseUrl/room-services/provider/listings/$id/';
+  static String propertyProviderListingPhotos(int id) => '$baseUrl/room-services/provider/listings/$id/photos/';
+  static String propertyProviderListingAvailability(int id) => '$baseUrl/room-services/provider/listings/$id/availability/';
   static const String propertyProviderBookings = '$baseUrl/room-services/provider/bookings/';
   static String propertyProviderBookingDetail(int id) => '$baseUrl/room-services/provider/bookings/$id/';
   static String propertyProviderBookingConfirm(int id) => '$baseUrl/room-services/provider/bookings/$id/confirm/';
   static String propertyProviderBookingDecline(int id) => '$baseUrl/room-services/provider/bookings/$id/decline/';
   static String propertyProviderBookingComplete(int id) => '$baseUrl/room-services/provider/bookings/$id/complete/';
   static const String propertyProviderStats = '$baseUrl/room-services/provider/stats/';
+  static const String propertyProviderReviews = '$baseUrl/room-services/provider/reviews/';
 
-  // ---------------- PROVIDER APPLICATIONS ----------------
+  // ---------------- PROVIDER PROFILES & ONBOARDING ----------------
+  static const String providerRideProfile = '$baseUrl/providers/rides/me/';
   static const String providerRideSubmit = '$baseUrl/providers/rides/me/submit/';
+  static const String providerCourierProfile = '$baseUrl/providers/courier/me/';
   static const String providerCourierSubmit = '$baseUrl/providers/courier/me/submit/';
+  static const String providerRentalProfile = '$baseUrl/providers/rentals/me/';
   static const String providerRentalSubmit = '$baseUrl/providers/rentals/me/submit/';
+  static const String providerRestaurantProfile = '$baseUrl/providers/restaurants/me/';
   static const String providerRestaurantSubmit = '$baseUrl/providers/restaurants/me/submit/';
+  static const String providerPropertyProfile = '$baseUrl/providers/properties/me/';
   static const String providerPropertySubmit = '$baseUrl/providers/properties/me/submit/';
 
   // ---------------- NOTIFICATIONS ----------------

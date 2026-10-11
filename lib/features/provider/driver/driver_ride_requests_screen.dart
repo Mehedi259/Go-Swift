@@ -1,18 +1,63 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/ride_model.dart';
+import '../../../core/services/ride_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
-class DriverRideRequestsScreen extends StatelessWidget {
+class DriverRideRequestsScreen extends StatefulWidget {
   const DriverRideRequestsScreen({super.key});
 
   @override
+  State<DriverRideRequestsScreen> createState() => _DriverRideRequestsScreenState();
+}
+
+class _DriverRideRequestsScreenState extends State<DriverRideRequestsScreen> {
+  final RideService _rideService = RideService();
+  List<RideModel> _liveRequests = [];
+  bool _isLoading = true;
+
+  final List<Map<String, String>> _fallbackRequests = [
+    {'fare': '\$85.00', 'from': 'Lynden Pindling Int\'l (NAS)', 'to': 'The Ocean Club, Paradise Island', 'passenger': 'Alexander Vance', 'dist': '14.2 km'},
+    {'fare': '\$105.00', 'from': 'Baha Mar Resort, Cable Beach', 'to': 'Albany Luxury Marina', 'passenger': 'Sarah Jenkins', 'dist': '18.6 km'},
+    {'fare': '\$125.00', 'from': 'Atlantis Paradise Island', 'to': 'Lyford Cay Club', 'passenger': 'David Sterling', 'dist': '24.1 km'},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRequests();
+  }
+
+  Future<void> _fetchRequests() async {
+    try {
+      final rides = await _rideService.getAvailableRides();
+      if (mounted) {
+        setState(() {
+          _liveRequests = rides;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleAccept(int? rideId) async {
+    if (rideId != null) {
+      try {
+        await _rideService.acceptRide(rideId);
+      } catch (_) {}
+    }
+    if (mounted) {
+      Navigator.pushNamed(context, '/provider/driver/active-ride');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final requests = [
-      {'fare': '\$85.00', 'from': 'Lynden Pindling Int\'l (NAS)', 'to': 'The Ocean Club, Paradise Island', 'passenger': 'Alexander Vance', 'dist': '14.2 km'},
-      {'fare': '\$105.00', 'from': 'Baha Mar Resort, Cable Beach', 'to': 'Albany Luxury Marina', 'passenger': 'Sarah Jenkins', 'dist': '18.6 km'},
-      {'fare': '\$125.00', 'from': 'Atlantis Paradise Island', 'to': 'Lyford Cay Club', 'passenger': 'David Sterling', 'dist': '24.1 km'},
-    ];
+    final useLive = _liveRequests.isNotEmpty;
+    final count = useLive ? _liveRequests.length : _fallbackRequests.length;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -35,106 +80,131 @@ class DriverRideRequestsScreen extends StatelessWidget {
         title: Text('Ride Requests', style: AppTextStyles.titleLarge),
         centerTitle: false,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(20),
-        itemCount: requests.length,
-        itemBuilder: (c, i) {
-          final req = requests[i];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.border),
-              boxShadow: AppColors.cardShadow,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
+          : ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: count,
+              itemBuilder: (c, i) {
+                final String fare;
+                final String from;
+                final String to;
+                final String passenger;
+                final String dist;
+                int? rideId;
+
+                if (useLive) {
+                  final r = _liveRequests[i];
+                  rideId = r.id;
+                  fare = '\$${r.estimatedFare}';
+                  from = r.pickupAddress;
+                  to = r.destinationAddress;
+                  passenger = r.customerName;
+                  dist = r.distanceKm != null ? '${r.distanceKm} km' : '12.0 km';
+                } else {
+                  final req = _fallbackRequests[i];
+                  fare = req['fare']!;
+                  from = req['from']!;
+                  to = req['to']!;
+                  passenger = req['passenger']!;
+                  dist = req['dist']!;
+                }
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.goldLight,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text('NEW REQUEST', style: AppTextStyles.goldLabel),
+                          ),
+                          Text(
+                            fare,
+                            style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: const BoxDecoration(
+                              color: AppColors.cardTouchpoint,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.person, color: AppColors.cyan, size: 18),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(passenger, style: AppTextStyles.titleMedium),
+                          const Spacer(),
+                          Text(dist, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                        ],
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Divider(color: AppColors.border, height: 1),
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.radio_button_checked, color: AppColors.cyan, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(from, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, color: AppColors.gold, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(to, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GSButton(
+                              label: 'Decline',
+                              isSecondary: true,
+                              onTap: () {},
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: GSButton(
+                              label: 'Accept →',
+                              onTap: () => _handleAccept(rideId),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.goldLight,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text('NEW REQUEST', style: AppTextStyles.goldLabel),
-                    ),
-                    Text(
-                      req['fare']!,
-                      style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(
-                        color: AppColors.cardTouchpoint,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.person, color: AppColors.cyan, size: 18),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(req['passenger']!, style: AppTextStyles.titleMedium),
-                    const Spacer(),
-                    Text(req['dist']!, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
-                  ],
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Divider(color: AppColors.border, height: 1),
-                ),
-                Row(
-                  children: [
-                    const Icon(Icons.radio_button_checked, color: AppColors.cyan, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(req['from']!, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, color: AppColors.gold, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(req['to']!, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: GSButton(
-                        label: 'Decline',
-                        isSecondary: true,
-                        onTap: () {},
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: GSButton(
-                        label: 'Accept →',
-                        onTap: () => Navigator.pushNamed(context, '/provider/driver/active-ride'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
     );
   }
 }

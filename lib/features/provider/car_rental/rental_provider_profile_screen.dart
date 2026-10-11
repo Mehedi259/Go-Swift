@@ -1,10 +1,54 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/provider_application_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
-class RentalProviderProfileScreen extends StatelessWidget {
+class RentalProviderProfileScreen extends StatefulWidget {
   const RentalProviderProfileScreen({super.key});
+
+  @override
+  State<RentalProviderProfileScreen> createState() => _RentalProviderProfileScreenState();
+}
+
+class _RentalProviderProfileScreenState extends State<RentalProviderProfileScreen> {
+  final ProviderApplicationService _providerService = ProviderApplicationService();
+  String _name = 'Island Prestige Fleet';
+  String _subtitle = 'Licensed Fleet Provider • Nassau';
+  String _license = 'FL-8921-BAH (Verified)';
+  String _contact = '+1 (242) 555-0144';
+  String _base = 'NAS Airport VIP Parking Lounge';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final p = await _providerService.getRentalProfile();
+      if (mounted && p.isNotEmpty) {
+        setState(() {
+          if (p['company_or_host_legal_name'] != null && (p['company_or_host_legal_name'] as String).isNotEmpty) {
+            _name = p['company_or_host_legal_name'];
+          }
+          if (p['operational_contact_name'] != null) {
+            _subtitle = 'Managed by ${p['operational_contact_name']}';
+          }
+          if (p['rental_license_number'] != null) {
+            _license = '${p['rental_license_number']} (Verified)';
+          }
+          if (p['business_contact_number'] != null) {
+            _contact = p['business_contact_number'];
+          }
+          if (p['primary_operating_base'] != null) {
+            _base = p['primary_operating_base'];
+          }
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,26 +98,27 @@ class RentalProviderProfileScreen extends StatelessWidget {
                     child: const Icon(Icons.directions_car, color: AppColors.cyan, size: 36),
                   ),
                   const SizedBox(height: 12),
-                  Text('Island Prestige Fleet', style: AppTextStyles.headlineMedium),
+                  Text(_name, style: AppTextStyles.headlineMedium),
                   const SizedBox(height: 2),
-                  Text('Licensed Fleet Provider • Nassau', style: AppTextStyles.cyanLabel),
+                  Text(_subtitle, style: AppTextStyles.cyanLabel),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.star, color: AppColors.gold, size: 16),
                       const SizedBox(width: 4),
-                      Text('4.96 ★ • 3 luxury vehicles', style: AppTextStyles.bodySmall),
+                      Text('4.96 ★ • Luxury Fleet Verified', style: AppTextStyles.bodySmall),
                     ],
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            _infoTile(Icons.badge_outlined, 'Fleet License', 'FL-8921-BAH (Verified)'),
+            _infoTile(Icons.badge_outlined, 'Fleet License', _license),
+            _infoTile(Icons.phone_outlined, 'Business Phone', _contact),
             _infoTile(Icons.shield_outlined, 'Commercial Insurance', 'Royal Fidelity • Full Fleet'),
             _infoTile(Icons.payment, 'Direct Deposit', 'Scotiabank Bahamas • ••••5512'),
-            _infoTile(Icons.location_on_outlined, 'Pickup Hub', 'NAS Airport VIP Parking Lounge'),
+            _infoTile(Icons.location_on_outlined, 'Pickup Hub', _base),
             const SizedBox(height: 24),
             GSButton(label: 'Edit Fleet Profile', isSecondary: true, onTap: () {}),
             const SizedBox(height: 12),
@@ -100,8 +145,8 @@ class RentalProviderProfileScreen extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: AppColors.cardTouchpoint,
                 borderRadius: BorderRadius.circular(10),

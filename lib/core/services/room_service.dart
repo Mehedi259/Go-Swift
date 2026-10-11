@@ -128,7 +128,52 @@ class RoomService {
     await _api.post(ApiEndpoints.propertyProviderBookingConfirm(id));
   }
 
+  Future<void> declineBooking(int id) async {
+    await _api.post(ApiEndpoints.propertyProviderBookingDecline(id));
+  }
+
   Future<void> completeBooking(int id) async {
     await _api.post(ApiEndpoints.propertyProviderBookingComplete(id));
+  }
+
+  Future<Map<String, dynamic>> getProviderStats() async {
+    final response = await _api.get(ApiEndpoints.propertyProviderStats);
+    return response as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getProviderReviews() async {
+    final response = await _api.get(ApiEndpoints.propertyProviderReviews);
+    if (response is List) return response;
+    if (response is Map && response['results'] is List) return response['results'] as List;
+    return [];
+  }
+
+  Future<PropertyListingModel> createListing({
+    required String title,
+    required String propertyType,
+    required String islandRegion,
+    required String streetAddress,
+    required double nightlyBaseRate,
+    int bedrooms = 3,
+    int bathrooms = 3,
+    int maxGuests = 6,
+    String? description,
+  }) async {
+    final response = await _api.post(
+      ApiEndpoints.propertyProviderListings,
+      body: {
+        'title': title,
+        'property_type': propertyType,
+        'island_region': islandRegion,
+        'street_address': streetAddress,
+        'nightly_base_rate': nightlyBaseRate,
+        'bedrooms': bedrooms,
+        'bathrooms': bathrooms,
+        'max_guests': maxGuests,
+        if (description != null) 'description': description,
+        'is_active': true,
+      },
+    );
+    return PropertyListingModel.fromJson(response as Map<String, dynamic>);
   }
 }

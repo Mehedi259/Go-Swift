@@ -1,10 +1,59 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/provider_application_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
-class RestaurantProfileScreen extends StatelessWidget {
+class RestaurantProfileScreen extends StatefulWidget {
   const RestaurantProfileScreen({super.key});
+
+  @override
+  State<RestaurantProfileScreen> createState() => _RestaurantProfileScreenState();
+}
+
+class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
+  final ProviderApplicationService _providerService = ProviderApplicationService();
+  String _name = 'Dune by Jean-Georges';
+  String _concept = 'Fine French-Asian Dining';
+  String _location = 'Ocean Club, Paradise Island';
+  String _phone = '+1 (242) 363-2501';
+  String _hours = 'Open Daily: 11:30 AM – 11:00 PM';
+  String _vat = 'BAH-VAT-89214-FS';
+  bool _accepting = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final p = await _providerService.getRestaurantProfile();
+      if (mounted && p.isNotEmpty) {
+        setState(() {
+          if (p['restaurant_name'] != null && (p['restaurant_name'] as String).isNotEmpty) {
+            _name = p['restaurant_name'];
+          }
+          if (p['cuisine_concept'] != null) {
+            _concept = p['cuisine_concept'];
+          }
+          if (p['island_service_hub'] != null) {
+            _location = p['island_service_hub'];
+          }
+          if (p['commercial_line'] != null) {
+            _phone = p['commercial_line'];
+          }
+          if (p['business_license_number'] != null) {
+            _vat = p['business_license_number'];
+          }
+          if (p['accepting_orders'] != null) {
+            _accepting = p['accepting_orders'] == true;
+          }
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,26 +103,27 @@ class RestaurantProfileScreen extends StatelessWidget {
                     child: const Icon(Icons.restaurant, color: AppColors.cyan, size: 36),
                   ),
                   const SizedBox(height: 12),
-                  Text('Dune by Jean-Georges', style: AppTextStyles.headlineMedium),
+                  Text(_name, style: AppTextStyles.headlineMedium),
                   const SizedBox(height: 2),
-                  Text('Fine French-Asian Dining', style: AppTextStyles.cyanLabel),
+                  Text(_concept, style: AppTextStyles.cyanLabel),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.star, color: AppColors.gold, size: 16),
                       const SizedBox(width: 4),
-                      Text('4.9 ★ • Ocean Club, Paradise Island', style: AppTextStyles.bodySmall),
+                      Text('4.9 ★ • $_location', style: AppTextStyles.bodySmall),
                     ],
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            _infoTile(Icons.storefront_outlined, 'Business Hours', 'Open Daily: 11:30 AM – 11:00 PM'),
-            _infoTile(Icons.phone_outlined, 'Contact', '+1 (242) 363-2501'),
+            _infoTile(Icons.power_settings_new, 'Dispatch Status', _accepting ? 'Live & Accepting Orders' : 'Paused / Offline'),
+            _infoTile(Icons.storefront_outlined, 'Business Hours', _hours),
+            _infoTile(Icons.phone_outlined, 'Commercial Line', _phone),
             _infoTile(Icons.payment, 'Payout Account', 'FirstCaribbean Bank • ••••4102'),
-            _infoTile(Icons.receipt_long_outlined, 'VAT Registration', 'BAH-VAT-89214-FS'),
+            _infoTile(Icons.receipt_long_outlined, 'Business License / VAT', _vat),
             const SizedBox(height: 24),
             GSButton(label: 'Edit Restaurant Info', isSecondary: true, onTap: () {}),
             const SizedBox(height: 12),
@@ -100,8 +150,8 @@ class RestaurantProfileScreen extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: AppColors.cardTouchpoint,
                 borderRadius: BorderRadius.circular(10),

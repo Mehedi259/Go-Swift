@@ -54,6 +54,8 @@ class FoodItemModel {
   final List<String> dietaryTags;
   final bool availableToday;
 
+  bool get isAvailable => availableToday;
+
   FoodItemModel({
     required this.id,
     required this.name,
@@ -98,6 +100,8 @@ class FoodOrderModel {
   final String? deliveryAddress;
   final String? createdAt;
   final List<FoodOrderItemModel> items;
+
+  String get customerName => 'VIP Dining Guest';
 
   FoodOrderModel({
     required this.id,

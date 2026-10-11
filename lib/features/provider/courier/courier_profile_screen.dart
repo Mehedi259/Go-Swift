@@ -1,11 +1,71 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/courier_service.dart';
+import '../../../core/services/provider_application_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
-class CourierProfileScreen extends StatelessWidget {
+class CourierProfileScreen extends StatefulWidget {
   final bool embedded;
   const CourierProfileScreen({super.key, this.embedded = false});
+
+  @override
+  State<CourierProfileScreen> createState() => _CourierProfileScreenState();
+}
+
+class _CourierProfileScreenState extends State<CourierProfileScreen> {
+  String _name = 'Marcus Rolle';
+  String _badge = 'Bonded Courier • #BC-182';
+  String _rating = '4.92 ★';
+  String _deliveries = '2,450';
+  String _earned = '\$12,400';
+  String _license = 'BL-94281-NP • Active';
+  String _zone = 'Nassau • Paradise Island';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final p = await ProviderApplicationService().getCourierProfile();
+      if (mounted && p.isNotEmpty) {
+        setState(() {
+          if (p['legal_name'] != null && (p['legal_name'] as String).isNotEmpty) {
+            _name = p['legal_name'];
+          }
+          if (p['transport_mode'] != null) {
+            _badge = 'Bonded Courier • ${p['transport_mode'].toString().toUpperCase()}';
+          }
+          if (p['driver_license_number'] != null) {
+            _license = '${p['driver_license_number']} • Active';
+          }
+          if (p['operating_island_zone'] != null) {
+            _zone = p['operating_island_zone'];
+          }
+        });
+      }
+    } catch (_) {}
+
+    try {
+      final stats = await CourierService().getProviderStats();
+      if (mounted && stats.isNotEmpty) {
+        setState(() {
+          if (stats['total_earnings'] != null) {
+            _earned = '\$${stats['total_earnings']}';
+          }
+          if (stats['average_rating'] != null) {
+            _rating = '${stats['average_rating']} ★';
+          }
+          if (stats['completed_deliveries_today'] != null) {
+            _deliveries = '${stats['completed_deliveries_today']}';
+          }
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +81,7 @@ class CourierProfileScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                if (embedded)
+                if (widget.embedded)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -39,7 +99,7 @@ class CourierProfileScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                if (embedded) const SizedBox(height: 20),
+                if (widget.embedded) const SizedBox(height: 20),
                 Container(
                   width: 84,
                   height: 84,
@@ -51,26 +111,27 @@ class CourierProfileScreen extends StatelessWidget {
                   child: const Icon(Icons.delivery_dining, color: AppColors.cyan, size: 44),
                 ),
                 const SizedBox(height: 12),
-                Text('Marcus Rolle', style: AppTextStyles.headlineMedium),
+                Text(_name, style: AppTextStyles.headlineMedium),
                 const SizedBox(height: 2),
-                Text('Bonded Courier • #BC-182', style: AppTextStyles.cyanLabel),
+                Text(_badge, style: AppTextStyles.cyanLabel),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.star, color: AppColors.gold, size: 16),
                     const SizedBox(width: 4),
-                    Text('4.92 rating  •  2,450 deliveries', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                    Text('$_rating rating • Bonded Logistics',
+                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
                   ],
                 ),
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    Expanded(child: _statPill('2,450', 'Deliveries')),
+                    Expanded(child: _statPill(_deliveries, 'Deliveries')),
                     const SizedBox(width: 10),
-                    Expanded(child: _statPill('\$12,400', 'Earned')),
+                    Expanded(child: _statPill(_earned, 'Earned')),
                     const SizedBox(width: 10),
-                    Expanded(child: _statPill('4.92 ★', 'Rating')),
+                    Expanded(child: _statPill(_rating, 'Rating')),
                   ],
                 ),
               ],
@@ -83,10 +144,10 @@ class CourierProfileScreen extends StatelessWidget {
               children: [
                 Text('Courier Details', style: AppTextStyles.headlineSmall),
                 const SizedBox(height: 14),
-                _infoTile(Icons.shield_outlined, 'Bonded Status', 'Active  •  Insured up to \$50,000'),
-                _infoTile(Icons.directions_bike, 'Vehicle', 'Yamaha NMAX 155  •  BS-124-MC'),
-                _infoTile(Icons.payment, 'Payout Account', 'Bank of Bahamas  •  ••••8921'),
-                _infoTile(Icons.location_on_outlined, 'Service Zone', 'Nassau  •  Paradise Island'),
+                _infoTile(Icons.shield_outlined, 'Bonded Status', 'Active • Insured up to \$50,000'),
+                _infoTile(Icons.badge_outlined, 'License No.', _license),
+                _infoTile(Icons.payment, 'Payout Account', 'Bank of Bahamas • ••••8921'),
+                _infoTile(Icons.location_on_outlined, 'Service Zone', _zone),
                 const SizedBox(height: 24),
                 GSButton(label: 'Edit Profile', isSecondary: true, onTap: () {}),
                 const SizedBox(height: 12),
@@ -103,13 +164,15 @@ class CourierProfileScreen extends StatelessWidget {
       ),
     );
 
-    return embedded
+    return widget.embedded
         ? content
         : Scaffold(
             backgroundColor: AppColors.background,
             appBar: AppBar(
               backgroundColor: AppColors.background,
               elevation: 0,
+              title: Text('Courier Profile', style: AppTextStyles.titleLarge),
+              centerTitle: false,
               leading: GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
@@ -123,43 +186,40 @@ class CourierProfileScreen extends StatelessWidget {
                   child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
                 ),
               ),
-              title: Text('Courier Profile', style: AppTextStyles.titleLarge),
-              centerTitle: false,
             ),
             body: content,
           );
   }
 
-  Widget _statPill(String v, String l) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+  Widget _statPill(String value, String label) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: AppColors.cardTouchpoint,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           children: [
-            Text(v, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(value, style: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 2),
-            Text(l, style: AppTextStyles.bodySmall),
+            Text(label, style: AppTextStyles.bodySmall),
           ],
         ),
       );
 
-  Widget _infoTile(IconData icon, String label, String val) => Container(
+  Widget _infoTile(IconData icon, String label, String value) => Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.card,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.border),
           boxShadow: AppColors.cardShadow,
         ),
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: AppColors.cardTouchpoint,
                 borderRadius: BorderRadius.circular(10),
@@ -173,7 +233,7 @@ class CourierProfileScreen extends StatelessWidget {
                 children: [
                   Text(label, style: AppTextStyles.bodySmall),
                   const SizedBox(height: 2),
-                  Text(val, style: AppTextStyles.titleMedium),
+                  Text(value, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
