@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
+import '../../core/storage/local_storage.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -24,9 +25,36 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
     _controller.forward();
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) Navigator.pushReplacementNamed(context, '/choose-account');
-    });
+    _checkAuthAndNavigate();
+  }
+
+  Future<void> _checkAuthAndNavigate() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    await LocalStorage.init();
+    if (!mounted) return;
+
+    if (LocalStorage.isLoggedIn) {
+      final role = (LocalStorage.getUserRole() ?? 'customer').toLowerCase();
+      String destination = '/customer/hub';
+
+      if (role.contains('driver') || role.contains('chauffeur')) {
+        destination = '/provider/driver/hub';
+      } else if (role.contains('courier')) {
+        destination = '/provider/courier/hub';
+      } else if (role.contains('restaurant')) {
+        destination = '/provider/restaurant/orders';
+      } else if (role.contains('rental')) {
+        destination = '/provider/rental/vehicles';
+      } else if (role.contains('property')) {
+        destination = '/provider/property/listings';
+      }
+
+      Navigator.pushReplacementNamed(context, destination);
+    } else {
+      Navigator.pushReplacementNamed(context, '/choose-account');
+    }
   }
 
   @override

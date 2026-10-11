@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'app.dart';
-import 'core/providers/auth_provider.dart';
 import 'core/storage/local_storage.dart';
 
 void main() async {
@@ -16,12 +14,5 @@ void main() async {
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()..init()),
-      ],
-      child: const GoSwiftApp(),
-    ),
-  );
+  runApp(const GoSwiftApp());
 }

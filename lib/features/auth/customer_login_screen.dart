@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class CustomerLoginScreen extends StatefulWidget {
@@ -16,6 +17,29 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (LocalStorage.isLoggedIn && mounted) {
+        final role = (LocalStorage.getUserRole() ?? 'customer').toLowerCase();
+        String destination = '/customer/hub';
+        if (role.contains('driver') || role.contains('chauffeur')) {
+          destination = '/provider/driver/hub';
+        } else if (role.contains('courier')) {
+          destination = '/provider/courier/hub';
+        } else if (role.contains('restaurant')) {
+          destination = '/provider/restaurant/orders';
+        } else if (role.contains('rental')) {
+          destination = '/provider/rental/vehicles';
+        } else if (role.contains('property')) {
+          destination = '/provider/property/listings';
+        }
+        Navigator.pushReplacementNamed(context, destination);
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -54,7 +78,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
       } else if (role.contains('restaurant')) {
         destination = '/provider/restaurant/orders';
       } else if (role.contains('rental')) {
-        destination = '/provider/rental/fleet';
+        destination = '/provider/rental/vehicles';
       } else if (role.contains('property')) {
         destination = '/provider/property/listings';
       }

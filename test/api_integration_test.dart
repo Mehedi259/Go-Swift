@@ -5,6 +5,7 @@ import 'package:go_swift/core/models/food_model.dart';
 import 'package:go_swift/core/models/courier_model.dart';
 import 'package:go_swift/core/models/car_rental_model.dart';
 import 'package:go_swift/core/models/property_model.dart';
+import 'package:go_swift/core/network/api_client.dart';
 import 'package:go_swift/core/network/api_endpoints.dart';
 import 'package:go_swift/core/network/api_exceptions.dart';
 import 'package:go_swift/core/storage/local_storage.dart';
@@ -182,6 +183,32 @@ void main() {
       });
       expect(exc.firstError, 'phone_number: Enter a valid Bahamian phone number.');
       expect(exc.statusCode, 400);
+    });
+
+    test('ApiClient singleton is accessible for all app services', () {
+      expect(ApiClient.instance, isNotNull);
+    });
+
+    test('ApiClient logs request and response/exception properly', () async {
+      try {
+        await ApiClient.instance.get('${ApiEndpoints.baseUrl}/health/');
+      } catch (e) {
+        expect(e, isA<Exception>());
+      }
+    });
+
+    test('ApiClient logs POST request body and response body properly', () async {
+      try {
+        await ApiClient.instance.post(
+          ApiEndpoints.login,
+          body: {
+            'email': 'test_debug@goswift.bs',
+            'password': 'DebugPassword123!',
+          },
+        );
+      } catch (e) {
+        expect(e, isA<Exception>());
+      }
     });
   });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
+import '../../core/storage/local_storage.dart';
 import '../../core/widgets/gs_button.dart';
 
 class ChooseAccountTypeScreen extends StatefulWidget {
@@ -12,6 +13,29 @@ class ChooseAccountTypeScreen extends StatefulWidget {
 
 class _ChooseAccountTypeScreenState extends State<ChooseAccountTypeScreen> {
   int _selected = 0; // 0 = User, 1 = Provider
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (LocalStorage.isLoggedIn && mounted) {
+        final role = (LocalStorage.getUserRole() ?? 'customer').toLowerCase();
+        String destination = '/customer/hub';
+        if (role.contains('driver') || role.contains('chauffeur')) {
+          destination = '/provider/driver/hub';
+        } else if (role.contains('courier')) {
+          destination = '/provider/courier/hub';
+        } else if (role.contains('restaurant')) {
+          destination = '/provider/restaurant/orders';
+        } else if (role.contains('rental')) {
+          destination = '/provider/rental/vehicles';
+        } else if (role.contains('property')) {
+          destination = '/provider/property/listings';
+        }
+        Navigator.pushReplacementNamed(context, destination);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -75,6 +75,8 @@ import 'package:go_swift/features/provider/property_owner/create_listing_screen.
 import 'package:go_swift/features/provider/property_owner/booking_requests_screen.dart';
 import 'package:go_swift/features/provider/property_owner/past_bookings_screen.dart';
 import 'package:go_swift/features/provider/property_owner/property_earnings_screen.dart' show PropertyEarningsScreen, PropertyOwnerProfileScreen;
+import 'package:provider/provider.dart';
+import 'core/providers/auth_provider.dart';
 import 'core/theme/app_theme.dart';
 
 class GoSwiftApp extends StatelessWidget {
@@ -82,8 +84,12 @@ class GoSwiftApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'GO SWIFT Bahamas',
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()..init()),
+      ],
+      child: MaterialApp(
+        title: 'GO SWIFT Bahamas',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       initialRoute: '/',
@@ -173,6 +179,7 @@ class GoSwiftApp extends StatelessWidget {
         '/provider/property/earnings': (c) => const PropertyEarningsScreen(),
         '/provider/property/owner-profile': (c) => const PropertyOwnerProfileScreen(),
       },
+      ),
     );
   }
 }
