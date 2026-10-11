@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/car_rental_model.dart';
+import '../../../core/services/car_rental_service.dart';
 
-class CarRentalSearchScreen extends StatelessWidget {
+class CarRentalSearchScreen extends StatefulWidget {
   const CarRentalSearchScreen({super.key});
+
+  @override
+  State<CarRentalSearchScreen> createState() => _CarRentalSearchScreenState();
+}
+
+class _CarRentalSearchScreenState extends State<CarRentalSearchScreen> {
+  List<RentalVehicleModel> _liveVehicles = [];
+  bool _isLoading = false;
+
   final _cars = const [
     {'name': 'Cadillac Escalade ESV', 'type': 'LUXURY SUV', 'price': '\$285/day', 'badge': 'MOST BOOKED', 'seats': 6, 'bags': 6},
     {'name': 'Range Rover Sport', 'type': 'LUXURY SUV', 'price': '\$245/day', 'badge': 'ISLAND FAVORITE', 'seats': 5, 'bags': 4},
@@ -11,6 +22,43 @@ class CarRentalSearchScreen extends StatelessWidget {
     {'name': 'Mercedes S-Class', 'type': 'EXECUTIVE SEDAN', 'price': '\$195/day', 'badge': '', 'seats': 4, 'bags': 3},
     {'name': 'Ferrari 488 Spider', 'type': 'EXOTIC CONVERTIBLE', 'price': '\$1,200/day', 'badge': 'EXOTIC', 'seats': 2, 'bags': 1},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchVehicles();
+  }
+
+  Future<void> _fetchVehicles() async {
+    setState(() => _isLoading = true);
+    try {
+      final vehicles = await CarRentalService().getVehicles();
+      if (mounted) {
+        setState(() {
+          _liveVehicles = vehicles;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  List<Map<String, dynamic>> get _displayCars {
+    if (_liveVehicles.isNotEmpty) {
+      return _liveVehicles.map((v) => {
+        'id': v.id,
+        'name': '${v.make} ${v.model}',
+        'type': v.category.toUpperCase(),
+        'price': '\$${v.dailyRate.toStringAsFixed(0)}/day',
+        'badge': v.year.toString(),
+        'seats': v.seatingCapacity,
+        'bags': 4,
+        'model': v,
+      }).toList();
+    }
+    return _cars;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,14 +120,17 @@ class CarRentalSearchScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryTeal,
-                        borderRadius: BorderRadius.circular(12),
+                    GestureDetector(
+                      onTap: _fetchVehicles,
+                      child: Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryTeal,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.search, color: Colors.white, size: 22),
                       ),
-                      child: const Icon(Icons.search, color: Colors.white, size: 22),
                     ),
                   ],
                 ),
@@ -95,11 +146,17 @@ class CarRentalSearchScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: _cars.length,
-              itemBuilder: (c, i) => _CarCard(car: _cars[i]),
-            ),
+            child: _isLoading && _liveVehicles.isEmpty
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
+                : RefreshIndicator(
+                    onRefresh: _fetchVehicles,
+                    color: AppColors.primaryTeal,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: _displayCars.length,
+                      itemBuilder: (c, i) => _CarCard(car: _displayCars[i]),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -132,7 +189,11 @@ class _CarCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/customer/car-rental/vehicle'),
+      onTap: () => Navigator.pushNamed(
+        context,
+        '/customer/car-rental/vehicle',
+        arguments: car['model'] ?? car,
+      ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(

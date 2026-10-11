@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/ride_model.dart';
+import '../../../core/services/ride_service.dart';
 import '../../../core/widgets/gs_button.dart';
 import '../../../core/widgets/gs_app_bar.dart';
 
@@ -11,14 +13,84 @@ class RideBookingScreen extends StatefulWidget {
 
 class _RideBookingScreenState extends State<RideBookingScreen> {
   int _vehicle = 0;
+  final _pickupController = TextEditingController(text: "Lynden Pindling Int'l Airport (NAS)");
+  final _destController = TextEditingController(text: "The Ocean Club, Four Seasons");
+  
+  bool _isLoading = false;
+  FareEstimateModel? _estimate;
+
   final _vehicles = [
-    {'name': 'Executive SUV', 'type': 'Cadillac Escalade ESV', 'price': '\$85–\$120', 'eta': '4 min', 'icon': Icons.directions_car, 'badge': 'MOST POPULAR'},
-    {'name': 'Luxury Sedan', 'type': 'Mercedes-Benz S-Class', 'price': '\$65–\$90', 'eta': '6 min', 'icon': Icons.directions_car_outlined, 'badge': ''},
-    {'name': 'VIP Sprinter', 'type': 'Mercedes-Benz Sprinter', 'price': '\$110–\$160', 'eta': '8 min', 'icon': Icons.airport_shuttle_outlined, 'badge': 'GROUP PREFERRED'},
+    {'name': 'Executive SUV', 'type': 'Cadillac Escalade ESV', 'category': 'executive_suv', 'price': '\$85–\$120', 'eta': '4 min', 'icon': Icons.directions_car, 'badge': 'MOST POPULAR'},
+    {'name': 'Luxury Sedan', 'type': 'Mercedes-Benz S-Class', 'category': 'luxury_sedan', 'price': '\$65–\$90', 'eta': '6 min', 'icon': Icons.directions_car_outlined, 'badge': ''},
+    {'name': 'VIP Sprinter', 'type': 'Mercedes-Benz Sprinter', 'category': 'vip_sprinter', 'price': '\$110–\$160', 'eta': '8 min', 'icon': Icons.airport_shuttle_outlined, 'badge': 'GROUP PREFERRED'},
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _fetchEstimate();
+  }
+
+  @override
+  void dispose() {
+    _pickupController.dispose();
+    _destController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchEstimate() async {
+    try {
+      final est = await RideService().estimateFare(
+        distanceKm: 18.5,
+        estimatedDurationMinutes: 25,
+        passengerCount: 2,
+      );
+      if (mounted) setState(() => _estimate = est);
+    } catch (_) {}
+  }
+
+  Future<void> _handleBookRide() async {
+    final pickup = _pickupController.text.trim();
+    final dest = _destController.text.trim();
+    if (pickup.isEmpty || dest.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter pickup and destination'), backgroundColor: AppColors.red),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final selectedCategory = _vehicles[_vehicle]['category'] as String;
+      final ride = await RideService().createRide(
+        pickupAddress: pickup,
+        pickupLatitude: 25.0389,
+        pickupLongitude: -77.4662,
+        destinationAddress: dest,
+        destinationLatitude: 25.0786,
+        destinationLongitude: -77.3072,
+        requestedVehicleCategory: selectedCategory,
+        requestedPassengerCount: 2,
+        distanceKm: 18.5,
+        estimatedDurationMinutes: 25,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      Navigator.pushNamed(context, '/customer/ride/waiting', arguments: ride);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Booking request failed: $e'), backgroundColor: AppColors.red),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final estimatedTotal = _estimate != null ? '\$${_estimate!.estimatedFare.toStringAsFixed(2)}' : '\$118.50';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: GSAppBar(
@@ -52,6 +124,7 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
                   Text('PICKUP LOCATION', style: AppTextStyles.labelSmall),
                   const SizedBox(height: 8),
                   TextFormField(
+                    controller: _pickupController,
                     style: AppTextStyles.bodyLarge,
                     decoration: InputDecoration(
                       hintText: "Lynden Pindling Int'l Airport (NAS)",
@@ -68,6 +141,7 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
                   Text('DESTINATION', style: AppTextStyles.labelSmall),
                   const SizedBox(height: 8),
                   TextFormField(
+                    controller: _destController,
                     style: AppTextStyles.bodyLarge,
                     decoration: InputDecoration(
                       hintText: 'The Ocean Club, Four Seasons',
@@ -155,45 +229,16 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(e.value['price'] as String, style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-                              Text('${e.value['eta']} away', style: AppTextStyles.bodySmall),
+                              Text(e.value['eta'] as String, style: AppTextStyles.bodySmall.copyWith(color: AppColors.green)),
                             ],
                           ),
                         ],
                       ),
                     ),
                   )),
-                  const SizedBox(height: 16),
-                  // Ride schedule options
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: AppColors.cardShadow,
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Ride Schedule', style: AppTextStyles.titleMedium),
-                            const Icon(Icons.access_time, color: AppColors.textSecondary, size: 18),
-                          ],
-                        ),
-                        const Divider(color: AppColors.border, height: 20),
-                        Row(
-                          children: [
-                            Expanded(child: _rideOption('Now', 'Instant dispatch', true)),
-                            const SizedBox(width: 8),
-                            Expanded(child: _rideOption('Reserve', 'Schedule ahead', false)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(height: 20),
-                  // Fare summary
+                  Text('Trip Summary', style: AppTextStyles.headlineSmall),
+                  const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -203,7 +248,7 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
                     ),
                     child: Column(
                       children: [
-                        _summaryRow('Estimated Fare', '\$118.50'),
+                        _summaryRow('Estimated Fare', estimatedTotal),
                         const Divider(color: AppColors.border, height: 16),
                         _summaryRow('Service Fee', '\$8.50'),
                         _summaryRow('Go Swift Concierge', 'Included'),
@@ -216,36 +261,28 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
           ),
           Padding(
             padding: const EdgeInsets.all(20),
-            child: GSButton(label: 'Confirm Booking →', onTap: () => Navigator.pushNamed(context, '/customer/ride/waiting')),
+            child: GSButton(
+              label: 'Confirm Booking →',
+              isLoading: _isLoading,
+              onTap: _handleBookRide,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _quickDestBtn(String label) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.border),
-      boxShadow: AppColors.cardShadow,
-    ),
-    child: Text(label, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary)),
-  );
-
-  Widget _rideOption(String title, String sub, bool active) => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: active ? AppColors.cyanPill : AppColors.cardTouchpoint,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: active ? AppColors.primaryTeal : AppColors.border),
-    ),
-    child: Column(
-      children: [
-        Text(title, style: AppTextStyles.titleMedium.copyWith(color: active ? AppColors.primaryTeal : AppColors.textPrimary, fontWeight: FontWeight.bold)),
-        Text(sub, style: AppTextStyles.bodySmall),
-      ],
+  Widget _quickDestBtn(String label) => GestureDetector(
+    onTap: () => setState(() => _destController.text = label),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Text(label, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary)),
     ),
   );
 

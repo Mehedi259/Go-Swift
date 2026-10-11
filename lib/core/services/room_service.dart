@@ -1,0 +1,134 @@
+import '../models/property_model.dart';
+import '../network/api_client.dart';
+import '../network/api_endpoints.dart';
+
+class RoomService {
+  final ApiClient _api = ApiClient.instance;
+
+  // --- LISTINGS ---
+  Future<List<PropertyListingModel>> getListings({
+    String? search,
+    String? region,
+    int? bedrooms,
+    int? maxGuests,
+  }) async {
+    final params = <String, String>{};
+    if (search != null && search.isNotEmpty) params['search'] = search;
+    if (region != null && region.isNotEmpty) params['region'] = region;
+    if (bedrooms != null) params['bedrooms'] = bedrooms.toString();
+    if (maxGuests != null) params['max_guests'] = maxGuests.toString();
+
+    final response = await _api.get(ApiEndpoints.propertyListings, queryParams: params);
+    List<dynamic> list = [];
+    if (response is List) {
+      list = response;
+    } else if (response is Map && response['results'] is List) {
+      list = response['results'] as List;
+    }
+    return list.map((e) => PropertyListingModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<PropertyListingModel> getListingDetail(int id) async {
+    final response = await _api.get(ApiEndpoints.propertyListingDetail(id));
+    return PropertyListingModel.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<Map<String, dynamic>> getQuote({
+    required int listingId,
+    required String checkInDate,
+    required String checkOutDate,
+    int guestsCount = 2,
+  }) async {
+    final response = await _api.post(
+      ApiEndpoints.roomServiceQuote,
+      body: {
+        'listing': listingId,
+        'check_in_date': checkInDate,
+        'check_out_date': checkOutDate,
+        'guests_count': guestsCount,
+      },
+    );
+    return response as Map<String, dynamic>;
+  }
+
+  // --- BOOKINGS ---
+  Future<RoomBookingModel> createBooking({
+    required int listingId,
+    required String checkInDate,
+    required String checkOutDate,
+    int numberOfPersons = 2,
+    String primaryGuestName = 'VIP Sovereign Guest',
+    String primaryGuestContact = '+1 (242) 555-0199',
+    String primaryGuestEmail = 'guest@goswift.bs',
+    String? guestNote,
+  }) async {
+    final response = await _api.post(
+      ApiEndpoints.customerRoomBookings,
+      body: {
+        'listing_id': listingId,
+        'check_in_date': checkInDate,
+        'check_out_date': checkOutDate,
+        'number_of_persons': numberOfPersons,
+        'primary_guest_full_legal_name': primaryGuestName,
+        'primary_guest_contact_number': primaryGuestContact,
+        'primary_guest_email': primaryGuestEmail,
+        if (guestNote != null) 'guest_note': guestNote,
+      },
+    );
+    return RoomBookingModel.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<List<RoomBookingModel>> getMyBookings() async {
+    final response = await _api.get(ApiEndpoints.customerRoomBookings);
+    List<dynamic> list = [];
+    if (response is List) {
+      list = response;
+    } else if (response is Map && response['results'] is List) {
+      list = response['results'] as List;
+    }
+    return list.map((e) => RoomBookingModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<RoomBookingModel> getBookingDetail(int id) async {
+    final response = await _api.get(ApiEndpoints.customerRoomBookingDetail(id));
+    return RoomBookingModel.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<void> cancelBooking(int id, {required String reason}) async {
+    await _api.post(
+      ApiEndpoints.customerRoomBookingCancel(id),
+      body: {'reason': reason},
+    );
+  }
+
+  // --- PROPERTY PROVIDER ---
+  Future<List<PropertyListingModel>> getMyListings() async {
+    final response = await _api.get(ApiEndpoints.propertyProviderListings);
+    List<dynamic> list = [];
+    if (response is List) {
+      list = response;
+    } else if (response is Map && response['results'] is List) {
+      list = response['results'] as List;
+    }
+    return list.map((e) => PropertyListingModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<List<RoomBookingModel>> getProviderBookings() async {
+    final response = await _api.get(ApiEndpoints.propertyProviderBookings);
+    List<dynamic> list = [];
+    if (response is List) {
+      list = response;
+    } else if (response is Map && response['results'] is List) {
+      list = response['results'] as List;
+    }
+    return list.map((e) => RoomBookingModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> confirmBooking(int id) async {
+    await _api.post(ApiEndpoints.propertyProviderBookingConfirm(id));
+  }
+
+  Future<void> completeBooking(int id) async {
+    await _api.post(ApiEndpoints.propertyProviderBookingComplete(id));
+  }
+}

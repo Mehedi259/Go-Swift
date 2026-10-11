@@ -191,7 +191,14 @@ class VehicleDetailsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    GSButton(label: 'Reserve Vehicle →', onTap: () => Navigator.pushNamed(context, '/customer/car-rental/booking')),
+                    GSButton(
+                      label: 'Reserve Vehicle →',
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        '/customer/car-rental/booking',
+                        arguments: ModalRoute.of(context)?.settings.arguments,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                   ],
                 ),

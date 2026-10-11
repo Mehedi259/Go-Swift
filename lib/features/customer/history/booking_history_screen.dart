@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/ride_model.dart';
+import '../../../core/models/food_model.dart';
+import '../../../core/models/courier_model.dart';
+import '../../../core/models/car_rental_model.dart';
+import '../../../core/models/property_model.dart';
+import '../../../core/services/ride_service.dart';
+import '../../../core/services/food_service.dart';
+import '../../../core/services/courier_service.dart';
+import '../../../core/services/car_rental_service.dart';
+import '../../../core/services/room_service.dart';
 import 'widgets/active_history_card.dart';
 import 'widgets/past_history_card.dart';
 import 'widgets/cancelled_history_card.dart';
@@ -14,6 +24,159 @@ class BookingHistoryScreen extends StatefulWidget {
 class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
   int _activeTab = 0; // 0: Active, 1: Past, 2: Cancelled
   int _selectedFilter = 0;
+  bool _isLoading = false;
+
+  final List<Map<String, dynamic>> _liveActive = [];
+  final List<Map<String, dynamic>> _livePast = [];
+  final List<Map<String, dynamic>> _liveCancelled = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    setState(() => _isLoading = true);
+    try {
+      final results = await Future.wait([
+        RideService().getMyRides().catchError((_) => <RideModel>[]),
+        FoodService().getMyOrders().catchError((_) => <FoodOrderModel>[]),
+        CourierService().getMyDeliveries().catchError((_) => <CourierDeliveryModel>[]),
+        CarRentalService().getMyBookings().catchError((_) => <CarRentalBookingModel>[]),
+        RoomService().getMyBookings().catchError((_) => <RoomBookingModel>[]),
+      ]);
+
+      final rides = results[0] as List<RideModel>;
+      final orders = results[1] as List<FoodOrderModel>;
+      final deliveries = results[2] as List<CourierDeliveryModel>;
+      final rentals = results[3] as List<CarRentalBookingModel>;
+      final rooms = results[4] as List<RoomBookingModel>;
+
+      final newActive = <Map<String, dynamic>>[];
+      final newPast = <Map<String, dynamic>>[];
+      final newCancelled = <Map<String, dynamic>>[];
+
+      for (final r in rides) {
+        final map = {
+          'type': 'ride',
+          'status': r.status.toUpperCase(),
+          'id': '#BS-RD-${r.id}',
+          'icon': Icons.directions_car,
+          'color': AppColors.primaryTeal,
+          'title': r.destinationAddress,
+          'subtitle': 'Pickup: ${r.pickupAddress}',
+          'category': 'Ride Service',
+          'date': r.createdAt != null && r.createdAt!.length >= 10 ? r.createdAt!.substring(0, 10) : 'Recent',
+        };
+        if (r.status == 'cancelled') {
+          newCancelled.add(map);
+        } else if (r.status == 'completed') {
+          newPast.add(map);
+        } else {
+          newActive.add(map);
+        }
+      }
+
+      for (final o in orders) {
+        final map = {
+          'type': 'food',
+          'status': o.status.toUpperCase(),
+          'id': '#BS-FD-${o.id}',
+          'icon': Icons.restaurant,
+          'color': const Color(0xFFC78400),
+          'title': o.restaurantName,
+          'subtitle': o.deliveryAddress,
+          'category': 'Dining Delivery',
+          'date': o.createdAt != null && o.createdAt!.length >= 10 ? o.createdAt!.substring(0, 10) : 'Recent',
+        };
+        if (o.status == 'cancelled') {
+          newCancelled.add(map);
+        } else if (o.status == 'delivered' || o.status == 'completed') {
+          newPast.add(map);
+        } else {
+          newActive.add(map);
+        }
+      }
+
+      for (final d in deliveries) {
+        final map = {
+          'type': 'courier',
+          'status': d.status.toUpperCase(),
+          'id': '#BS-CR-${d.id}',
+          'icon': Icons.shield_outlined,
+          'color': AppColors.primaryTeal,
+          'title': d.dropoffAddress,
+          'subtitle': 'Pickup: ${d.pickupAddress}',
+          'category': 'Courier Service',
+          'date': d.createdAt != null && d.createdAt!.length >= 10 ? d.createdAt!.substring(0, 10) : 'Recent',
+        };
+        if (d.status == 'cancelled') {
+          newCancelled.add(map);
+        } else if (d.status == 'delivered' || d.status == 'completed') {
+          newPast.add(map);
+        } else {
+          newActive.add(map);
+        }
+      }
+
+      for (final rn in rentals) {
+        final map = {
+          'type': 'rental',
+          'status': rn.status.toUpperCase(),
+          'id': '#BS-RN-${rn.id}',
+          'icon': Icons.vpn_key_outlined,
+          'color': const Color(0xFFB8860B),
+          'title': rn.vehicleName,
+          'subtitle': '${rn.startDate} to ${rn.endDate}',
+          'category': 'Car Rental',
+          'date': rn.startDate,
+        };
+        if (rn.status == 'cancelled') {
+          newCancelled.add(map);
+        } else if (rn.status == 'completed' || rn.status == 'returned') {
+          newPast.add(map);
+        } else {
+          newActive.add(map);
+        }
+      }
+
+      for (final rm in rooms) {
+        final map = {
+          'type': 'property',
+          'status': rm.status.toUpperCase(),
+          'id': '#BS-RM-${rm.id}',
+          'icon': Icons.hotel_outlined,
+          'color': AppColors.primaryTeal,
+          'title': rm.propertyTitle ?? 'Luxury Villa',
+          'subtitle': '${rm.checkInDate} to ${rm.checkOutDate}',
+          'category': 'Room Service',
+          'date': rm.checkInDate,
+        };
+        if (rm.status == 'cancelled') {
+          newCancelled.add(map);
+        } else if (rm.status == 'completed' || rm.status == 'checked_out') {
+          newPast.add(map);
+        } else {
+          newActive.add(map);
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _liveActive.clear();
+          _liveActive.addAll(newActive);
+          _livePast.clear();
+          _livePast.addAll(newPast);
+          _liveCancelled.clear();
+          _liveCancelled.addAll(newCancelled);
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   final _activeData = [
     {
@@ -275,18 +438,31 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
 
         // List
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            itemCount: _activeTab == 0 ? _activeData.length : _activeTab == 1 ? _pastData.length : _cancelledData.length,
-            itemBuilder: (c, i) {
-              if (_activeTab == 0) {
-                return ActiveHistoryCard(data: _activeData[i]);
-              } else if (_activeTab == 1) {
-                return PastHistoryCard(data: _pastData[i]);
-              } else {
-                return CancelledHistoryCard(data: _cancelledData[i]);
-              }
-            },
+          child: _isLoading && _liveActive.isEmpty && _livePast.isEmpty
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
+              : RefreshIndicator(
+                  onRefresh: _loadHistory,
+                  color: AppColors.primaryTeal,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              itemCount: _activeTab == 0
+                  ? (_liveActive.length + _activeData.length)
+                  : _activeTab == 1
+                      ? (_livePast.length + _pastData.length)
+                      : (_liveCancelled.length + _cancelledData.length),
+              itemBuilder: (c, i) {
+                if (_activeTab == 0) {
+                  final list = [..._liveActive, ..._activeData];
+                  return ActiveHistoryCard(data: list[i]);
+                } else if (_activeTab == 1) {
+                  final list = [..._livePast, ..._pastData];
+                  return PastHistoryCard(data: list[i]);
+                } else {
+                  final list = [..._liveCancelled, ..._cancelledData];
+                  return CancelledHistoryCard(data: list[i]);
+                }
+              },
+            ),
           ),
         ),
       ],

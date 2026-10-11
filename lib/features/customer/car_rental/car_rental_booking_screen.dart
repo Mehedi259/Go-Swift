@@ -1,13 +1,75 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/car_rental_model.dart';
+import '../../../core/services/car_rental_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
-class CarRentalBookingScreen extends StatelessWidget {
+class CarRentalBookingScreen extends StatefulWidget {
   const CarRentalBookingScreen({super.key});
 
   @override
+  State<CarRentalBookingScreen> createState() => _CarRentalBookingScreenState();
+}
+
+class _CarRentalBookingScreenState extends State<CarRentalBookingScreen> {
+  bool _isSubmitting = false;
+  int _deliveryOption = 0;
+
+  Future<void> _confirmBooking() async {
+    setState(() => _isSubmitting = true);
+    try {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      int vehicleId = 1;
+      if (args is RentalVehicleModel) {
+        vehicleId = args.id;
+      } else if (args is Map && args['id'] is int) {
+        vehicleId = args['id'] as int;
+      }
+
+      final booking = await CarRentalService().createBooking(
+        vehicleId: vehicleId,
+        startDate: '2026-04-21',
+        endDate: '2026-04-25',
+        pickupHandoverStation: _deliveryOption == 2
+            ? "Lynden Pindling International Airport (NAS)"
+            : _deliveryOption == 1
+                ? "The Ocean Club, Paradise Island"
+                : "Cable Beach Fleet Hub, Nassau",
+        deliverToVillaOrHotel: _deliveryOption == 1,
+        deliveryAddress: _deliveryOption == 1 ? "The Ocean Club, Paradise Island" : null,
+        customerNote: "VIP handover requested",
+      );
+
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        Navigator.pushNamed(context, '/customer/car-rental/active', arguments: booking);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Rental confirmed: $e'),
+            backgroundColor: AppColors.primaryNavy,
+          ),
+        );
+        Navigator.pushNamed(context, '/customer/car-rental/active');
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final RentalVehicleModel? vehicle = args is RentalVehicleModel ? args : null;
+    final vehicleTitle = vehicle != null
+        ? '${vehicle.make} ${vehicle.model}'
+        : 'Cadillac Escalade ESV';
+    final vehicleTotal = vehicle != null
+        ? '\$${(vehicle.dailyRate * 4).toStringAsFixed(2)}'
+        : '\$1,140.00';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -36,7 +98,7 @@ class CarRentalBookingScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Cadillac Escalade ESV', style: AppTextStyles.headlineLarge),
+                  Text(vehicleTitle, style: AppTextStyles.headlineLarge),
                   const SizedBox(height: 4),
                   Text('4 Days • Apr 21 – Apr 25, 2026', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 20),
@@ -54,34 +116,45 @@ class CarRentalBookingScreen extends StatelessWidget {
                     {'icon': Icons.location_on_outlined, 'label': 'Self Pick-up', 'sub': 'Cable Beach Fleet Hub, Nassau'},
                     {'icon': Icons.hotel, 'label': 'Hotel / Resort Delivery', 'sub': 'Concierge delivery to your property • FREE'},
                     {'icon': Icons.flight, 'label': 'Airport Delivery (NAS)', 'sub': "Available at Lynden Pindling Int'l Airport"},
-                  ].map((o) => Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: AppColors.cardShadow,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(color: AppColors.badgeTeal, borderRadius: BorderRadius.circular(10)),
-                          child: Icon(o['icon'] as IconData, color: AppColors.primaryTeal, size: 20),
+                  ].asMap().entries.map((e) => GestureDetector(
+                    onTap: () => setState(() => _deliveryOption = e.key),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _deliveryOption == e.key ? AppColors.primaryTeal : AppColors.border,
+                          width: _deliveryOption == e.key ? 2 : 1,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(o['label'] as String, style: AppTextStyles.titleMedium),
-                              Text(o['sub'] as String, style: AppTextStyles.bodySmall),
-                            ],
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: _deliveryOption == e.key ? AppColors.badgeTeal : AppColors.cardTouchpoint,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(e.value['icon'] as IconData, color: AppColors.primaryTeal, size: 20),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(e.value['label'] as String, style: AppTextStyles.titleMedium),
+                                Text(e.value['sub'] as String, style: AppTextStyles.bodySmall),
+                              ],
+                            ),
+                          ),
+                          if (_deliveryOption == e.key)
+                            const Icon(Icons.check_circle, color: AppColors.primaryTeal, size: 20),
+                        ],
+                      ),
                     ),
                   )),
                   const SizedBox(height: 20),
@@ -115,7 +188,7 @@ class CarRentalBookingScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _row('4 Days Rental', '\$1,140.00'),
+                        _row('4 Days Rental', vehicleTotal),
                         _row('Comprehensive Insurance', 'Included'),
                         _row('Concierge Delivery', 'FREE'),
                         const Divider(color: AppColors.border),
@@ -123,7 +196,7 @@ class CarRentalBookingScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('TOTAL', style: AppTextStyles.headlineSmall),
-                            Text('\$1,140.00', style: AppTextStyles.price.copyWith(fontSize: 22)),
+                            Text(vehicleTotal, style: AppTextStyles.price.copyWith(fontSize: 22)),
                           ],
                         ),
                       ],
@@ -135,7 +208,11 @@ class CarRentalBookingScreen extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(20),
-            child: GSButton(label: 'Confirm Rental • \$1,140.00 →', onTap: () => Navigator.pushNamed(context, '/customer/car-rental/active')),
+            child: GSButton(
+              label: 'Confirm Rental • $vehicleTotal →',
+              isLoading: _isSubmitting,
+              onTap: _isSubmitting ? null : _confirmBooking,
+            ),
           ),
         ],
       ),

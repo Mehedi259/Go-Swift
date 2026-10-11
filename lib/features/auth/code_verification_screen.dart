@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class CodeVerificationScreen extends StatefulWidget {
@@ -12,9 +14,70 @@ class CodeVerificationScreen extends StatefulWidget {
 
 class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
   final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  String _email = '';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args['email'] != null) {
+      _email = args['email'].toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _handleVerify() async {
+    final otp = _controllers.map((c) => c.text.trim()).join();
+    if (otp.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter the full 6-digit verification code.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    final emailToVerify = _email.isNotEmpty ? _email : 'marcus.vance@swiftbahamas.com';
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.verifyRegistrationOTP(email: emailToVerify, otp: otp);
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Identity verified successfully! Welcome to GO SWIFT.'),
+          backgroundColor: AppColors.green,
+        ),
+      );
+      Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Invalid or expired OTP. Please try again.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final displayEmail = _email.isNotEmpty ? _email : 'authorized credentials';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -47,7 +110,7 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
               decoration: BoxDecoration(
                 color: AppColors.cyanLight,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.cyan.withOpacity(0.25), width: 1.5),
+                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.25), width: 1.5),
                 boxShadow: AppColors.softShadow,
               ),
               child: const Icon(Icons.lock_outline, color: AppColors.cyan, size: 32),
@@ -73,7 +136,7 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
                   const Icon(Icons.mark_email_read_outlined, size: 14, color: AppColors.cyan),
                   const SizedBox(width: 6),
                   Text(
-                    'marcus.v***@swiftbahamas.com',
+                    displayEmail,
                     style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -89,6 +152,7 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
                   height: 56,
                   child: TextFormField(
                     controller: _controllers[i],
+                    focusNode: _focusNodes[i],
                     textAlign: TextAlign.center,
                     maxLength: 1,
                     keyboardType: TextInputType.number,
@@ -98,58 +162,51 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
                       filled: true,
                       fillColor: Colors.white,
                       contentPadding: EdgeInsets.zero,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.cyan, width: 2),
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.cyan, width: 2)),
                     ),
+                    onChanged: (val) {
+                      if (val.isNotEmpty && i < 5) {
+                        _focusNodes[i + 1].requestFocus();
+                      } else if (val.isEmpty && i > 0) {
+                        _focusNodes[i - 1].requestFocus();
+                      }
+                      if (i == 5 && val.isNotEmpty) {
+                        _handleVerify();
+                      }
+                    },
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 32),
-            GSButton(
-              label: 'Verify & Continue →',
-              icon: Icons.shield_outlined,
-              onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false),
-            ),
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: () {},
-              child: RichText(
-                text: TextSpan(
-                  text: "Didn't receive cryptographic code? ",
-                  style: AppTextStyles.bodyMedium,
-                  children: [
-                    TextSpan(
-                      text: 'Resend (42s)',
-                      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
-            ),
             const SizedBox(height: 36),
+            GSButton(
+              label: authProvider.isLoading ? 'Authenticating...' : 'Verify & Authenticate →',
+              onTap: authProvider.isLoading ? () {} : _handleVerify,
+            ),
+            const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.verified_user_outlined, size: 14, color: AppColors.textMuted),
-                const SizedBox(width: 6),
-                Text(
-                  'OFFICIAL TRANSPORT PARTNER • RTD SOVEREIGN CERTIFIED PROTOCOL',
-                  style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                Text('Didn\'t receive the security code? ', style: AppTextStyles.bodySmall),
+                GestureDetector(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('A fresh security code has been re-dispatched.'),
+                        backgroundColor: AppColors.cyan,
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Resend Code',
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
           ],
         ),
       ),

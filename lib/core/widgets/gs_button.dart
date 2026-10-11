@@ -9,6 +9,7 @@ class GSButton extends StatelessWidget {
   final bool isSecondary;
   final bool isSmall;
   final IconData? icon;
+  final bool isLoading;
 
   const GSButton({
     super.key,
@@ -17,12 +18,13 @@ class GSButton extends StatelessWidget {
     this.isSecondary = false,
     this.isSmall = false,
     this.icon,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         height: isSmall ? 44 : 56,
         decoration: BoxDecoration(
@@ -32,28 +34,39 @@ class GSButton extends StatelessWidget {
               ? null
               : [
                   BoxShadow(
-                    color: AppColors.cyan.withOpacity(0.22),
+                    color: AppColors.cyan.withValues(alpha: 0.22),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: AppTextStyles.buttonText.copyWith(
-                color: isSecondary ? AppColors.cyan : Colors.white,
-                fontWeight: FontWeight.w700,
+        child: isLoading
+            ? Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: isSecondary ? AppColors.cyan : Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: AppTextStyles.buttonText.copyWith(
+                      color: isSecondary ? AppColors.cyan : Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (icon != null) ...[
+                    const SizedBox(width: 8),
+                    Icon(icon, size: 18, color: isSecondary ? AppColors.cyan : Colors.white),
+                  ],
+                ],
               ),
-            ),
-            if (icon != null) ...[
-              const SizedBox(width: 8),
-              Icon(icon, size: 18, color: isSecondary ? AppColors.cyan : Colors.white),
-            ],
-          ],
-        ),
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/food_model.dart';
+import '../../../core/services/food_service.dart';
 import '../../../core/widgets/gs_card.dart';
 import '../../../core/widgets/gs_bottom_nav.dart';
 
@@ -12,6 +14,49 @@ class FoodDiningScreen extends StatefulWidget {
 class _FoodDiningScreenState extends State<FoodDiningScreen> {
   int _cat = 0;
   final _cats = ['All Restaurants', 'Bahamian Seafood', 'Fine Dining', 'Japanese', 'Caribbean'];
+  List<RestaurantModel> _liveRestaurants = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRestaurants();
+  }
+
+  Future<void> _fetchRestaurants() async {
+    setState(() => _isLoading = true);
+    try {
+      final list = await FoodService().getRestaurants();
+      if (mounted) {
+        setState(() {
+          _liveRestaurants = list;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  List<Map<String, dynamic>> get _displayList {
+    if (_liveRestaurants.isNotEmpty) {
+      return _liveRestaurants.map((r) => {
+        'id': r.id,
+        'name': r.name,
+        'type': (r.cuisineConcept ?? 'FINE DINING').toUpperCase(),
+        'location': '${r.islandHub ?? "Nassau"} • ${r.address ?? "Paradise Island"}',
+        'rating': r.rating,
+        'reviews': 120,
+        'time': r.averagePrepWindow ?? '25-35 min',
+        'badge': 'VERIFIED',
+        'price': '\$\$\$\$',
+        'special': 'Dockside Ready',
+        'feature': 'Free Yacht Delivery',
+        'model': r,
+      }).toList();
+    }
+    return _restaurants;
+  }
 
   final _restaurants = [
     {
@@ -244,11 +289,17 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
             ),
             // Restaurant list
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                itemCount: _restaurants.length,
-                itemBuilder: (c, i) => _RestaurantCard(data: _restaurants[i]),
-              ),
+              child: _isLoading && _liveRestaurants.isEmpty
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
+                  : RefreshIndicator(
+                      onRefresh: _fetchRestaurants,
+                      color: AppColors.primaryTeal,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                        itemCount: _displayList.length,
+                        itemBuilder: (c, i) => _RestaurantCard(data: _displayList[i]),
+                      ),
+                    ),
             ),
           ],
         ),
@@ -288,7 +339,11 @@ class _RestaurantCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/customer/food/restaurant'),
+      onTap: () => Navigator.pushNamed(
+        context,
+        '/customer/food/restaurant',
+        arguments: data['model'] ?? data['id'],
+      ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),
         decoration: BoxDecoration(

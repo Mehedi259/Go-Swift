@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/food_model.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class FoodOrderStatusScreen extends StatelessWidget {
@@ -8,11 +9,16 @@ class FoodOrderStatusScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final FoodOrderModel? order = args is FoodOrderModel ? args : null;
+    final orderNum = order?.orderNumber ?? (order != null ? '#GS-${order.id}' : '#GS-2847');
+    final restName = (order?.restaurantName ?? 'DUNE BY JEAN-GEORGES').toUpperCase();
+
     final steps = [
-      {'label': 'Order Confirmed', 'sub': 'Dune by Jean-Georges acknowledged', 'done': true},
+      {'label': 'Order Confirmed', 'sub': '$restName acknowledged', 'done': true},
       {'label': 'Chef Preparing', 'sub': 'Your meal is being prepared', 'done': true},
-      {'label': 'Out for Delivery', 'sub': 'Courier en route to you', 'done': false},
-      {'label': 'Delivered', 'sub': 'Estimated 4:18 PM', 'done': false},
+      {'label': 'Out for Delivery', 'sub': 'Courier en route to you', 'done': order?.status == 'in_transit'},
+      {'label': 'Delivered', 'sub': 'Handed over by courier', 'done': order?.status == 'delivered'},
     ];
 
     return Scaffold(
@@ -51,7 +57,7 @@ class FoodOrderStatusScreen extends StatelessWidget {
                 children: [
                   Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primaryTeal, shape: BoxShape.circle)),
                   const SizedBox(width: 6),
-                  Text('ORDER #GS-2847 • DUNE BY JEAN-GEORGES', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                  Text('ORDER $orderNum • $restName', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),

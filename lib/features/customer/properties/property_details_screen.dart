@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/property_model.dart';
 import '../../../core/widgets/gs_button.dart';
 import '../../../core/widgets/gs_card.dart';
 
@@ -9,6 +10,17 @@ class PropertyDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final PropertyListingModel? listing = args is PropertyListingModel ? args : null;
+    final title = listing?.title ?? 'The Ocean Club Villa';
+    final pType = (listing?.propertyType ?? 'OCEANFRONT VILLA').replaceAll('_', ' ').toUpperCase();
+    final pPrice = listing != null ? '\$${listing.pricePerNight.toStringAsFixed(0)}/night' : '\$1,850/night';
+    final pLocation = listing != null ? '${listing.city} • ${listing.address}' : 'Paradise Island • 0.2 miles from beach';
+    final pBedrooms = listing?.bedrooms.toString() ?? '5';
+    final pBathrooms = listing?.bathrooms.toString() ?? '6';
+    final pGuests = listing?.maxGuests.toString() ?? '12';
+    final pDesc = listing?.description ??
+        'Exquisite oceanfront villa at The Ocean Club, Paradise Island. Features private infinity pool, direct beach access, dedicated butler service, and panoramic views of the Atlantic Ocean. Fully equipped gourmet kitchen, home cinema, and 24/7 concierge.';
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -97,14 +109,14 @@ class PropertyDetailsScreen extends StatelessWidget {
                         color: AppColors.badgeTeal,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text('OCEANFRONT VILLA', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                      child: Text(pType, style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(child: Text('The Ocean Club Villa', style: AppTextStyles.headlineLarge)),
-                        Text('\$1,850/night', style: AppTextStyles.headlineSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                        Expanded(child: Text(title, style: AppTextStyles.headlineLarge)),
+                        Text(pPrice, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -112,24 +124,24 @@ class PropertyDetailsScreen extends StatelessWidget {
                       children: [
                         const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
                         const SizedBox(width: 4),
-                        Text('Paradise Island • 0.2 miles from beach', style: AppTextStyles.bodySmall),
+                        Expanded(child: Text(pLocation, style: AppTextStyles.bodySmall)),
                       ],
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        _stat('5', 'Bedrooms', Icons.bed_outlined),
+                        _stat(pBedrooms, 'Bedrooms', Icons.bed_outlined),
                         const SizedBox(width: 12),
-                        _stat('6', 'Bathrooms', Icons.bathroom_outlined),
+                        _stat(pBathrooms, 'Bathrooms', Icons.bathroom_outlined),
                         const SizedBox(width: 12),
-                        _stat('12', 'Max Guests', Icons.people_outline),
+                        _stat(pGuests, 'Max Guests', Icons.people_outline),
                       ],
                     ),
                     const SizedBox(height: 20),
                     Text('About This Property', style: AppTextStyles.headlineSmall),
                     const SizedBox(height: 8),
                     Text(
-                      'Exquisite oceanfront villa at The Ocean Club, Paradise Island. Features private infinity pool, direct beach access, dedicated butler service, and panoramic views of the Atlantic Ocean. Fully equipped gourmet kitchen, home cinema, and 24/7 concierge.',
+                      pDesc,
                       style: AppTextStyles.bodyMedium,
                     ),
                     const SizedBox(height: 20),
@@ -225,7 +237,14 @@ class PropertyDetailsScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    GSButton(label: 'Reserve Property →', onTap: () => Navigator.pushNamed(context, '/customer/properties/booking')),
+                    GSButton(
+                      label: 'Reserve Property →',
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        '/customer/properties/booking',
+                        arguments: ModalRoute.of(context)?.settings.arguments,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                   ],
                 ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/widgets/gs_bottom_nav.dart';
 import '../history/booking_history_screen.dart';
 import '../favorites/favorites_screen.dart';
@@ -47,6 +49,11 @@ class _HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+    final greetingName = (user != null && user.firstName.isNotEmpty)
+        ? user.firstName
+        : ((user != null && user.fullName.isNotEmpty) ? user.fullName : 'Guest');
+
     return SafeArea(
       child: SingleChildScrollView(
         child: Column(
@@ -131,7 +138,7 @@ class _HomeTab extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Welcome back, Marcus',
+                    'Welcome back, $greetingName',
                     style: AppTextStyles.headlineMedium.copyWith(
                       color: AppColors.textPrimary,
                       fontSize: 24,

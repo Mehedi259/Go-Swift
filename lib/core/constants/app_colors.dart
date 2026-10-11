@@ -39,6 +39,7 @@ class AppColors {
 
   // Text Colors
   static const Color textPrimary = Color(0xFF102A3A);   // Deep Navy-Charcoal
+  static const Color primaryNavy = Color(0xFF102A3A);   // Deep Sovereign Navy
   static const Color textSecondary = Color(0xFF5A7387); // Muted Island Slate
   static const Color textMuted = Color(0xFF8FA4B5);     // Soft Steel / Placeholder
   static const Color textCyan = Color(0xFF007A8C);      // Teal Accent Text

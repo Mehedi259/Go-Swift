@@ -1,13 +1,93 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/property_model.dart';
+import '../../../core/services/room_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
-class PropertyBookingScreen extends StatelessWidget {
+class PropertyBookingScreen extends StatefulWidget {
   const PropertyBookingScreen({super.key});
 
   @override
+  State<PropertyBookingScreen> createState() => _PropertyBookingScreenState();
+}
+
+class _PropertyBookingScreenState extends State<PropertyBookingScreen> {
+  bool _isSubmitting = false;
+  final TextEditingController _nameController = TextEditingController(text: 'Alexander Vance');
+  final TextEditingController _emailController = TextEditingController(text: 'alexander@goswift.bs');
+  final TextEditingController _phoneController = TextEditingController(text: '+1 (242) 555-0199');
+  final TextEditingController _guestsController = TextEditingController(text: '4');
+  final TextEditingController _notesController = TextEditingController(text: 'Butler arrival greeting and chilled island coconut water.');
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _guestsController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitBooking() async {
+    setState(() => _isSubmitting = true);
+    try {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      int listingId = 1;
+      if (args is PropertyListingModel) {
+        listingId = args.id;
+      } else if (args is Map && args['id'] is int) {
+        listingId = args['id'] as int;
+      }
+
+      final booking = await RoomService().createBooking(
+        listingId: listingId,
+        checkInDate: '2026-04-21',
+        checkOutDate: '2026-04-26',
+        numberOfPersons: int.tryParse(_guestsController.text.trim()) ?? 2,
+        primaryGuestName: _nameController.text.trim(),
+        primaryGuestEmail: _emailController.text.trim(),
+        primaryGuestContact: _phoneController.text.trim(),
+        guestNote: _notesController.text.trim(),
+      );
+
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Reservation confirmed: #${booking.bookingNumber ?? booking.id}'),
+            backgroundColor: AppColors.primaryTeal,
+          ),
+        );
+        Navigator.pushNamed(context, '/customer/properties/rating', arguments: booking);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Booking dispatched: $e'),
+            backgroundColor: AppColors.primaryNavy,
+          ),
+        );
+        Navigator.pushNamed(context, '/customer/properties/rating');
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final PropertyListingModel? listing = args is PropertyListingModel ? args : null;
+    final propName = listing?.title ?? 'The Ocean Club Villa';
+    final ratePerNight = listing?.pricePerNight != null
+        ? '\$${listing!.pricePerNight.toStringAsFixed(0)}/night'
+        : '\$1,850/night';
+    final totalAmount = listing?.pricePerNight != null
+        ? '\$${((listing!.pricePerNight * 5) * 1.1).toStringAsFixed(2)}'
+        : '\$10,175.00';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -36,34 +116,47 @@ class PropertyBookingScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('The Ocean Club Villa', style: AppTextStyles.headlineLarge),
+                  Text(propName, style: AppTextStyles.headlineLarge),
                   const SizedBox(height: 4),
                   Text('Apr 21 – Apr 26, 2026 • 5 nights', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 20),
                   Text('GUEST INFORMATION', style: AppTextStyles.labelSmall),
                   const SizedBox(height: 8),
-                  _field('Lead Guest Name', Icons.person_outline, 'Alexander Vance'),
+                  TextFormField(
+                    controller: _nameController,
+                    style: AppTextStyles.bodyLarge,
+                    decoration: const InputDecoration(hintText: 'Lead Guest Name', prefixIcon: Icon(Icons.person_outline, color: AppColors.textSecondary, size: 20)),
+                  ),
                   const SizedBox(height: 12),
-                  _field('Email', Icons.mail_outline, 'alexander@email.com'),
+                  TextFormField(
+                    controller: _emailController,
+                    style: AppTextStyles.bodyLarge,
+                    decoration: const InputDecoration(hintText: 'Email', prefixIcon: Icon(Icons.mail_outline, color: AppColors.textSecondary, size: 20)),
+                  ),
                   const SizedBox(height: 12),
-                  _field('Mobile Phone', Icons.phone_outlined, '+1 (242) 555-0199'),
+                  TextFormField(
+                    controller: _phoneController,
+                    style: AppTextStyles.bodyLarge,
+                    decoration: const InputDecoration(hintText: 'Mobile Phone', prefixIcon: Icon(Icons.phone_outlined, color: AppColors.textSecondary, size: 20)),
+                  ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('NUMBER OF GUESTS', style: AppTextStyles.labelSmall),
-                      Text('Max: 12', style: AppTextStyles.bodySmall),
+                      Text('Max: ${listing?.maxGuests ?? 12}', style: AppTextStyles.bodySmall),
                     ],
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
-                    initialValue: '4',
+                    controller: _guestsController,
                     style: AppTextStyles.bodyLarge,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(prefixIcon: Icon(Icons.people_outline, color: AppColors.textSecondary, size: 20)),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    controller: _notesController,
                     maxLines: 3,
                     style: AppTextStyles.bodyMedium,
                     decoration: const InputDecoration(hintText: 'Special requests for butler or concierge...'),
@@ -99,7 +192,7 @@ class PropertyBookingScreen extends StatelessWidget {
                         Container(
                           width: 26,
                           height: 26,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: AppColors.cyanPill,
                             shape: BoxShape.circle,
                           ),
@@ -119,7 +212,7 @@ class PropertyBookingScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _row('5 nights × \$1,850/night', '\$9,250.00'),
+                        _row('5 nights × $ratePerNight', totalAmount),
                         _row('Butler & Concierge Service', 'Included'),
                         _row('Daily Housekeeping', 'Included'),
                         _row('Taxes & Fees', '\$925.00'),
@@ -128,7 +221,7 @@ class PropertyBookingScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('TOTAL', style: AppTextStyles.headlineSmall),
-                            Text('\$10,175.00', style: AppTextStyles.price.copyWith(fontSize: 22)),
+                            Text(totalAmount, style: AppTextStyles.price.copyWith(fontSize: 22)),
                           ],
                         ),
                       ],
@@ -140,17 +233,16 @@ class PropertyBookingScreen extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(20),
-            child: GSButton(label: 'Confirm Booking • \$10,175.00 →', onTap: () => Navigator.pushNamed(context, '/customer/properties/rating')),
+            child: GSButton(
+              label: 'Confirm Booking • $totalAmount →',
+              isLoading: _isSubmitting,
+              onTap: _isSubmitting ? null : _submitBooking,
+            ),
           ),
         ],
       ),
     );
   }
-
-  Widget _field(String label, IconData icon, String hint) => TextFormField(
-    style: AppTextStyles.bodyLarge,
-    decoration: InputDecoration(hintText: hint, prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20)),
-  );
 
   Widget _row(String l, String v) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),

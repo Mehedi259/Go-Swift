@@ -1,13 +1,39 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/ride_model.dart';
+import '../../../core/services/ride_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
-class RideWaitingScreen extends StatelessWidget {
+class RideWaitingScreen extends StatefulWidget {
   const RideWaitingScreen({super.key});
 
   @override
+  State<RideWaitingScreen> createState() => _RideWaitingScreenState();
+}
+
+class _RideWaitingScreenState extends State<RideWaitingScreen> {
+  bool _isCancelling = false;
+
+  Future<void> _handleCancel(RideModel? ride) async {
+    if (ride != null) {
+      setState(() => _isCancelling = true);
+      try {
+        await RideService().cancelRide(ride.id, reason: 'Customer requested cancellation');
+      } catch (_) {}
+    }
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final ride = ModalRoute.of(context)?.settings.arguments as RideModel?;
+    final pickup = ride?.pickupAddress ?? "Lynden Pindling Int'l Airport (NAS)";
+    final destination = ride?.destinationAddress ?? 'The Ocean Club, Four Seasons Resort';
+    final fare = ride != null ? '\$${ride.estimatedFare.toStringAsFixed(2)}' : '\$118.50';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -71,7 +97,6 @@ class RideWaitingScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text('Nassau & Paradise Island dispatch network', style: AppTextStyles.bodyMedium),
                     const SizedBox(height: 24),
-                    // Searching animation placeholder
                     Center(
                       child: Container(
                         width: 140,
@@ -108,7 +133,7 @@ class RideWaitingScreen extends StatelessWidget {
                             children: [
                               Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.primaryTeal, shape: BoxShape.circle)),
                               const SizedBox(width: 10),
-                              Expanded(child: Text("Lynden Pindling Int'l Airport (NAS)", style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary))),
+                              Expanded(child: Text(pickup, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary))),
                             ],
                           ),
                           Padding(
@@ -119,7 +144,7 @@ class RideWaitingScreen extends StatelessWidget {
                             children: [
                               Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.gold, shape: BoxShape.circle)),
                               const SizedBox(width: 10),
-                              Expanded(child: Text('The Ocean Club, Four Seasons Resort', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary))),
+                              Expanded(child: Text(destination, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary))),
                             ],
                           ),
                         ],
@@ -128,7 +153,7 @@ class RideWaitingScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Expanded(child: _infoBox('Est. Fare', '\$118.50', AppColors.primaryTeal)),
+                        Expanded(child: _infoBox('Est. Fare', fare, AppColors.primaryTeal)),
                         const SizedBox(width: 12),
                         Expanded(child: _infoBox('Est. Time', '12-18 min', AppColors.textPrimary)),
                       ],
@@ -137,12 +162,13 @@ class RideWaitingScreen extends StatelessWidget {
                     GSButton(
                       label: 'Cancel Request',
                       isSecondary: true,
-                      onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false),
+                      isLoading: _isCancelling,
+                      onTap: () => _handleCancel(ride),
                     ),
                     const SizedBox(height: 16),
                     Center(
                       child: GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/customer/ride/driver-accepted'),
+                        onTap: () => Navigator.pushNamed(context, '/customer/ride/driver-accepted', arguments: ride),
                         child: Text('Simulate: Driver Accepted →', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
                       ),
                     ),

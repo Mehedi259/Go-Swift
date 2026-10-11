@@ -1,13 +1,109 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/widgets/gs_button.dart';
 
-class CustomerRegisterScreen extends StatelessWidget {
+class CustomerRegisterScreen extends StatefulWidget {
   const CustomerRegisterScreen({super.key});
 
   @override
+  State<CustomerRegisterScreen> createState() => _CustomerRegisterScreenState();
+}
+
+class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleRegister() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text;
+    final confirm = _confirmPasswordController.text;
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all required fields.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    if (password.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password must be at least 8 characters long.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    if (password != confirm) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Passwords do not match.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    final authProvider = context.read<AuthProvider>();
+    final formattedPhone = phone.isNotEmpty ? '+1242$phone' : null;
+
+    final success = await authProvider.initiateRegistration(
+      fullName: name,
+      email: email,
+      password: password,
+      confirmPassword: confirm,
+      phoneNumber: formattedPhone,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Security code sent to $email. Please verify.'),
+          backgroundColor: AppColors.green,
+        ),
+      );
+      Navigator.pushNamed(context, '/verify-code', arguments: {'email': email});
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Registration failed. Try again.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -50,10 +146,32 @@ class CustomerRegisterScreen extends StatelessWidget {
             const SizedBox(height: 6),
             Text('Create Your Account', style: AppTextStyles.displayMedium),
             const SizedBox(height: 24),
-            _buildField('FULL NAME', 'Marcus Vance', Icons.person_outline),
+            // Full Name
+            Text('FULL NAME', style: AppTextStyles.labelSmall),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _nameController,
+              style: AppTextStyles.bodyLarge,
+              decoration: const InputDecoration(
+                hintText: 'e.g. Alexander Vance',
+                prefixIcon: Icon(Icons.person_outline, color: AppColors.textSecondary, size: 20),
+              ),
+            ),
             const SizedBox(height: 18),
-            _buildField('EMAIL ADDRESS', 'marcus.vance@swiftbahamas.com', Icons.mail_outline),
+            // Email Address
+            Text('EMAIL ADDRESS', style: AppTextStyles.labelSmall),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              style: AppTextStyles.bodyLarge,
+              decoration: const InputDecoration(
+                hintText: 'alexander.vance@example.com',
+                prefixIcon: Icon(Icons.mail_outline, color: AppColors.textSecondary, size: 20),
+              ),
+            ),
             const SizedBox(height: 18),
+            // Mobile Phone
             Text('MOBILE PHONE', style: AppTextStyles.labelSmall),
             const SizedBox(height: 8),
             Row(
@@ -76,6 +194,8 @@ class CustomerRegisterScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextFormField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
                     style: AppTextStyles.bodyLarge,
                     decoration: const InputDecoration(hintText: '555-0199'),
                   ),
@@ -96,6 +216,7 @@ class CustomerRegisterScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
+            // Password
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -105,63 +226,48 @@ class CustomerRegisterScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             TextFormField(
-              obscureText: true,
+              controller: _passwordController,
+              obscureText: _obscurePassword,
               style: AppTextStyles.bodyLarge,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.lock_outline, color: AppColors.textSecondary, size: 20),
-                suffixIcon: Icon(Icons.visibility_outlined, color: AppColors.textSecondary, size: 20),
+              decoration: InputDecoration(
+                hintText: 'Enter account password',
+                prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textSecondary, size: 20),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  ),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                ),
               ),
             ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: 0.1,
-              backgroundColor: AppColors.border,
-              color: AppColors.cyan,
-              minHeight: 4,
-              borderRadius: BorderRadius.circular(2),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Security: Minimum 8 characters', style: AppTextStyles.caption),
-                Text('0/8', style: AppTextStyles.caption),
-              ],
-            ),
             const SizedBox(height: 18),
+            // Confirm Password
             Text('CONFIRM PASSWORD', style: AppTextStyles.labelSmall),
             const SizedBox(height: 8),
             TextFormField(
-              obscureText: true,
+              controller: _confirmPasswordController,
+              obscureText: _obscureConfirmPassword,
               style: AppTextStyles.bodyLarge,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.lock_clock_outlined, color: AppColors.textSecondary, size: 20),
-              ),
-            ),
-            const SizedBox(height: 20),
-            RichText(
-              text: TextSpan(
-                text: 'I acknowledge and agree to the ',
-                style: AppTextStyles.bodySmall,
-                children: [
-                  TextSpan(
-                    text: 'Terms of Service',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.cyan, decoration: TextDecoration.underline),
+              decoration: InputDecoration(
+                hintText: 'Re-enter account password',
+                prefixIcon: const Icon(Icons.lock_clock_outlined, color: AppColors.textSecondary, size: 20),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    color: AppColors.textSecondary,
+                    size: 20,
                   ),
-                  TextSpan(text: ' and ', style: AppTextStyles.bodySmall),
-                  TextSpan(
-                    text: 'Privacy Policy',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.cyan, decoration: TextDecoration.underline),
-                  ),
-                  TextSpan(
-                    text: ' governing island concierge and transportation services.',
-                    style: AppTextStyles.bodySmall,
-                  ),
-                ],
+                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                ),
               ),
             ),
             const SizedBox(height: 24),
-            GSButton(label: 'Create Account →', onTap: () => Navigator.pushNamed(context, '/verify-code')),
+            GSButton(
+              label: authProvider.isLoading ? 'Sending Security Code...' : 'Create Account →',
+              onTap: authProvider.isLoading ? () {} : _handleRegister,
+            ),
             const SizedBox(height: 18),
             Center(
               child: GestureDetector(
@@ -184,23 +290,6 @@ class CustomerRegisterScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildField(String label, String hint, IconData icon) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: AppTextStyles.labelSmall),
-        const SizedBox(height: 8),
-        TextFormField(
-          style: AppTextStyles.bodyLarge,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
-          ),
-        ),
-      ],
     );
   }
 }

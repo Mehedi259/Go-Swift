@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/notification_model.dart';
+import '../../../core/services/notification_service.dart';
 
 class NotificationsScreen extends StatefulWidget {
   final bool embedded;
@@ -12,6 +14,29 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   int _selectedFilter = 0;
+  List<NotificationModel> _apiNotifications = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    setState(() => _isLoading = true);
+    try {
+      final list = await NotificationService().getNotifications();
+      if (mounted) {
+        setState(() {
+          _apiNotifications = list;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,10 +100,31 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
 
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            children: [
-              _buildSectionHeader('NEW & ACTIVE', '2 Updates'),
+          child: _isLoading && _apiNotifications.isEmpty
+              ? const Center(child: CircularProgressIndicator(color: AppColors.cyan))
+              : RefreshIndicator(
+                  onRefresh: _loadNotifications,
+                  color: AppColors.cyan,
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    children: [
+                      if (_apiNotifications.isNotEmpty) ...[
+                        _buildSectionHeader('LIVE NOTIFICATIONS', '${_apiNotifications.length} Updates'),
+                  ..._apiNotifications.map((n) => _buildNotificationCard(
+                        category: 'CONCIERGE ALERT',
+                        title: n.title,
+                        body: n.body,
+                        time: (n.createdAt != null && n.createdAt!.length >= 16) ? n.createdAt!.substring(11, 16) : 'Just now',
+                        icon: Icons.notifications_active_outlined,
+                        iconColor: AppColors.cyan,
+                        iconBgColor: AppColors.cyanLight,
+                        badgeText: n.isRead ? 'Read' : 'New',
+                        badgeColor: n.isRead ? AppColors.textSecondary : AppColors.cyan,
+                        badgeBgColor: n.isRead ? AppColors.borderLight : AppColors.cyanLight,
+                        actionText: 'View Details →',
+                      )),
+                ],
+                _buildSectionHeader('VIP CONCIERGE UPDATES', 'Concierge Feed'),
               _buildNotificationCard(
                 category: 'RIDE • VIP CHAUFFEUR',
                 title: 'Driver Marcus Arriving in 3 Mins',
@@ -152,8 +198,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ],
           ),
         ),
-      ],
-    );
+      ),
+    ],
+  );
     return widget.embedded ? content : Scaffold(backgroundColor: AppColors.background, body: SafeArea(child: content));
   }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/providers/auth_provider.dart';
 
 class CustomerProfileScreen extends StatelessWidget {
   final bool embedded;
@@ -8,6 +10,13 @@ class CustomerProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final user = auth.user;
+    final displayName = user != null && user.fullName.isNotEmpty ? user.fullName : 'Valued Guest';
+    final displayEmail = user?.email ?? 'user@goswift.com';
+    final displayPhone = user != null && user.phone.isNotEmpty ? user.phone : '+1 (242) 555-0100';
+    final displayCity = (user?.city != null && user!.city!.isNotEmpty) ? user.city! : 'Nassau & Paradise Island, The Bahamas';
+
     final content = Column(
       children: [
         // App Bar
@@ -92,13 +101,13 @@ class CustomerProfileScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Marcus Pendelton', style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textPrimary, fontSize: 20)),
+                                Text(displayName, style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textPrimary, fontSize: 20)),
                                 const SizedBox(height: 6),
                                 Row(
                                   children: [
                                     const Icon(Icons.location_on_outlined, color: AppColors.primaryTeal, size: 14),
                                     const SizedBox(width: 6),
-                                    Expanded(child: Text('Nassau & Paradise Island, The Bahamas', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary))),
+                                    Expanded(child: Text(displayCity, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary))),
                                   ],
                                 ),
                               ],
@@ -111,7 +120,7 @@ class CustomerProfileScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.email_outlined, color: AppColors.primaryTeal, size: 16),
                           const SizedBox(width: 12),
-                          Text('marcus.p@luxurybahamas.com', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary)),
+                          Text(displayEmail, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary)),
                         ],
                       ),
                       const SizedBox(height: 10),
@@ -119,7 +128,7 @@ class CustomerProfileScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.phone_android_outlined, color: AppColors.primaryTeal, size: 16),
                           const SizedBox(width: 12),
-                          Text('+1 (242) 555-0192', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary)),
+                          Text(displayPhone, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary)),
                         ],
                       ),
                     ],
@@ -381,7 +390,12 @@ class CustomerProfileScreen extends StatelessWidget {
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(27),
-                      onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/choose-account', (_) => false),
+                      onTap: () async {
+                        await context.read<AuthProvider>().logout();
+                        if (context.mounted) {
+                          Navigator.pushNamedAndRemoveUntil(context, '/choose-account', (_) => false);
+                        }
+                      },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

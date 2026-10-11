@@ -320,8 +320,12 @@ class _BgPainter extends CustomPainter {
       ..color = const Color(0xFFE2EFF5)
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
-    for (double y = 20; y < size.height; y += 35) canvas.drawLine(Offset(0, y), Offset(size.width, y), street);
-    for (double x = 20; x < size.width; x += 40) canvas.drawLine(Offset(x, 0), Offset(x, size.height), street);
+    for (double y = 20; y < size.height; y += 35) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), street);
+    }
+    for (double x = 20; x < size.width; x += 40) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), street);
+    }
 
     final hwy = Paint()..color = const Color(0xFFCCE4EC)..strokeWidth = 10;
     canvas.drawLine(Offset(0, size.height * 0.6), Offset(size.width, size.height * 0.3), hwy);

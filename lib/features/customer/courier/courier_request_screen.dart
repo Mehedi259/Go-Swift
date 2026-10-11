@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/courier_model.dart';
+import '../../../core/services/courier_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class CourierRequestScreen extends StatefulWidget {
@@ -10,11 +12,84 @@ class CourierRequestScreen extends StatefulWidget {
 
 class _CourierRequestScreenState extends State<CourierRequestScreen> {
   int _type = 0;
+  bool _isSubmitting = false;
+
+  final TextEditingController _pickupController = TextEditingController(text: 'Graycliff Boutique, Downtown Nassau');
+  final TextEditingController _dropoffController = TextEditingController(text: 'The Ocean Club, Paradise Island');
+  final TextEditingController _recipientNameController = TextEditingController(text: 'Captain Devon Butler');
+  final TextEditingController _recipientPhoneController = TextEditingController(text: '+1 (242) 555-0199');
+
   final _types = [
-    {'icon': Icons.laptop_mac_outlined, 'label': 'Standard Package', 'sub': 'Up to 20 lbs • Standard tracking'},
-    {'icon': Icons.gavel, 'label': 'Bonded Legal Document', 'sub': 'Chain-of-custody • Notarized delivery'},
-    {'icon': Icons.diamond_outlined, 'label': 'Luxury Retail', 'sub': 'White-glove • Temperature controlled'},
+    {
+      'size': 'small_parcel',
+      'icon': Icons.laptop_mac_outlined,
+      'label': 'Standard Package',
+      'sub': 'Up to 20 lbs • Standard tracking',
+    },
+    {
+      'size': 'document',
+      'icon': Icons.gavel,
+      'label': 'Bonded Legal Document',
+      'sub': 'Chain-of-custody • Notarized delivery',
+    },
+    {
+      'size': 'large_cargo',
+      'icon': Icons.diamond_outlined,
+      'label': 'Luxury Retail & Cargo',
+      'sub': 'White-glove • Temperature controlled',
+    },
   ];
+
+  @override
+  void dispose() {
+    _pickupController.dispose();
+    _dropoffController.dispose();
+    _recipientNameController.dispose();
+    _recipientPhoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitDelivery() async {
+    final pickup = _pickupController.text.trim();
+    final dropoff = _dropoffController.text.trim();
+    if (pickup.isEmpty || dropoff.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter pickup and delivery locations.')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      final selectedPkg = _types[_type]['size'] as String;
+      final CourierDeliveryModel delivery = await CourierService().createDelivery(
+        pickupAddress: pickup,
+        dropoffAddress: dropoff,
+        packageSize: selectedPkg,
+        recipientName: _recipientNameController.text.trim(),
+        recipientPhone: _recipientPhoneController.text.trim(),
+        packageContentsDescription: _types[_type]['label'] as String,
+        fragileOrHighValue: _type == 2,
+        transitInsurance: true,
+      );
+
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        Navigator.pushNamed(context, '/customer/courier/status', arguments: delivery);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Delivery dispatched: $e'),
+            backgroundColor: AppColors.primaryNavy,
+          ),
+        );
+        Navigator.pushNamed(context, '/customer/courier/status');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +147,7 @@ class _CourierRequestScreenState extends State<CourierRequestScreen> {
                   Text('Pickup Location', style: AppTextStyles.labelSmall),
                   const SizedBox(height: 8),
                   TextFormField(
+                    controller: _pickupController,
                     style: AppTextStyles.bodyLarge,
                     decoration: const InputDecoration(
                       hintText: 'e.g. Graycliff Boutique, Downtown Nassau',
@@ -82,6 +158,7 @@ class _CourierRequestScreenState extends State<CourierRequestScreen> {
                   Text('Delivery Destination', style: AppTextStyles.labelSmall),
                   const SizedBox(height: 8),
                   TextFormField(
+                    controller: _dropoffController,
                     style: AppTextStyles.bodyLarge,
                     decoration: const InputDecoration(
                       hintText: 'e.g. The Ocean Club, Paradise Island',
@@ -150,6 +227,7 @@ class _CourierRequestScreenState extends State<CourierRequestScreen> {
                   Text('Recipient Name', style: AppTextStyles.labelSmall),
                   const SizedBox(height: 8),
                   TextFormField(
+                    controller: _recipientNameController,
                     style: AppTextStyles.bodyLarge,
                     decoration: const InputDecoration(
                       hintText: 'Full name of recipient',
@@ -160,6 +238,7 @@ class _CourierRequestScreenState extends State<CourierRequestScreen> {
                   Text('Recipient Phone', style: AppTextStyles.labelSmall),
                   const SizedBox(height: 8),
                   TextFormField(
+                    controller: _recipientPhoneController,
                     style: AppTextStyles.bodyLarge,
                     decoration: const InputDecoration(
                       hintText: '+1 (242) 555-0199',
@@ -172,7 +251,11 @@ class _CourierRequestScreenState extends State<CourierRequestScreen> {
           ),
           Padding(
             padding: const EdgeInsets.all(20),
-            child: GSButton(label: 'Find Courier →', onTap: () => Navigator.pushNamed(context, '/customer/courier/status')),
+            child: GSButton(
+              label: 'Find Courier →',
+              isLoading: _isSubmitting,
+              onTap: _isSubmitting ? null : _submitDelivery,
+            ),
           ),
         ],
       ),

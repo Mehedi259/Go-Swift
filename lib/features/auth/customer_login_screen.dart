@@ -1,14 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/widgets/gs_button.dart';
-import '../../../core/widgets/gs_text_field.dart';
 
-class CustomerLoginScreen extends StatelessWidget {
+class CustomerLoginScreen extends StatefulWidget {
   const CustomerLoginScreen({super.key});
 
   @override
+  State<CustomerLoginScreen> createState() => _CustomerLoginScreenState();
+}
+
+class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter both email and password.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.login(email: email, password: password);
+
+    if (!mounted) return;
+
+    if (success) {
+      final role = authProvider.userRole.toLowerCase();
+      String destination = '/customer/hub';
+
+      if (role.contains('driver') || role.contains('chauffeur')) {
+        destination = '/provider/driver/hub';
+      } else if (role.contains('courier')) {
+        destination = '/provider/courier/hub';
+      } else if (role.contains('restaurant')) {
+        destination = '/provider/restaurant/orders';
+      } else if (role.contains('rental')) {
+        destination = '/provider/rental/fleet';
+      } else if (role.contains('property')) {
+        destination = '/provider/property/listings';
+      }
+
+      Navigator.pushNamedAndRemoveUntil(context, destination, (_) => false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Login failed. Please check credentials.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -58,7 +123,7 @@ class CustomerLoginScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.cyanLight,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.cyan.withOpacity(0.25), width: 1.5),
+                        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.25), width: 1.5),
                         boxShadow: AppColors.softShadow,
                       ),
                       child: const Icon(Icons.lock_outline, color: AppColors.cyan, size: 32),
@@ -76,15 +141,17 @@ class CustomerLoginScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Email or Bahamas Mobile', style: AppTextStyles.labelSmall),
+                        Text('Email Address', style: AppTextStyles.labelSmall),
                         Text('NASSAU • OUT ISLANDS', style: AppTextStyles.cyanLabel),
                       ],
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
                       style: AppTextStyles.bodyLarge,
                       decoration: const InputDecoration(
-                        hintText: 'marcus.vance@swiftbahamas.com or +1 (242) 555-0199',
+                        hintText: 'alexander.vance@example.com',
                         prefixIcon: Icon(Icons.alternate_email, color: AppColors.textSecondary, size: 20),
                       ),
                     ),
@@ -101,14 +168,28 @@ class CustomerLoginScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const GSTextField(
-                      label: '',
-                      hint: 'Enter your security credentials',
-                      isPassword: true,
-                      prefixIcon: Icons.key_outlined,
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      style: AppTextStyles.bodyLarge,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your account password',
+                        prefixIcon: const Icon(Icons.key_outlined, color: AppColors.textSecondary, size: 20),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: AppColors.textSecondary,
+                            size: 20,
+                          ),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 28),
-                    GSButton(label: 'Sign In →', onTap: () => Navigator.pushNamed(context, '/verify-code')),
+                    GSButton(
+                      label: authProvider.isLoading ? 'Signing In...' : 'Sign In →',
+                      onTap: authProvider.isLoading ? () {} : _handleLogin,
+                    ),
                     const SizedBox(height: 20),
                     // Register card
                     Container(
@@ -125,55 +206,26 @@ class CustomerLoginScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('NEW TO GO SWIFT?', style: AppTextStyles.goldLabel),
+                                Text('Don\'t have an account?', style: AppTextStyles.titleMedium),
                                 const SizedBox(height: 2),
-                                Text(
-                                  'Open your account',
-                                  style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
-                                ),
+                                Text('Create your VIP customer profile', style: AppTextStyles.bodySmall),
                               ],
                             ),
                           ),
                           GestureDetector(
                             onTap: () => Navigator.pushNamed(context, '/customer/register'),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                               decoration: BoxDecoration(
-                                color: AppColors.cyanPill,
+                                color: AppColors.cyanLight,
                                 borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.2)),
                               ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    'Register',
-                                    style: AppTextStyles.labelLarge.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.north_east, size: 14, color: AppColors.cyan),
-                                ],
-                              ),
+                              child: Text('Register', style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 32),
-                    // Footer
-                    Column(
-                      children: [
-                        const Icon(Icons.verified_user_outlined, color: AppColors.textMuted, size: 18),
-                        const SizedBox(height: 6),
-                        Text(
-                          'OFFICIAL TRANSPORT PARTNER',
-                          style: AppTextStyles.labelSmall.copyWith(color: AppColors.textMuted, letterSpacing: 0.8),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'LICENSED BY THE ROAD TRAFFIC DEPARTMENT OF THE BAHAMAS',
-                          style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
                     ),
                     const SizedBox(height: 24),
                   ],

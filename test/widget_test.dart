@@ -6,5 +6,7 @@ void main() {
   testWidgets('GoSwift app smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const GoSwiftApp());
     expect(find.byType(MaterialApp), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(seconds: 4));
   });
 }

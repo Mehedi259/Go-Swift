@@ -1,17 +1,68 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/property_model.dart';
+import '../../../core/services/room_service.dart';
 import '../../../core/widgets/gs_card.dart';
 import '../../../core/widgets/gs_bottom_nav.dart';
 
-class PropertiesSearchScreen extends StatelessWidget {
+class PropertiesSearchScreen extends StatefulWidget {
   const PropertiesSearchScreen({super.key});
+
+  @override
+  State<PropertiesSearchScreen> createState() => _PropertiesSearchScreenState();
+}
+
+class _PropertiesSearchScreenState extends State<PropertiesSearchScreen> {
+  List<PropertyListingModel> _liveProperties = [];
+  bool _isLoading = false;
+
   final _properties = const [
     {'name': 'The Ocean Club Villa', 'type': 'OCEANFRONT VILLA', 'location': 'Paradise Island • 0.2 miles from beach', 'price': '\$1,850/night', 'rating': 4.98, 'reviews': 87, 'badge': 'OCEAN CLUB', 'beds': 5, 'baths': 6},
     {'name': 'Atlantis Royal Suite', 'type': 'RESORT PENTHOUSE', 'location': 'Atlantis Paradise Island • Lagoon view', 'price': '\$2,200/night', 'rating': 4.95, 'reviews': 62, 'badge': 'ATLANTIS', 'beds': 3, 'baths': 4},
     {'name': 'Lyford Cay Estate', 'type': 'PRIVATE ESTATE', 'location': 'Lyford Cay • Gated community • Golf access', 'price': '\$4,500/night', 'rating': 5.0, 'reviews': 28, 'badge': 'LYFORD CAY', 'beds': 7, 'baths': 8},
     {'name': 'Baha Mar Oceanview Villa', 'type': 'RESORT VILLA', 'location': 'Cable Beach • Direct ocean access', 'price': '\$1,200/night', 'rating': 4.92, 'reviews': 145, 'badge': 'BAHA MAR', 'beds': 3, 'baths': 3},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchListings();
+  }
+
+  Future<void> _fetchListings() async {
+    setState(() => _isLoading = true);
+    try {
+      final list = await RoomService().getListings();
+      if (mounted) {
+        setState(() {
+          _liveProperties = list;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  List<Map<String, dynamic>> get _displayList {
+    if (_liveProperties.isNotEmpty) {
+      return _liveProperties.map((l) => {
+        'id': l.id,
+        'name': l.title,
+        'type': l.propertyType.replaceAll('_', ' ').toUpperCase(),
+        'location': '${l.city} • ${l.address}',
+        'price': '\$${l.pricePerNight.toStringAsFixed(0)}/night',
+        'rating': 4.95,
+        'reviews': 45,
+        'badge': l.city.toUpperCase(),
+        'beds': l.bedrooms,
+        'baths': l.bathrooms,
+        'model': l,
+      }).toList();
+    }
+    return _properties;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,21 +112,21 @@ class PropertiesSearchScreen extends StatelessWidget {
                       const Expanded(
                         child: TextField(
                           decoration: InputDecoration(
-                            hintText: 'Search properties, villas, resorts...',
+                            hintText: 'Search villas, penthouses, islands...',
                             prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 20),
                             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryTeal,
-                          borderRadius: BorderRadius.circular(12),
+                      GestureDetector(
+                        onTap: _fetchListings,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(color: AppColors.primaryTeal, borderRadius: BorderRadius.circular(12)),
+                          child: const Icon(Icons.tune, color: Colors.white, size: 20),
                         ),
-                        child: const Icon(Icons.tune, color: Colors.white, size: 20),
                       ),
                     ],
                   ),
@@ -86,23 +137,30 @@ class PropertiesSearchScreen extends StatelessWidget {
                       children: [
                         _filterChip('All Properties', true),
                         const SizedBox(width: 8),
-                        _filterChip('Oceanfront', false),
+                        _filterChip('Oceanfront Villas', false),
                         const SizedBox(width: 8),
-                        _filterChip('Private Pool', false),
+                        _filterChip('Penthouse Suites', false),
                         const SizedBox(width: 8),
-                        _filterChip('Beachfront', false),
+                        _filterChip('Private Islands', false),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
+            // Properties list
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _properties.length,
-                itemBuilder: (c, i) => _PropertyCard(p: _properties[i]),
-              ),
+              child: _isLoading && _liveProperties.isEmpty
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
+                  : RefreshIndicator(
+                      onRefresh: _fetchListings,
+                      color: AppColors.primaryTeal,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: _displayList.length,
+                        itemBuilder: (c, i) => _PropertyCard(p: _displayList[i]),
+                      ),
+                    ),
             ),
           ],
         ),
@@ -141,7 +199,11 @@ class _PropertyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/customer/properties/details'),
+      onTap: () => Navigator.pushNamed(
+        context,
+        '/customer/properties/details',
+        arguments: p['model'] ?? p,
+      ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),
         decoration: BoxDecoration(
@@ -193,6 +255,18 @@ class _PropertyCard extends StatelessWidget {
                   ),
                   Positioned(
                     bottom: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(p['type'] as String, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary)),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 10,
                     right: 10,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -211,13 +285,11 @@ class _PropertyCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(p['type'] as String, style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
-                  const SizedBox(height: 4),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(child: Text(p['name'] as String, style: AppTextStyles.headlineSmall)),
-                      Text(p['price'] as String, style: AppTextStyles.titleLarge.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                      Text(p['price'] as String, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -233,13 +305,13 @@ class _PropertyCard extends StatelessWidget {
                     children: [
                       const Icon(Icons.bed_outlined, size: 16, color: AppColors.textSecondary),
                       const SizedBox(width: 4),
-                      Text('${p['beds']} beds', style: AppTextStyles.bodySmall),
+                      Text('${p['beds']} Beds', style: AppTextStyles.bodySmall),
                       const SizedBox(width: 14),
-                      const Icon(Icons.bathroom_outlined, size: 16, color: AppColors.textSecondary),
+                      const Icon(Icons.bathtub_outlined, size: 16, color: AppColors.textSecondary),
                       const SizedBox(width: 4),
-                      Text('${p['baths']} baths', style: AppTextStyles.bodySmall),
+                      Text('${p['baths']} Baths', style: AppTextStyles.bodySmall),
                       const SizedBox(width: 14),
-                      const Icon(Icons.pool, size: 16, color: AppColors.primaryTeal),
+                      const Icon(Icons.pool_outlined, size: 16, color: AppColors.primaryTeal),
                       const SizedBox(width: 4),
                       Text('Private Pool', style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w600)),
                     ],

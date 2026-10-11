@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/courier_model.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class CourierDeliveryStatusScreen extends StatelessWidget {
@@ -8,6 +9,11 @@ class CourierDeliveryStatusScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final CourierDeliveryModel? delivery = args is CourierDeliveryModel ? args : null;
+    final trackingCode = delivery?.trackingNumber ?? (delivery != null ? '#CS-${delivery.id}' : '#CS-3182');
+    final statusText = (delivery?.status ?? 'IN TRANSIT').toUpperCase();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -40,7 +46,7 @@ class CourierDeliveryStatusScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'PARCEL #CS-3182 • IN TRANSIT',
+                'PARCEL $trackingCode • $statusText',
                 style: AppTextStyles.goldLabel.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold),
               ),
             ),
