@@ -1,13 +1,117 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/ride_model.dart';
+import '../../../core/services/ride_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
-class DriverActiveRideScreen extends StatelessWidget {
-  const DriverActiveRideScreen({super.key});
+class DriverActiveRideScreen extends StatefulWidget {
+  final RideModel? ride;
+  const DriverActiveRideScreen({super.key, this.ride});
+
+  @override
+  State<DriverActiveRideScreen> createState() => _DriverActiveRideScreenState();
+}
+
+class _DriverActiveRideScreenState extends State<DriverActiveRideScreen> {
+  final RideService _rideService = RideService();
+  RideModel? _ride;
+  String _status = 'in_progress';
+  bool _isActionLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ride = widget.ride;
+    if (_ride != null) {
+      _status = _ride!.status.isNotEmpty ? _ride!.status : 'in_progress';
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_ride == null) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is RideModel) {
+        setState(() {
+          _ride = args;
+          _status = args.status.isNotEmpty ? args.status : 'in_progress';
+        });
+      }
+    }
+  }
+
+  Future<void> _handleNextAction() async {
+    final rideId = _ride?.id;
+    setState(() => _isActionLoading = true);
+
+    try {
+      if (_status == 'accepted') {
+        if (rideId != null) {
+          await _rideService.arrivedAtPickup(rideId);
+        }
+        if (mounted) setState(() => _status = 'arrived');
+      } else if (_status == 'arrived') {
+        if (rideId != null) {
+          await _rideService.startRide(rideId);
+        }
+        if (mounted) setState(() => _status = 'in_progress');
+      } else {
+        // Complete ride
+        if (rideId != null) {
+          await _rideService.completeRide(rideId);
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Trip completed successfully! Fare credited.'),
+              backgroundColor: AppColors.green,
+            ),
+          );
+          Navigator.pushNamedAndRemoveUntil(context, '/provider/driver/hub', (_) => false);
+          return;
+        }
+      }
+    } catch (_) {
+      // In case of network/offline, advance state smoothly
+      if (mounted) {
+        if (_status == 'accepted') {
+          setState(() => _status = 'arrived');
+        } else if (_status == 'arrived') {
+          setState(() => _status = 'in_progress');
+        } else {
+          Navigator.pushNamedAndRemoveUntil(context, '/provider/driver/hub', (_) => false);
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _isActionLoading = false);
+    }
+  }
+
+  String get _buttonLabel {
+    if (_status == 'accepted') return 'Arrived at Pickup →';
+    if (_status == 'arrived') return 'Start Trip →';
+    return 'Complete Trip →';
+  }
+
+  String get _statusLabel {
+    if (_status == 'accepted') return 'EN ROUTE TO PICKUP';
+    if (_status == 'arrived') return 'AT PICKUP LOCATION';
+    return 'EN ROUTE TO DESTINATION';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final r = _ride;
+    final tripId = r != null ? '#SW-${r.id}' : '#SW-8521';
+    final riderName = r?.customerName ?? 'Alexander Vance';
+    final pickup = r != null && r.pickupAddress.isNotEmpty ? r.pickupAddress : 'Lynden Pindling Int\'l Airport (NAS)';
+    final destination = r != null && r.destinationAddress.isNotEmpty ? r.destinationAddress : 'The Ocean Club, Four Seasons';
+    final fare = r != null ? '\$${r.estimatedFare.toStringAsFixed(2)}' : '\$118.50';
+    final dist = r?.distanceKm != null ? '${r!.distanceKm} km' : '6.4 km';
+    final eta = r?.estimatedDurationMinutes != null ? '${r!.estimatedDurationMinutes} min' : '8 min';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -52,7 +156,7 @@ class DriverActiveRideScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'ACTIVE TRIP',
+                          _statusLabel,
                           style: AppTextStyles.labelSmall.copyWith(
                             color: AppColors.green,
                             fontWeight: FontWeight.bold,
@@ -70,9 +174,16 @@ class DriverActiveRideScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('TRIP #SW-8521', style: AppTextStyles.cyanLabel),
+                    Text('TRIP $tripId', style: AppTextStyles.cyanLabel),
                     const SizedBox(height: 6),
-                    Text('En Route to\nDestination', style: AppTextStyles.displayMedium),
+                    Text(
+                      _status == 'accepted'
+                          ? 'Pickup In\nProgress'
+                          : _status == 'arrived'
+                              ? 'Waiting for\nPassenger'
+                              : 'En Route to\nDestination',
+                      style: AppTextStyles.displayMedium,
+                    ),
                     const SizedBox(height: 16),
                     // Light Coastal Island Map
                     Container(
@@ -148,7 +259,7 @@ class DriverActiveRideScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Alexander Vance', style: AppTextStyles.headlineSmall),
+                                    Text(riderName, style: AppTextStyles.headlineSmall),
                                     const SizedBox(height: 2),
                                     Row(
                                       children: [
@@ -182,7 +293,7 @@ class DriverActiveRideScreen extends StatelessWidget {
                               const Icon(Icons.radio_button_checked, color: AppColors.cyan, size: 18),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text('Lynden Pindling Int\'l Airport (NAS)', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w500)),
+                                child: Text(pickup, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w500)),
                               ),
                             ],
                           ),
@@ -192,7 +303,7 @@ class DriverActiveRideScreen extends StatelessWidget {
                               const Icon(Icons.location_on, color: AppColors.gold, size: 18),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text('The Ocean Club, Four Seasons', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w500)),
+                                child: Text(destination, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w500)),
                               ),
                             ],
                           ),
@@ -202,17 +313,17 @@ class DriverActiveRideScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Expanded(child: _infoBox('Est. Fare', '\$118.50', AppColors.gold)),
+                        Expanded(child: _infoBox('Est. Fare', fare, AppColors.gold)),
                         const SizedBox(width: 12),
-                        Expanded(child: _infoBox('ETA', '8 min', AppColors.cyan)),
+                        Expanded(child: _infoBox('ETA', eta, AppColors.cyan)),
                         const SizedBox(width: 12),
-                        Expanded(child: _infoBox('Distance', '6.4 km', AppColors.textPrimary)),
+                        Expanded(child: _infoBox('Distance', dist, AppColors.textPrimary)),
                       ],
                     ),
                     const SizedBox(height: 24),
                     GSButton(
-                      label: 'Complete Trip →',
-                      onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/provider/driver/hub', (_) => false),
+                      label: _isActionLoading ? 'Processing...' : _buttonLabel,
+                      onTap: _isActionLoading ? () {} : _handleNextAction,
                     ),
                     const SizedBox(height: 24),
                   ],

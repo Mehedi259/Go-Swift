@@ -37,12 +37,13 @@ class _CourierRequestsScreenState extends State<CourierRequestsScreen> {
     }
   }
 
-  Future<void> _accept(int id) async {
+  Future<void> _accept(int id, CourierDeliveryModel? item) async {
+    CourierDeliveryModel? accepted = item;
     try {
-      await _courierService.acceptDelivery(id);
+      accepted = await _courierService.acceptDelivery(id);
     } catch (_) {}
     if (mounted) {
-      Navigator.pushNamed(context, '/provider/courier/active');
+      Navigator.pushNamed(context, '/provider/courier/active', arguments: accepted);
     }
   }
 
@@ -140,7 +141,7 @@ class _CourierRequestsScreenState extends State<CourierRequestsScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 flex: 2,
-                                child: GSButton(label: 'Accept →', onTap: () => _accept(req.id)),
+                                child: GSButton(label: 'Accept →', onTap: () => _accept(req.id, req)),
                               ),
                             ],
                           ),

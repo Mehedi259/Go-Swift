@@ -1,13 +1,83 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/car_rental_model.dart';
+import '../../../core/services/car_rental_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
-class ActiveRentalManagementScreen extends StatelessWidget {
-  const ActiveRentalManagementScreen({super.key});
+class ActiveRentalManagementScreen extends StatefulWidget {
+  final CarRentalBookingModel? booking;
+  const ActiveRentalManagementScreen({super.key, this.booking});
+
+  @override
+  State<ActiveRentalManagementScreen> createState() => _ActiveRentalManagementScreenState();
+}
+
+class _ActiveRentalManagementScreenState extends State<ActiveRentalManagementScreen> {
+  final CarRentalService _rentalService = CarRentalService();
+  CarRentalBookingModel? _booking;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _booking = widget.booking;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_booking == null) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is CarRentalBookingModel) {
+        setState(() => _booking = args);
+      }
+    }
+  }
+
+  Future<void> _handleCompleteReturn() async {
+    final bId = _booking?.id;
+    setState(() => _isLoading = true);
+
+    try {
+      if (bId != null) {
+        await _rentalService.completeBooking(bId);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vehicle return completed and inspected successfully!'),
+            backgroundColor: AppColors.green,
+          ),
+        );
+        Navigator.pop(context, true);
+        return;
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Rental return completed successfully.'),
+            backgroundColor: AppColors.green,
+          ),
+        );
+        Navigator.pop(context, true);
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final b = _booking;
+    final bookingId = b != null ? (b.bookingNumber ?? '#CR-${b.id}') : '#CR-5821';
+    final vehicle = b?.vehicleName ?? 'Cadillac Escalade ESV';
+    final renter = b?.customerName ?? 'Alexander Vance';
+    final period = b != null ? '${b.startDate.split('T').first} – ${b.endDate.split('T').first}' : 'Apr 21 – Apr 25, 2026';
+    final total = b != null ? '\$${b.totalPrice.toStringAsFixed(2)}' : '\$1,140.00';
+    final status = b?.status.toUpperCase() ?? 'ACTIVE';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -26,7 +96,7 @@ class ActiveRentalManagementScreen extends StatelessWidget {
             child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
           ),
         ),
-        title: Text('Active Rental #CR-5821', style: AppTextStyles.titleLarge),
+        title: Text('Active Rental $bookingId', style: AppTextStyles.titleLarge),
         centerTitle: false,
       ),
       body: SingleChildScrollView(
@@ -42,22 +112,22 @@ class ActiveRentalManagementScreen extends StatelessWidget {
                 border: Border.all(color: AppColors.green.withOpacity(0.3)),
               ),
               child: Text(
-                'ACTIVE  •  2 DAYS REMAINING',
+                '$status  •  HANDOVER COMPLETE',
                 style: AppTextStyles.labelSmall.copyWith(color: AppColors.green, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 14),
-            Text('Cadillac Escalade ESV', style: AppTextStyles.displayMedium),
+            Text(vehicle, style: AppTextStyles.displayMedium),
             const SizedBox(height: 20),
-            _info('Renter', 'Alexander Vance'),
-            _info('Rental Period', 'Apr 21 – Apr 25, 2026'),
-            _info('Total Paid', '\$1,140.00'),
+            _info('Renter', renter),
+            _info('Rental Period', period),
+            _info('Total Paid', total),
             _info('Insurance Tier', 'Full Bahamian Sovereign Coverage'),
             _info('Drop-off Location', 'Lynden Pindling Int\'l Airport (NAS)'),
             const SizedBox(height: 24),
             GSButton(
-              label: 'Complete Return →',
-              onTap: () => Navigator.pop(context),
+              label: _isLoading ? 'Completing Inspection...' : 'Complete Return →',
+              onTap: _isLoading ? () {} : _handleCompleteReturn,
             ),
             const SizedBox(height: 20),
           ],

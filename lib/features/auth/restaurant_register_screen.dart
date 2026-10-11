@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/provider_application_service.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class RestaurantRegisterScreen extends StatefulWidget {
@@ -34,17 +36,29 @@ class _RestaurantRegisterScreenState extends State<RestaurantRegisterScreen> {
   Future<void> _handleRegister() async {
     setState(() => _isLoading = true);
     try {
-      await ProviderApplicationService().updateRestaurantProfile(
-        restaurantName: _restaurantNameController.text.trim(),
-        managerOrHeadChefName: _ownerNameController.text.trim(),
-        contactEmail: _emailController.text.trim(),
-        contactPhone: _phoneController.text.trim(),
-        commercialLine: _phoneController.text.trim(),
-        businessLicenseNumber: _licenseController.text.trim(),
-        islandServiceHub: 'Paradise Island & Ocean Club',
-        cuisineConcept: 'French-Asian Island Fine Dining',
-        averagePrepWindow: '25-35 min',
-      );
+      // Auto-authenticate if credentials are provided and not yet logged in
+      if (!LocalStorage.isLoggedIn && _emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
+        try {
+          await AuthService().login(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+        } catch (_) {}
+      }
+
+      if (LocalStorage.isLoggedIn) {
+        await ProviderApplicationService().updateRestaurantProfile(
+          restaurantName: _restaurantNameController.text.trim(),
+          managerOrHeadChefName: _ownerNameController.text.trim(),
+          contactEmail: _emailController.text.trim(),
+          contactPhone: _phoneController.text.trim(),
+          commercialLine: _phoneController.text.trim(),
+          businessLicenseNumber: _licenseController.text.trim(),
+          islandServiceHub: 'Paradise Island & Ocean Club',
+          cuisineConcept: 'French-Asian Island Fine Dining',
+          averagePrepWindow: '25-35 min',
+        );
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

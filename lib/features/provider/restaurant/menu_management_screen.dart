@@ -34,6 +34,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     _loadMenuData();
   }
 
+  int? _activeCategoryId;
+
   Future<void> _loadMenuData() async {
     try {
       final p = await _providerService.getRestaurantProfile();
@@ -46,6 +48,13 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             _restaurantLocation = p['island_service_hub'];
           }
         });
+      }
+    } catch (_) {}
+
+    try {
+      final cats = await _foodService.getCategories();
+      if (cats.isNotEmpty && cats.first['id'] != null) {
+        _activeCategoryId = cats.first['id'] is int ? cats.first['id'] as int : int.tryParse(cats.first['id'].toString());
       }
     } catch (_) {}
 
@@ -106,8 +115,16 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               if (name.isNotEmpty && price > 0) {
                 Navigator.pop(ctx);
                 try {
+                  int? catId = _activeCategoryId;
+                  if (catId == null) {
+                    final created = await _foodService.createCategory(name: 'Main Menu', description: 'Chef Curated Island Specialties');
+                    if (created['id'] != null) {
+                      catId = created['id'] is int ? created['id'] as int : int.tryParse(created['id'].toString());
+                      _activeCategoryId = catId;
+                    }
+                  }
                   await _foodService.createFoodItem(
-                    categoryId: 1,
+                    categoryId: catId,
                     name: name,
                     description: descCtrl.text.trim(),
                     price: price,

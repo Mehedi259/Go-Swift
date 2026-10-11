@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/food_model.dart';
 import '../../../core/services/food_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
@@ -15,6 +16,35 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   final FoodService _foodService = FoodService();
   String _status = 'PREPARING';
   bool _isUpdating = false;
+  FoodOrderModel? _liveOrder;
+  bool _isLoading = true;
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final int orderId = args?['id'] ?? 2847;
+      _loadOrderDetail(orderId);
+    }
+  }
+
+  Future<void> _loadOrderDetail(int orderId) async {
+    try {
+      final order = await _foodService.getProviderOrderDetail(orderId);
+      if (mounted) {
+        setState(() {
+          _liveOrder = order;
+          _status = order.status.toUpperCase();
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   Future<void> _updateStatus(String newStatus, int orderId) async {
     setState(() => _isUpdating = true);
@@ -62,9 +92,11 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         title: Text('Order #GS-$orderId', style: AppTextStyles.titleLarge),
         centerTitle: false,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.cyan))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
@@ -80,53 +112,89 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            Text('Alexander Vance', style: AppTextStyles.headlineLarge),
+            Text(_liveOrder?.customerName ?? 'Alexander Vance', style: AppTextStyles.headlineLarge),
             const SizedBox(height: 4),
             Row(
               children: [
                 const Icon(Icons.directions_boat_outlined, size: 16, color: AppColors.cyan),
                 const SizedBox(width: 6),
-                Text('Yacht delivery • Slip #12, Albany Marina',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                Expanded(
+                  child: Text(
+                    _liveOrder?.deliveryAddress ?? 'Yacht delivery • Slip #12, Albany Marina',
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 22),
             Text('Order Items', style: AppTextStyles.headlineSmall),
             const SizedBox(height: 12),
-            ...[
-              {'name': 'Yellowfin Tuna Tartare', 'qty': 1, 'price': '\$38.00'},
-              {'name': 'Crispy Black Cod Miso', 'qty': 1, 'price': '\$68.00'},
-              {'name': 'Bahamian Lobster Bisque', 'qty': 2, 'price': '\$84.00'},
-            ].map((item) => Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.card,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: AppColors.cardShadow,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(color: AppColors.cyan, shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          '×${item['qty']} ${item['name']}',
-                          style: AppTextStyles.titleMedium,
+            if (_liveOrder != null && _liveOrder!.items.isNotEmpty)
+              ..._liveOrder!.items.map((item) => Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: AppColors.cardShadow,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(color: AppColors.cyan, shape: BoxShape.circle),
                         ),
-                      ),
-                      Text(
-                        item['price'] as String,
-                        style: AppTextStyles.titleMedium.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                )),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            '×${item.quantity} ${item.name}',
+                            style: AppTextStyles.titleMedium,
+                          ),
+                        ),
+                        Text(
+                          '\$${(item.price * item.quantity).toStringAsFixed(2)}',
+                          style: AppTextStyles.titleMedium.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ))
+            else
+              ...[
+                {'name': 'Yellowfin Tuna Tartare', 'qty': 1, 'price': '\$38.00'},
+                {'name': 'Crispy Black Cod Miso', 'qty': 1, 'price': '\$68.00'},
+                {'name': 'Bahamian Lobster Bisque', 'qty': 2, 'price': '\$84.00'},
+              ].map((item) => Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: AppColors.cardShadow,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(color: AppColors.cyan, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            '×${item['qty']} ${item['name']}',
+                            style: AppTextStyles.titleMedium,
+                          ),
+                        ),
+                        Text(
+                          item['price'] as String,
+                          style: AppTextStyles.titleMedium.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  )),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(18),
@@ -138,8 +206,8 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               ),
               child: Column(
                 children: [
-                  _row('Subtotal', '\$190.00'),
-                  _row('Courier Fee', 'Assigned (Paid)'),
+                  _row('Subtotal', _liveOrder != null ? '\$${_liveOrder!.totalAmount.toStringAsFixed(2)}' : '\$190.00'),
+                  _row('Delivery Fee', _liveOrder?.deliveryFee != null ? '\$${_liveOrder!.deliveryFee!.toStringAsFixed(2)}' : 'Assigned (Paid)'),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Divider(color: AppColors.border),
@@ -149,7 +217,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     children: [
                       Text('TOTAL', style: AppTextStyles.headlineSmall),
                       Text(
-                        '\$202.50',
+                        _liveOrder != null ? '\$${_liveOrder!.totalAmount.toStringAsFixed(2)}' : '\$202.50',
                         style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
                       ),
                     ],

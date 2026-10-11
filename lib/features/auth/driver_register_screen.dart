@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/services/provider_application_service.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class DriverRegisterScreen extends StatefulWidget {
@@ -49,14 +50,16 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   Future<void> _handleSubmit() async {
     setState(() => _isLoading = true);
     try {
-      // Attempt backend provider registration/update
-      await ProviderApplicationService().updateRideProfile(
-        legalName: _nameController.text.trim(),
-        contactEmail: _emailController.text.trim(),
-        contactPhone: '+1 (242) ${_phoneController.text.trim()}',
-        publicServiceDriverLicense: _licenseController.text.trim(),
-        vehicleCategory: _vehicleCategoryKey(_vehicleType),
-      );
+      if (LocalStorage.isLoggedIn) {
+        // Attempt backend provider registration/update
+        await ProviderApplicationService().updateRideProfile(
+          legalName: _nameController.text.trim(),
+          contactEmail: _emailController.text.trim(),
+          contactPhone: '+1 (242) ${_phoneController.text.trim()}',
+          publicServiceDriverLicense: _licenseController.text.trim(),
+          vehicleCategory: _vehicleCategoryKey(_vehicleType),
+        );
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

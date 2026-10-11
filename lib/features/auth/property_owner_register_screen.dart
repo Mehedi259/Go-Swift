@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/provider_application_service.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class PropertyOwnerRegisterScreen extends StatefulWidget {
@@ -34,15 +36,26 @@ class _PropertyOwnerRegisterScreenState extends State<PropertyOwnerRegisterScree
   Future<void> _handleRegister() async {
     setState(() => _isLoading = true);
     try {
-      await ProviderApplicationService().updatePropertyProfile(
-        hostName: _nameController.text.trim(),
-        officialHostEmail: _emailController.text.trim(),
-        mobilePhone: _phoneController.text.trim(),
-        primaryPropertyLocation: 'Paradise Island Beachfront',
-        tourismLicenseNumber: _licenseController.text.trim(),
-        propertyTypology: 'villa',
-        estimatedPortfolioScale: '1-3 properties',
-      );
+      if (!LocalStorage.isLoggedIn && _emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
+        try {
+          await AuthService().login(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+        } catch (_) {}
+      }
+
+      if (LocalStorage.isLoggedIn) {
+        await ProviderApplicationService().updatePropertyProfile(
+          hostName: _nameController.text.trim(),
+          officialHostEmail: _emailController.text.trim(),
+          mobilePhone: _phoneController.text.trim(),
+          primaryPropertyLocation: 'Paradise Island Beachfront',
+          tourismLicenseNumber: _licenseController.text.trim(),
+          propertyTypology: 'villa',
+          estimatedPortfolioScale: '1-3 properties',
+        );
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

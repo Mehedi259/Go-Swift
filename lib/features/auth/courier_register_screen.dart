@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/provider_application_service.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class CourierRegisterScreen extends StatefulWidget {
@@ -32,14 +34,25 @@ class _CourierRegisterScreenState extends State<CourierRegisterScreen> {
   Future<void> _handleRegister() async {
     setState(() => _isLoading = true);
     try {
-      await ProviderApplicationService().updateCourierProfile(
-        legalName: _nameController.text.trim(),
-        contactEmail: _emailController.text.trim(),
-        contactPhone: _phoneController.text.trim(),
-        driverLicenseNumber: _licenseController.text.trim(),
-        operatingIslandZone: 'New Providence & Paradise Island',
-        transportMode: 'car',
-      );
+      if (!LocalStorage.isLoggedIn && _emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
+        try {
+          await AuthService().login(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+        } catch (_) {}
+      }
+
+      if (LocalStorage.isLoggedIn) {
+        await ProviderApplicationService().updateCourierProfile(
+          legalName: _nameController.text.trim(),
+          contactEmail: _emailController.text.trim(),
+          contactPhone: _phoneController.text.trim(),
+          driverLicenseNumber: _licenseController.text.trim(),
+          operatingIslandZone: 'New Providence & Paradise Island',
+          transportMode: 'car',
+        );
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

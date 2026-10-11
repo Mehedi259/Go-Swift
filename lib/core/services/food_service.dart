@@ -159,10 +159,10 @@ class FoodService {
       body: {
         'name': name,
         'price': price,
-        if (description != null) 'description': description,
+        if (description != null) 'culinary_description': description,
         if (categoryId != null) 'category': categoryId,
         if (dietaryTags != null) 'dietary_tags': dietaryTags,
-        'is_available': isAvailable,
+        'available_today': isAvailable,
       },
     );
     return FoodItemModel.fromJson(response as Map<String, dynamic>);

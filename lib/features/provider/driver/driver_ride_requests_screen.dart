@@ -43,14 +43,15 @@ class _DriverRideRequestsScreenState extends State<DriverRideRequestsScreen> {
     }
   }
 
-  Future<void> _handleAccept(int? rideId) async {
+  Future<void> _handleAccept(int? rideId, RideModel? liveRide) async {
+    RideModel? accepted = liveRide;
     if (rideId != null) {
       try {
-        await _rideService.acceptRide(rideId);
+        accepted = await _rideService.acceptRide(rideId);
       } catch (_) {}
     }
     if (mounted) {
-      Navigator.pushNamed(context, '/provider/driver/active-ride');
+      Navigator.pushNamed(context, '/provider/driver/active-ride', arguments: accepted);
     }
   }
 
@@ -195,7 +196,7 @@ class _DriverRideRequestsScreenState extends State<DriverRideRequestsScreen> {
                             flex: 2,
                             child: GSButton(
                               label: 'Accept →',
-                              onTap: () => _handleAccept(rideId),
+                              onTap: () => _handleAccept(rideId, useLive ? _liveRequests[i] : null),
                             ),
                           ),
                         ],

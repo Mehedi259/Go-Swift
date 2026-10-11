@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/provider_application_service.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class RentalProviderRegisterScreen extends StatefulWidget {
@@ -32,15 +34,26 @@ class _RentalProviderRegisterScreenState extends State<RentalProviderRegisterScr
   Future<void> _handleRegister() async {
     setState(() => _isLoading = true);
     try {
-      await ProviderApplicationService().updateRentalProfile(
-        companyOrHostLegalName: 'Prestige Fleet Bahamas Ltd.',
-        operationalContactName: _nameController.text.trim(),
-        businessContactNumber: _phoneController.text.trim(),
-        contactEmail: _emailController.text.trim(),
-        rentalLicenseNumber: _licenseController.text.trim(),
-        primaryOperatingBase: 'Downtown Nassau & Lynden Pindling FBO',
-        estimatedActiveFleetSize: '5-15 vehicles',
-      );
+      if (!LocalStorage.isLoggedIn && _emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
+        try {
+          await AuthService().login(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+        } catch (_) {}
+      }
+
+      if (LocalStorage.isLoggedIn) {
+        await ProviderApplicationService().updateRentalProfile(
+          companyOrHostLegalName: 'Prestige Fleet Bahamas Ltd.',
+          operationalContactName: _nameController.text.trim(),
+          businessContactNumber: _phoneController.text.trim(),
+          contactEmail: _emailController.text.trim(),
+          rentalLicenseNumber: _licenseController.text.trim(),
+          primaryOperatingBase: 'Downtown Nassau & Lynden Pindling FBO',
+          estimatedActiveFleetSize: '5-15 vehicles',
+        );
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

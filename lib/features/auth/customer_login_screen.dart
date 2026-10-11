@@ -215,47 +215,70 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                       onTap: authProvider.isLoading ? () {} : _handleLogin,
                     ),
                     const SizedBox(height: 20),
-                    // Register card
+                    // Quick Role Switcher for seamless simulator & QA testing
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border, width: 0.8),
+                        border: Border.all(color: AppColors.border),
                         boxShadow: AppColors.cardShadow,
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Don\'t have an account?', style: AppTextStyles.titleMedium),
-                                const SizedBox(height: 2),
-                                Text('Create your VIP customer profile', style: AppTextStyles.bodySmall),
-                              ],
-                            ),
+                          Row(
+                            children: [
+                              const Icon(Icons.explore_outlined, color: AppColors.cyan, size: 18),
+                              const SizedBox(width: 8),
+                              Text('EXPLORE ROLES (TESTING MODE)', style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
+                            ],
                           ),
-                          GestureDetector(
-                            onTap: () => Navigator.pushNamed(context, '/customer/register'),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppColors.cyanLight,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.2)),
-                              ),
-                              child: Text('Register', style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
-                            ),
+                          const SizedBox(height: 6),
+                          Text('1-Tap to inspect screens across all provider domains:', style: AppTextStyles.bodySmall),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _demoChip('Customer Hub', Icons.person, () => Navigator.pushNamed(context, '/customer/hub')),
+                              _demoChip('Chauffeur Driver', Icons.directions_car, () => Navigator.pushNamed(context, '/provider/driver/hub')),
+                              _demoChip('Restaurant Partner', Icons.restaurant, () => Navigator.pushNamed(context, '/provider/restaurant/orders')),
+                              _demoChip('Island Courier', Icons.delivery_dining, () => Navigator.pushNamed(context, '/provider/courier/hub')),
+                              _demoChip('Car Rental Host', Icons.car_rental, () => Navigator.pushNamed(context, '/provider/rental/vehicles')),
+                              _demoChip('Property Host', Icons.villa, () => Navigator.pushNamed(context, '/provider/property/listings')),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _demoChip(String title, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.cardTouchpoint,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: AppColors.cyan, size: 14),
+            const SizedBox(width: 5),
+            Text(title, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
           ],
         ),
       ),

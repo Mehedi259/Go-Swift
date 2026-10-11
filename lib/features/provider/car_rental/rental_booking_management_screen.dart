@@ -192,7 +192,14 @@ class _RentalBookingManagementScreenState extends State<RentalBookingManagementS
                       else ...[
                         GSButton(
                           label: 'Manage Active Rental →',
-                          onTap: () => Navigator.pushNamed(context, '/provider/rental/active'),
+                          onTap: () async {
+                            final res = await Navigator.pushNamed(
+                              context,
+                              '/provider/rental/active',
+                              arguments: useLive ? _liveBookings[i] : null,
+                            );
+                            if (res == true) _fetchBookings();
+                          },
                         ),
                       ],
                     ],
