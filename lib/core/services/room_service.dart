@@ -101,6 +101,23 @@ class RoomService {
     );
   }
 
+  Future<Map<String, dynamic>> reviewBooking(
+    int id, {
+    required int rating,
+    String? notes,
+    List<String>? stoodOut,
+  }) async {
+    final response = await _api.post(
+      ApiEndpoints.customerRoomBookingReview(id),
+      body: {
+        'rating': rating,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+        if (stoodOut != null && stoodOut.isNotEmpty) 'stood_out': stoodOut,
+      },
+    );
+    return response as Map<String, dynamic>;
+  }
+
   // --- PROPERTY PROVIDER ---
   Future<List<PropertyListingModel>> getMyListings() async {
     final response = await _api.get(ApiEndpoints.propertyProviderListings);

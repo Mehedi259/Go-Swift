@@ -30,6 +30,7 @@ import 'package:go_swift/features/customer/car_rental/car_rental_search_screen.d
 import 'package:go_swift/features/customer/car_rental/vehicle_details_screen.dart';
 import 'package:go_swift/features/customer/car_rental/car_rental_booking_screen.dart';
 import 'package:go_swift/features/customer/car_rental/active_car_rental_screen.dart';
+import 'package:go_swift/features/customer/car_rental/car_rental_rating_screen.dart';
 import 'package:go_swift/features/customer/properties/properties_search_screen.dart';
 import 'package:go_swift/features/customer/properties/property_details_screen.dart';
 import 'package:go_swift/features/customer/properties/property_booking_screen.dart';
@@ -127,6 +128,7 @@ class GoSwiftApp extends StatelessWidget {
         '/customer/car-rental/vehicle': (c) => const VehicleDetailsScreen(),
         '/customer/car-rental/booking': (c) => const CarRentalBookingScreen(),
         '/customer/car-rental/active': (c) => const ActiveCarRentalScreen(),
+        '/customer/car-rental/rating': (c) => const CarRentalRatingScreen(),
         '/customer/properties/search': (c) => const PropertiesSearchScreen(),
         '/customer/properties/details': (c) => const PropertyDetailsScreen(),
         '/customer/properties/booking': (c) => const PropertyBookingScreen(),

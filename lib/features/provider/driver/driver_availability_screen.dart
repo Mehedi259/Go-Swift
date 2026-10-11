@@ -56,6 +56,27 @@ class _DriverAvailabilityScreenState extends State<DriverAvailabilityScreen> {
         });
       }
     } catch (_) {}
+
+    try {
+      final history = await RideService().getDriverRideHistory();
+      if (mounted && history.isNotEmpty) {
+        double todaySum = 0;
+        int todayTrips = 0;
+        final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+        for (final r in history) {
+          if (r.createdAt != null && r.createdAt!.startsWith(todayStr)) {
+            todaySum += r.finalFare ?? r.estimatedFare;
+            todayTrips++;
+          }
+        }
+        if (todayTrips > 0) {
+          setState(() {
+            _todayEarnings = '\$${todaySum.toStringAsFixed(2)}';
+            _tripsCount = '$todayTrips';
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _toggleOnline() async {

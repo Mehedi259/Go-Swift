@@ -1,13 +1,26 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/car_rental_model.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class ActiveCarRentalScreen extends StatelessWidget {
-  const ActiveCarRentalScreen({super.key});
+  final CarRentalBookingModel? booking;
+  const ActiveCarRentalScreen({super.key, this.booking});
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final CarRentalBookingModel? activeBooking = booking ?? (args is CarRentalBookingModel ? args : null);
+
+    final bookingCode = activeBooking != null ? '#CR-${activeBooking.id}' : '#CR-5821';
+    final vehicleTitle = activeBooking?.vehicleName ?? 'Cadillac Escalade ESV';
+    final vehiclePlate = activeBooking?.licensePlate ?? 'BS-942-EX';
+    final returnDate = activeBooking?.endDate ?? 'Apr 25, 2026';
+    final totalFare = activeBooking?.totalPrice != null
+        ? '\$${activeBooking!.totalPrice.toStringAsFixed(2)}'
+        : '\$1,140.00';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -44,27 +57,27 @@ class ActiveCarRentalScreen extends StatelessWidget {
                 children: [
                   Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
                   const SizedBox(width: 6),
-                  Text('ACTIVE RENTAL • #CR-5821', style: AppTextStyles.labelSmall.copyWith(color: AppColors.green, fontWeight: FontWeight.bold)),
+                  Text('ACTIVE RENTAL • $bookingCode', style: AppTextStyles.labelSmall.copyWith(color: AppColors.green, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            Text('Cadillac Escalade ESV', style: AppTextStyles.displayMedium),
+            Text(vehicleTitle, style: AppTextStyles.displayMedium),
             const SizedBox(height: 2),
-            Text('BS-942-EX • Onyx Black', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w600)),
+            Text('$vehiclePlate • Onyx Black', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w600)),
             const SizedBox(height: 20),
             // Stats
             Row(
               children: [
                 Expanded(child: _stat('Days Remaining', '2 of 4', Icons.calendar_today_outlined, AppColors.primaryTeal)),
                 const SizedBox(width: 12),
-                Expanded(child: _stat('Return Date', 'Apr 25, 2026', Icons.flag_outlined, const Color(0xFF8A5300))),
+                Expanded(child: _stat('Return Date', returnDate, Icons.flag_outlined, const Color(0xFF8A5300))),
               ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _stat('Total Paid', '\$1,140.00', Icons.credit_card, AppColors.green)),
+                Expanded(child: _stat('Total Paid', totalFare, Icons.credit_card, AppColors.green)),
                 const SizedBox(width: 12),
                 Expanded(child: _stat('Fuel Level', 'Full', Icons.local_gas_station_outlined, AppColors.primaryTeal)),
               ],
@@ -82,8 +95,8 @@ class ActiveCarRentalScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _infoRow('License Plate', 'BS-942-EX'),
-                  _infoRow('Color', 'Onyx Black'),
+                  _infoRow('License Plate', vehiclePlate),
+                  _infoRow('Category', 'Luxury Sovereign SUV'),
                   _infoRow('Seats', '6 Passengers'),
                   _infoRow('Max Luggage', '6 Bags'),
                   _infoRow('Insurance', 'Comprehensive — Active'),
@@ -105,7 +118,10 @@ class ActiveCarRentalScreen extends StatelessWidget {
             const SizedBox(height: 24),
             GSButton(label: 'Extend Rental', isSecondary: true, onTap: () {}),
             const SizedBox(height: 12),
-            GSButton(label: 'Return Vehicle →', onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false)),
+            GSButton(
+              label: 'Return Vehicle & Rate Experience →',
+              onTap: () => Navigator.pushNamed(context, '/customer/car-rental/rating', arguments: activeBooking),
+            ),
             const SizedBox(height: 20),
           ],
         ),
@@ -160,7 +176,7 @@ class ActiveCarRentalScreen extends StatelessWidget {
       children: [
         Icon(icon, color: color, size: 22),
         const SizedBox(height: 6),
-        Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+        Text(label, style: AppTextStyles.caption.copyWith(color: color, fontWeight: FontWeight.bold)),
       ],
     ),
   );

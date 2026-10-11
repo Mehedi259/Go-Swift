@@ -94,6 +94,23 @@ class CarRentalService {
     );
   }
 
+  Future<Map<String, dynamic>> reviewBooking(
+    int id, {
+    required int rating,
+    String? notes,
+    List<String>? stoodOut,
+  }) async {
+    final response = await _api.post(
+      ApiEndpoints.customerCarRentalReview(id),
+      body: {
+        'rating': rating,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+        if (stoodOut != null && stoodOut.isNotEmpty) 'stood_out': stoodOut,
+      },
+    );
+    return response as Map<String, dynamic>;
+  }
+
   // --- PROVIDER FLEET ---
   Future<List<RentalVehicleModel>> getFleetVehicles() async {
     final response = await _api.get(ApiEndpoints.rentalProviderVehicles);

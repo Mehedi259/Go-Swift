@@ -13,6 +13,7 @@ class CourierDeliveryModel {
   final double? finalFare;
   final String currency;
   final String? pickupPin;
+  final String? courierName;
   final String? createdAt;
 
   CourierDeliveryModel({
@@ -30,6 +31,7 @@ class CourierDeliveryModel {
     this.finalFare,
     this.currency = 'BSD',
     this.pickupPin,
+    this.courierName,
     this.createdAt,
   });
 
@@ -53,6 +55,7 @@ class CourierDeliveryModel {
       finalFare: json['final_fare'] != null ? double.tryParse(json['final_fare'].toString()) : null,
       currency: json['currency']?.toString() ?? 'BSD',
       pickupPin: json['pickup_handover_pin']?.toString(),
+      courierName: json['courier_name']?.toString() ?? (json['courier'] is Map ? json['courier']['legal_name']?.toString() : null),
       createdAt: json['created_at']?.toString(),
     );
   }

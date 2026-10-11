@@ -92,6 +92,25 @@ class CourierService {
     );
   }
 
+  Future<Map<String, dynamic>> reviewDelivery(
+    int id, {
+    required int rating,
+    String? notes,
+    List<String>? stoodOut,
+    double? tipAmount,
+  }) async {
+    final response = await _api.post(
+      ApiEndpoints.customerCourierDeliveryReview(id),
+      body: {
+        'rating': rating,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+        if (stoodOut != null && stoodOut.isNotEmpty) 'stood_out': stoodOut,
+        if (tipAmount != null && tipAmount > 0) 'tip_amount': tipAmount,
+      },
+    );
+    return response as Map<String, dynamic>;
+  }
+
   // --- COURIER PROVIDER ---
   Future<List<CourierDeliveryModel>> getProviderRequests() async {
     final response = await _api.get(ApiEndpoints.courierProviderRequests);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/ride_model.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class RideCompletedScreen extends StatelessWidget {
@@ -8,6 +9,11 @@ class RideCompletedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ride = ModalRoute.of(context)?.settings.arguments as RideModel?;
+    final tripCode = ride != null ? '#SW-${ride.id}' : '#SW-8492';
+    final dest = ride?.destinationAddress ?? 'The Ocean Club, A Four Seasons Resort';
+    final totalFare = ride != null ? '\$${(ride.finalFare ?? ride.estimatedFare).toStringAsFixed(2)}' : '\$118.50';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -47,15 +53,15 @@ class RideCompletedScreen extends StatelessWidget {
                         children: [
                           Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
                           const SizedBox(width: 6),
-                          Text('TRIP COMPLETED • #SW-8492', style: AppTextStyles.labelSmall.copyWith(color: AppColors.green, fontWeight: FontWeight.bold)),
+                          Text('TRIP COMPLETED • $tripCode', style: AppTextStyles.labelSmall.copyWith(color: AppColors.green, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text('You\'ve Arrived\nSafely', style: AppTextStyles.displayMedium, textAlign: TextAlign.center),
                     const SizedBox(height: 8),
-                    Text('The Ocean Club, A Four Seasons Resort', style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
-                    Text('One Ocean Drive, Paradise Island, Bahamas', style: AppTextStyles.bodySmall, textAlign: TextAlign.center),
+                    Text(dest, style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
+                    Text('Nassau & Paradise Island, Bahamas', style: AppTextStyles.bodySmall, textAlign: TextAlign.center),
                     const SizedBox(height: 28),
                     // Fare breakdown
                     Container(
@@ -84,7 +90,7 @@ class RideCompletedScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text('TOTAL FARE', style: AppTextStyles.titleLarge),
-                              Text('\$118.50', style: AppTextStyles.price.copyWith(fontSize: 22)),
+                              Text(totalFare, style: AppTextStyles.price.copyWith(fontSize: 22)),
                             ],
                           ),
                           const SizedBox(height: 14),
@@ -117,7 +123,10 @@ class RideCompletedScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    GSButton(label: 'Rate Your Ride →', onTap: () => Navigator.pushNamed(context, '/customer/ride/rating')),
+                    GSButton(
+                      label: 'Rate Your Ride →',
+                      onTap: () => Navigator.pushNamed(context, '/customer/ride/rating', arguments: ride),
+                    ),
                     const SizedBox(height: 12),
                     GSButton(
                       label: 'Book Another Ride',

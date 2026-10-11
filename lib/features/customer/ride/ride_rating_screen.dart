@@ -1,20 +1,76 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/ride_model.dart';
+import '../../../core/services/ride_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class RideRatingScreen extends StatefulWidget {
-  const RideRatingScreen({super.key});
-  @override State<RideRatingScreen> createState() => _RideRatingScreenState();
+  final int? rideId;
+  const RideRatingScreen({super.key, this.rideId});
+
+  @override
+  State<RideRatingScreen> createState() => _RideRatingScreenState();
 }
 
 class _RideRatingScreenState extends State<RideRatingScreen> {
   int _rating = 5;
   final _tags = ['On Time', 'Professional', 'Safe Driver', 'Excellent Vehicle', 'Polite & Courteous', 'VIP Experience'];
   final _selected = <int>{};
+  final TextEditingController _commentController = TextEditingController();
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSubmitRating(int? rideId) async {
+    setState(() => _isSubmitting = true);
+    try {
+      if (rideId != null) {
+        final selectedTags = _selected.map((i) => _tags[i]).toList();
+        await RideService().reviewRide(
+          rideId,
+          rating: _rating,
+          notes: _commentController.text.trim().isNotEmpty ? _commentController.text.trim() : null,
+          stoodOut: selectedTags,
+        );
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thank you! Your rating has been recorded.'), backgroundColor: AppColors.green),
+        );
+        Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
+      }
+    } catch (_) {
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    int? resolvedRideId = widget.rideId;
+    String driverName = 'Captain Terrence Rolle';
+    String tripLabel = 'Trip #SW-8492';
+
+    if (args is RideModel) {
+      resolvedRideId = args.id;
+      tripLabel = 'Trip #SW-${args.id}';
+      if (args.driver?.legalName != null) {
+        driverName = args.driver!.legalName!;
+      }
+    } else if (args is int) {
+      resolvedRideId = args;
+      tripLabel = 'Trip #SW-$args';
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -53,7 +109,7 @@ class _RideRatingScreenState extends State<RideRatingScreen> {
             const SizedBox(height: 16),
             Text('Rate Your Chauffeur', style: AppTextStyles.displayMedium, textAlign: TextAlign.center),
             const SizedBox(height: 4),
-            Text('Captain Terrence Rolle • Trip #SW-8492', style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
+            Text('$driverName • $tripLabel', style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
             const SizedBox(height: 28),
             // Stars
             Row(
@@ -104,12 +160,17 @@ class _RideRatingScreenState extends State<RideRatingScreen> {
             Align(alignment: Alignment.centerLeft, child: Text('Additional Comments', style: AppTextStyles.labelSmall)),
             const SizedBox(height: 8),
             TextFormField(
+              controller: _commentController,
               maxLines: 3,
               style: AppTextStyles.bodyLarge,
-              decoration: const InputDecoration(hintText: 'Share your experience with Captain Terrence...'),
+              decoration: InputDecoration(hintText: 'Share your experience with $driverName...'),
             ),
             const SizedBox(height: 28),
-            GSButton(label: 'Submit Rating →', onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false)),
+            GSButton(
+              label: _isSubmitting ? 'Submitting...' : 'Submit Rating →',
+              isLoading: _isSubmitting,
+              onTap: _isSubmitting ? () {} : () => _handleSubmitRating(resolvedRideId),
+            ),
             const SizedBox(height: 14),
             TextButton(
               onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false),

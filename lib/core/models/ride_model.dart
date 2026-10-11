@@ -21,6 +21,7 @@ class RideModel {
   final String? customerPhoneNumber;
   final DriverProfileModel? driver;
   final String? createdAt;
+  final Map<String, dynamic>? review;
 
   String get customerName => customerFullName ?? 'VIP Rider';
 
@@ -47,6 +48,7 @@ class RideModel {
     this.customerPhoneNumber,
     this.driver,
     this.createdAt,
+    this.review,
   });
 
   factory RideModel.fromJson(Map<String, dynamic> json) {
@@ -75,6 +77,7 @@ class RideModel {
       customerPhoneNumber: json['customer_phone_number']?.toString(),
       driver: json['driver'] is Map<String, dynamic> ? DriverProfileModel.fromJson(json['driver'] as Map<String, dynamic>) : null,
       createdAt: json['created_at']?.toString(),
+      review: json['review'] is Map<String, dynamic> ? json['review'] as Map<String, dynamic> : null,
     );
   }
 }

@@ -83,6 +83,7 @@ class CarRentalBookingModel {
   final int totalDays;
   final double totalPrice;
   final String? vehicleName;
+  final String? licensePlate;
   final String? createdAt;
 
   CarRentalBookingModel({
@@ -94,6 +95,7 @@ class CarRentalBookingModel {
     this.totalDays = 1,
     required this.totalPrice,
     this.vehicleName,
+    this.licensePlate,
     this.createdAt,
   });
 
@@ -109,6 +111,7 @@ class CarRentalBookingModel {
       totalDays: json['total_days'] is int ? json['total_days'] : int.tryParse(json['total_days']?.toString() ?? '1') ?? 1,
       totalPrice: double.tryParse(json['total_price']?.toString() ?? '0') ?? 0.0,
       vehicleName: json['vehicle_name']?.toString() ?? (json['vehicle'] is Map ? json['vehicle']['name'] : null),
+      licensePlate: json['license_plate']?.toString() ?? (json['vehicle'] is Map ? json['vehicle']['license_plate']?.toString() : null),
       createdAt: json['created_at']?.toString(),
     );
   }

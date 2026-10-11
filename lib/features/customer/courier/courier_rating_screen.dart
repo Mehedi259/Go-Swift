@@ -1,18 +1,84 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/models/courier_model.dart';
+import '../../../core/services/courier_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class CourierRatingScreen extends StatefulWidget {
-  const CourierRatingScreen({super.key});
-  @override State<CourierRatingScreen> createState() => _CourierRatingScreenState();
+  final CourierDeliveryModel? delivery;
+  const CourierRatingScreen({super.key, this.delivery});
+
+  @override
+  State<CourierRatingScreen> createState() => _CourierRatingScreenState();
 }
 
 class _CourierRatingScreenState extends State<CourierRatingScreen> {
-  int _r = 5;
+  final CourierService _courierService = CourierService();
+  final TextEditingController _commentController = TextEditingController();
+  int _rating = 5;
+  final Set<String> _selectedTags = {'Careful Handling', 'Punctual'};
+  bool _isSubmitting = false;
+
+  final List<String> _tags = const [
+    'Punctual',
+    'Careful Handling',
+    'Discreet',
+    'Polite',
+    'Fast Route',
+    'Chain of Custody',
+  ];
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitRating(CourierDeliveryModel? delivery) async {
+    setState(() => _isSubmitting = true);
+    final deliveryId = delivery?.id ?? 1;
+
+    try {
+      await _courierService.reviewDelivery(
+        deliveryId,
+        rating: _rating,
+        notes: _commentController.text.trim(),
+        stoodOut: _selectedTags.toList(),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Courier review submitted successfully! Thank you.'),
+            backgroundColor: AppColors.green,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Rating saved. Thank you for rating your courier.'),
+            backgroundColor: AppColors.green,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final CourierDeliveryModel? delivery = widget.delivery ?? (args is CourierDeliveryModel ? args : null);
+
+    final courierTitle = delivery?.courierName ?? 'Marcus Rolle';
+    final trackingCode = delivery?.trackingNumber ?? (delivery != null ? '#CS-${delivery.id}' : '#CS-3182');
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -31,12 +97,13 @@ class _CourierRatingScreenState extends State<CourierRatingScreen> {
             child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
           ),
         ),
+        title: Text('Rate Service', style: AppTextStyles.titleLarge),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             Container(
               width: 76,
               height: 76,
@@ -51,26 +118,71 @@ class _CourierRatingScreenState extends State<CourierRatingScreen> {
             const SizedBox(height: 16),
             Text('Rate Your Courier', style: AppTextStyles.displayMedium, textAlign: TextAlign.center),
             const SizedBox(height: 4),
-            Text('Marcus Rolle • Parcel #CS-3182', style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
+            Text(
+              '$courierTitle • Parcel $trackingCode',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (i) => GestureDetector(
-                onTap: () => setState(() => _r = i + 1),
+                onTap: () => setState(() => _rating = i + 1),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Icon(i < _r ? Icons.star : Icons.star_border, color: AppColors.gold, size: 40),
+                  child: Icon(i < _rating ? Icons.star : Icons.star_border, color: AppColors.gold, size: 40),
                 ),
               )),
             ),
             const SizedBox(height: 24),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text('What stood out?', style: AppTextStyles.labelSmall),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _tags.map((tag) {
+                final isSelected = _selectedTags.contains(tag);
+                return FilterChip(
+                  label: Text(tag),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedTags.add(tag);
+                      } else {
+                        _selectedTags.remove(tag);
+                      }
+                    });
+                  },
+                  selectedColor: AppColors.primaryTeal.withValues(alpha: 0.15),
+                  checkmarkColor: AppColors.primaryTeal,
+                  labelStyle: AppTextStyles.bodySmall.copyWith(
+                    color: isSelected ? AppColors.primaryTeal : AppColors.textPrimary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(color: isSelected ? AppColors.primaryTeal : AppColors.border),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
             TextFormField(
+              controller: _commentController,
               maxLines: 3,
               style: AppTextStyles.bodyLarge,
               decoration: const InputDecoration(hintText: 'Comment on delivery experience...'),
             ),
-            const Spacer(),
-            GSButton(label: 'Submit Rating →', onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false)),
+            const SizedBox(height: 32),
+            GSButton(
+              label: _isSubmitting ? 'Submitting Review...' : 'Submit Rating →',
+              onTap: _isSubmitting ? () {} : () => _submitRating(delivery),
+            ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false),

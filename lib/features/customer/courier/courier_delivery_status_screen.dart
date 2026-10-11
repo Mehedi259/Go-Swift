@@ -141,7 +141,7 @@ class CourierDeliveryStatusScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            GSButton(label: 'Parcel Delivered →', onTap: () => Navigator.pushNamed(context, '/customer/courier/rating')),
+            GSButton(label: 'Parcel Delivered →', onTap: () => Navigator.pushNamed(context, '/customer/courier/rating', arguments: delivery)),
             const SizedBox(height: 12),
             GSButton(
               label: 'Return to Hub',

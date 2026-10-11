@@ -38,6 +38,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  List<NotificationModel> get _filteredNotifications {
+    if (_selectedFilter == 0) return _apiNotifications;
+    return _apiNotifications.where((n) {
+      final text = '${n.title} ${n.body}'.toLowerCase();
+      if (_selectedFilter == 1) return text.contains('ride') || text.contains('chauffeur') || text.contains('driver');
+      if (_selectedFilter == 2) return text.contains('food') || text.contains('dining') || text.contains('meal') || text.contains('order');
+      if (_selectedFilter == 3) return text.contains('courier') || text.contains('parcel') || text.contains('package') || text.contains('delivery');
+      return true;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final content = Column(
@@ -109,98 +120,108 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     children: [
                       if (_apiNotifications.isNotEmpty) ...[
-                        _buildSectionHeader('LIVE NOTIFICATIONS', '${_apiNotifications.length} Updates'),
-                  ..._apiNotifications.map((n) => _buildNotificationCard(
-                        category: 'CONCIERGE ALERT',
-                        title: n.title,
-                        body: n.body,
-                        time: (n.createdAt != null && n.createdAt!.length >= 16) ? n.createdAt!.substring(11, 16) : 'Just now',
-                        icon: Icons.notifications_active_outlined,
-                        iconColor: AppColors.cyan,
-                        iconBgColor: AppColors.cyanLight,
-                        badgeText: n.isRead ? 'Read' : 'New',
-                        badgeColor: n.isRead ? AppColors.textSecondary : AppColors.cyan,
-                        badgeBgColor: n.isRead ? AppColors.borderLight : AppColors.cyanLight,
-                        actionText: 'View Details →',
-                      )),
-                ],
-                _buildSectionHeader('VIP CONCIERGE UPDATES', 'Concierge Feed'),
-              _buildNotificationCard(
-                category: 'RIDE • VIP CHAUFFEUR',
-                title: 'Driver Marcus Arriving in 3 Mins',
-                body: 'Mercedes-Maybach S580 (Plate BS-7492) is approaching Odyssey Aviation FBO pickup terminal.',
-                time: 'Just now',
-                icon: Icons.directions_car_outlined,
-                iconColor: AppColors.cyan,
-                iconBgColor: AppColors.cyanLight,
-                badgeText: 'Active Ride',
-                badgeColor: AppColors.cyan,
-                badgeBgColor: AppColors.cyanLight,
-                actionText: 'Track Ride →',
-              ),
-              _buildNotificationCard(
-                category: 'FOOD & DINING',
-                title: 'Order Out for Delivery',
-                body: 'Dune at The Ocean Club has handed your order #SW-FD-892 to Chauffeur Devon.',
-                time: '14m ago',
-                icon: Icons.restaurant_outlined,
-                iconColor: AppColors.gold,
-                iconBgColor: AppColors.goldLight,
-                badgeText: 'In Transit',
-                badgeColor: AppColors.gold,
-                badgeBgColor: AppColors.goldLight,
-                actionText: 'View Food Status →',
-              ),
-
-              _buildSectionHeader('EARLIER TODAY', '2 Updates'),
-              _buildNotificationCard(
-                category: 'COURIER & FREIGHT',
-                title: 'Package Secured & Picked Up',
-                body: 'Courier Liam collected secure documents from Lyford Cay Club Concierge. En route to Downtown Nassau.',
-                time: '1h ago',
-                icon: Icons.local_shipping_outlined,
-                iconColor: AppColors.courierBlue,
-                iconBgColor: AppColors.courierBlueLight,
-                badgeText: 'En Route',
-                badgeColor: AppColors.courierBlue,
-                badgeBgColor: AppColors.courierBlueLight,
-                actionText: 'Live Courier Map →',
-              ),
-              _buildNotificationCard(
-                category: 'CAR RENTAL',
-                title: 'Vehicle Ready for Handover',
-                body: 'Porsche 911 Carrera Cabriolet pre-inspection passed. Ready at Lyford Cay Marina Bay #4.',
-                time: '3h ago',
-                icon: Icons.vpn_key_outlined,
-                iconColor: AppColors.fleetTan,
-                iconBgColor: AppColors.fleetTanLight,
-                badgeText: 'Confirmed',
-                badgeColor: AppColors.fleetTan,
-                badgeBgColor: AppColors.fleetTanLight,
-                actionText: 'View Rental Details →',
-              ),
-
-              _buildSectionHeader('YESTERDAY', '1 Update'),
-              _buildNotificationCard(
-                category: 'PROPERTY & VILLA',
-                title: 'Stay Confirmed & Gate Pass Active',
-                body: 'The Sovereign Ocean Villa booking #BS-STAY-4071 confirmed by Julian Turnquest. Digital gate access code generated.',
-                time: 'Yesterday',
-                icon: Icons.home_work_outlined,
-                iconColor: AppColors.staysTeal,
-                iconBgColor: AppColors.staysTealLight,
-                badgeText: 'Gate Active',
-                badgeColor: AppColors.staysTeal,
-                badgeBgColor: AppColors.staysTealLight,
-                actionText: 'View Property Booking →',
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
+                        _buildSectionHeader('LIVE NOTIFICATIONS', '${_filteredNotifications.length} Updates'),
+                        if (_filteredNotifications.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 32),
+                            child: Center(
+                              child: Text(
+                                'No notifications for this category.',
+                                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                              ),
+                            ),
+                          )
+                        else
+                          ..._filteredNotifications.map((n) => _buildNotificationCard(
+                                category: 'CONCIERGE ALERT',
+                                title: n.title,
+                                body: n.body,
+                                time: (n.createdAt != null && n.createdAt!.length >= 16) ? n.createdAt!.substring(11, 16) : 'Just now',
+                                icon: Icons.notifications_active_outlined,
+                                iconColor: AppColors.cyan,
+                                iconBgColor: AppColors.cyanLight,
+                                badgeText: n.isRead ? 'Read' : 'New',
+                                badgeColor: n.isRead ? AppColors.textSecondary : AppColors.cyan,
+                                badgeBgColor: n.isRead ? AppColors.borderLight : AppColors.cyanLight,
+                                actionText: 'View Details →',
+                              )),
+                      ] else ...[
+                        _buildSectionHeader('VIP CONCIERGE UPDATES', 'Concierge Feed'),
+                        _buildNotificationCard(
+                          category: 'RIDE • VIP CHAUFFEUR',
+                          title: 'Driver Marcus Arriving in 3 Mins',
+                          body: 'Mercedes-Maybach S580 (Plate BS-7492) is approaching Odyssey Aviation FBO pickup terminal.',
+                          time: 'Just now',
+                          icon: Icons.directions_car_outlined,
+                          iconColor: AppColors.cyan,
+                          iconBgColor: AppColors.cyanLight,
+                          badgeText: 'Active Ride',
+                          badgeColor: AppColors.cyan,
+                          badgeBgColor: AppColors.cyanLight,
+                          actionText: 'Track Ride →',
+                        ),
+                        _buildNotificationCard(
+                          category: 'FOOD & DINING',
+                          title: 'Order Out for Delivery',
+                          body: 'Dune at The Ocean Club has handed your order #SW-FD-892 to Chauffeur Devon.',
+                          time: '14m ago',
+                          icon: Icons.restaurant_outlined,
+                          iconColor: AppColors.gold,
+                          iconBgColor: AppColors.goldLight,
+                          badgeText: 'In Transit',
+                          badgeColor: AppColors.gold,
+                          badgeBgColor: AppColors.goldLight,
+                          actionText: 'View Food Status →',
+                        ),
+                        _buildSectionHeader('EARLIER TODAY', '2 Updates'),
+                        _buildNotificationCard(
+                          category: 'COURIER & FREIGHT',
+                          title: 'Package Secured & Picked Up',
+                          body: 'Courier Liam collected secure documents from Lyford Cay Club Concierge. En route to Downtown Nassau.',
+                          time: '1h ago',
+                          icon: Icons.local_shipping_outlined,
+                          iconColor: AppColors.courierBlue,
+                          iconBgColor: AppColors.courierBlueLight,
+                          badgeText: 'En Route',
+                          badgeColor: AppColors.courierBlue,
+                          badgeBgColor: AppColors.courierBlueLight,
+                          actionText: 'Live Courier Map →',
+                        ),
+                        _buildNotificationCard(
+                          category: 'CAR RENTAL',
+                          title: 'Vehicle Ready for Handover',
+                          body: 'Porsche 911 Carrera Cabriolet pre-inspection passed. Ready at Lyford Cay Marina Bay #4.',
+                          time: '3h ago',
+                          icon: Icons.vpn_key_outlined,
+                          iconColor: AppColors.fleetTan,
+                          iconBgColor: AppColors.fleetTanLight,
+                          badgeText: 'Confirmed',
+                          badgeColor: AppColors.fleetTan,
+                          badgeBgColor: AppColors.fleetTanLight,
+                          actionText: 'View Rental Details →',
+                        ),
+                        _buildSectionHeader('YESTERDAY', '1 Update'),
+                        _buildNotificationCard(
+                          category: 'PROPERTY & VILLA',
+                          title: 'Stay Confirmed & Gate Pass Active',
+                          body: 'The Sovereign Ocean Villa booking #BS-STAY-4071 confirmed by Julian Turnquest. Digital gate access code generated.',
+                          time: 'Yesterday',
+                          icon: Icons.home_work_outlined,
+                          iconColor: AppColors.staysTeal,
+                          iconBgColor: AppColors.staysTealLight,
+                          badgeText: 'Gate Active',
+                          badgeColor: AppColors.staysTeal,
+                          badgeBgColor: AppColors.staysTealLight,
+                          actionText: 'View Property Booking →',
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
     return widget.embedded ? content : Scaffold(backgroundColor: AppColors.background, body: SafeArea(child: content));
   }
 
