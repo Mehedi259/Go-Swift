@@ -68,6 +68,26 @@ class LocalStorage {
 
   static bool get isLoggedIn => hasToken();
 
+  // --- PAYMENT CARDS ---
+  static const String _keySavedCards = 'gs_saved_cards';
+
+  static Future<void> savePaymentCards(List<Map<String, dynamic>> cards) async {
+    await init();
+    final jsonStr = jsonEncode(cards);
+    await _prefs!.setString(_keySavedCards, jsonStr);
+  }
+
+  static List<Map<String, dynamic>> getPaymentCards() {
+    final jsonStr = _prefs?.getString(_keySavedCards);
+    if (jsonStr == null || jsonStr.isEmpty) return [];
+    try {
+      final list = jsonDecode(jsonStr) as List;
+      return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   // --- LOGOUT / CLEAR ---
   static Future<void> clearAuth() async {
     await init();

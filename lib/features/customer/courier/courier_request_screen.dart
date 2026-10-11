@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/courier_model.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/courier_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
@@ -13,11 +15,24 @@ class CourierRequestScreen extends StatefulWidget {
 class _CourierRequestScreenState extends State<CourierRequestScreen> {
   int _type = 0;
   bool _isSubmitting = false;
+  bool _initialized = false;
 
   final TextEditingController _pickupController = TextEditingController(text: 'Graycliff Boutique, Downtown Nassau');
   final TextEditingController _dropoffController = TextEditingController(text: 'The Ocean Club, Paradise Island');
   final TextEditingController _recipientNameController = TextEditingController(text: 'Captain Devon Butler');
   final TextEditingController _recipientPhoneController = TextEditingController(text: '+1 (242) 555-0199');
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      final user = Provider.of<AuthProvider>(context, listen: false).user;
+      if (user != null && user.streetAddress != null && user.streetAddress!.isNotEmpty) {
+        _pickupController.text = '${user.streetAddress}${user.city != null ? ", ${user.city}" : ""}';
+      }
+    }
+  }
 
   final _types = [
     {

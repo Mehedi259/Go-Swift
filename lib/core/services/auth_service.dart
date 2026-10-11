@@ -174,19 +174,36 @@ class AuthService {
   }
 
   // --- FAVORITES ---
-  Future<List<dynamic>> getFavorites() async {
+  Future<Map<String, List<dynamic>>> getFavorites() async {
     final response = await _api.get(ApiEndpoints.favorites);
-    if (response is List) return response;
-    if (response is Map && response['results'] is List) return response['results'] as List;
-    return [];
+    if (response is Map) {
+      final map = Map<String, dynamic>.from(response);
+      return {
+        'rides': (map['rides'] as List<dynamic>?) ?? [],
+        'food': (map['food'] as List<dynamic>?) ?? [],
+        'courier': (map['courier'] as List<dynamic>?) ?? [],
+        'car_rentals': (map['car_rentals'] as List<dynamic>?) ?? [],
+        'properties': (map['properties'] as List<dynamic>?) ?? [],
+      };
+    }
+    return {
+      'rides': [],
+      'food': [],
+      'courier': [],
+      'car_rentals': [],
+      'properties': [],
+    };
   }
 
-  Future<Map<String, dynamic>> toggleFavorite({required String itemType, required int itemId}) async {
+  Future<Map<String, dynamic>> toggleFavorite({
+    required String serviceType,
+    required int objectId,
+  }) async {
     final response = await _api.post(
       ApiEndpoints.favoritesToggle,
       body: {
-        'item_type': itemType,
-        'item_id': itemId,
+        'service_type': serviceType,
+        'object_id': objectId,
       },
     );
     return response as Map<String, dynamic>;

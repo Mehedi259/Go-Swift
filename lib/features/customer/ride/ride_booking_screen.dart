@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/ride_model.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/ride_service.dart';
 import '../../../core/widgets/gs_button.dart';
 import '../../../core/widgets/gs_app_bar.dart';
@@ -17,6 +19,7 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
   final _destController = TextEditingController(text: "The Ocean Club, Four Seasons");
   
   bool _isLoading = false;
+  bool _initialized = false;
   FareEstimateModel? _estimate;
 
   final _vehicles = [
@@ -24,6 +27,18 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
     {'name': 'Luxury Sedan', 'type': 'Mercedes-Benz S-Class', 'category': 'luxury_sedan', 'price': '\$65–\$90', 'eta': '6 min', 'icon': Icons.directions_car_outlined, 'badge': ''},
     {'name': 'VIP Sprinter', 'type': 'Mercedes-Benz Sprinter', 'category': 'vip_sprinter', 'price': '\$110–\$160', 'eta': '8 min', 'icon': Icons.airport_shuttle_outlined, 'badge': 'GROUP PREFERRED'},
   ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      final user = Provider.of<AuthProvider>(context, listen: false).user;
+      if (user != null && user.streetAddress != null && user.streetAddress!.isNotEmpty) {
+        _pickupController.text = '${user.streetAddress}${user.city != null ? ", ${user.city}" : ""}';
+      }
+    }
+  }
 
   @override
   void initState() {
