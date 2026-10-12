@@ -88,6 +88,27 @@ class LocalStorage {
     }
   }
 
+  static const String _keyProviderCategory = 'gs_provider_category';
+  static const String _keyActivePortal = 'gs_active_portal';
+
+  static Future<void> saveProviderCategory(String category) async {
+    await init();
+    await _prefs!.setString(_keyProviderCategory, category);
+  }
+
+  static String? getProviderCategory() {
+    return _prefs?.getString(_keyProviderCategory);
+  }
+
+  static Future<void> saveActivePortal(String portal) async {
+    await init();
+    await _prefs!.setString(_keyActivePortal, portal);
+  }
+
+  static String? getActivePortal() {
+    return _prefs?.getString(_keyActivePortal);
+  }
+
   // --- LOGOUT / CLEAR ---
   static Future<void> clearAuth() async {
     await init();
@@ -95,6 +116,8 @@ class LocalStorage {
     await _prefs!.remove(_keyRefreshToken);
     await _prefs!.remove(_keyUser);
     await _prefs!.remove(_keyRole);
+    await _prefs!.remove(_keyProviderCategory);
+    await _prefs!.remove(_keyActivePortal);
   }
 
   static Future<void> clear() => clearAuth();

@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/property_model.dart';
 import '../../../core/services/room_service.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_card.dart';
 
 class PropertyListingsScreen extends StatefulWidget {
@@ -57,7 +58,16 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
+          onTap: () async {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              await LocalStorage.saveActivePortal('customer');
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, '/customer/hub');
+              }
+            }
+          },
           child: Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(

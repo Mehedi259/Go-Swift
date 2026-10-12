@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
+import '../../core/services/provider_application_service.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/widgets/gs_button.dart';
 
@@ -13,29 +14,6 @@ class ChooseAccountTypeScreen extends StatefulWidget {
 
 class _ChooseAccountTypeScreenState extends State<ChooseAccountTypeScreen> {
   int _selected = 0; // 0 = User, 1 = Provider
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (LocalStorage.isLoggedIn && mounted) {
-        final role = (LocalStorage.getUserRole() ?? 'customer').toLowerCase();
-        String destination = '/customer/hub';
-        if (role.contains('driver') || role.contains('chauffeur')) {
-          destination = '/provider/driver/hub';
-        } else if (role.contains('courier')) {
-          destination = '/provider/courier/hub';
-        } else if (role.contains('restaurant')) {
-          destination = '/provider/restaurant/orders';
-        } else if (role.contains('rental')) {
-          destination = '/provider/rental/vehicles';
-        } else if (role.contains('property')) {
-          destination = '/provider/property/listings';
-        }
-        Navigator.pushReplacementNamed(context, destination);
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +91,16 @@ class _ChooseAccountTypeScreenState extends State<ChooseAccountTypeScreen> {
                       buttonLabel: 'Continue as User',
                       isSelected: _selected == 0,
                       onSelect: () => setState(() => _selected = 0),
-                      onContinue: () => Navigator.pushNamed(context, '/customer/login'),
+                      onContinue: () async {
+                        if (LocalStorage.isLoggedIn) {
+                          await LocalStorage.saveActivePortal('customer');
+                          if (context.mounted) {
+                            Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
+                          }
+                        } else {
+                          Navigator.pushNamed(context, '/customer/login');
+                        }
+                      },
                       imagePath: 'assets/images/usercard.png',
                     ),
                     const SizedBox(height: 16),
@@ -129,10 +116,46 @@ class _ChooseAccountTypeScreenState extends State<ChooseAccountTypeScreen> {
                         'VIP private aviation & high-end resort dispatch network',
                         'Flexible schedule with verified Nassau fleet tracking',
                       ],
-                      buttonLabel: 'Apply as Service Provider',
+                      buttonLabel: LocalStorage.isLoggedIn &&
+                              (LocalStorage.getUserRole() ?? '').toLowerCase().contains('provider')
+                          ? 'Continue to Provider Portal'
+                          : 'Apply as Service Provider',
                       isSelected: _selected == 1,
                       onSelect: () => setState(() => _selected = 1),
-                      onContinue: () => Navigator.pushNamed(context, '/provider/service-category'),
+                      onContinue: () async {
+                        if (LocalStorage.isLoggedIn) {
+                          await LocalStorage.saveActivePortal('provider');
+                          String? category = LocalStorage.getProviderCategory();
+                          if (category == null || category.isEmpty) {
+                            category = await ProviderApplicationService().detectActiveProviderCategory();
+                          }
+                          String dest = '/provider/property/listings';
+                          switch (category.toLowerCase()) {
+                            case 'driver':
+                            case 'chauffeur':
+                              dest = '/provider/driver/hub';
+                              break;
+                            case 'courier':
+                              dest = '/provider/courier/hub';
+                              break;
+                            case 'restaurant':
+                              dest = '/provider/restaurant/orders';
+                              break;
+                            case 'rental':
+                              dest = '/provider/rental/vehicles';
+                              break;
+                            case 'property':
+                            default:
+                              dest = '/provider/property/listings';
+                              break;
+                          }
+                          if (context.mounted) {
+                            Navigator.pushNamedAndRemoveUntil(context, dest, (_) => false);
+                          }
+                        } else {
+                          Navigator.pushNamed(context, '/provider/service-category');
+                        }
+                      },
                       isPrimary: false,
                       imagePath: 'assets/images/service provider card.png',
                     ),

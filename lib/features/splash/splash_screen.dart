@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
+import '../../core/services/provider_application_service.dart';
 import '../../core/storage/local_storage.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -37,20 +38,43 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     if (LocalStorage.isLoggedIn) {
       final role = (LocalStorage.getUserRole() ?? 'customer').toLowerCase();
+      final activePortal = LocalStorage.getActivePortal();
       String destination = '/customer/hub';
 
-      if (role.contains('driver') || role.contains('chauffeur')) {
-        destination = '/provider/driver/hub';
-      } else if (role.contains('courier')) {
-        destination = '/provider/courier/hub';
-      } else if (role.contains('restaurant')) {
-        destination = '/provider/restaurant/orders';
-      } else if (role.contains('rental')) {
-        destination = '/provider/rental/vehicles';
-      } else if (role.contains('property')) {
-        destination = '/provider/property/listings';
+      if (role == 'service_provider' || role.contains('provider') || activePortal == 'provider') {
+        String? category = LocalStorage.getProviderCategory();
+        if (category == null || category.isEmpty) {
+          try {
+            category = await ProviderApplicationService().detectActiveProviderCategory();
+          } catch (_) {
+            category = 'property';
+          }
+        }
+
+        switch (category.toLowerCase()) {
+          case 'driver':
+          case 'chauffeur':
+            destination = '/provider/driver/hub';
+            break;
+          case 'courier':
+            destination = '/provider/courier/hub';
+            break;
+          case 'restaurant':
+            destination = '/provider/restaurant/orders';
+            break;
+          case 'rental':
+            destination = '/provider/rental/vehicles';
+            break;
+          case 'property':
+          default:
+            destination = '/provider/property/listings';
+            break;
+        }
+      } else {
+        destination = '/customer/hub';
       }
 
+      if (!mounted) return;
       Navigator.pushReplacementNamed(context, destination);
     } else {
       Navigator.pushReplacementNamed(context, '/choose-account');

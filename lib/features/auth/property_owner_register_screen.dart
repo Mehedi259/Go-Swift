@@ -98,8 +98,8 @@ class _PropertyOwnerRegisterScreenState extends State<PropertyOwnerRegisterScree
           mobilePhone: formattedPhone,
           primaryPropertyLocation: propertyName.isNotEmpty ? propertyName : 'Paradise Island Beachfront',
           tourismLicenseNumber: license,
-          propertyTypology: 'villa',
-          estimatedPortfolioScale: '1-3 properties',
+          propertyTypology: 'luxury_villa',
+          estimatedPortfolioScale: '1_property',
         );
 
         if (mounted) {
@@ -146,8 +146,8 @@ class _PropertyOwnerRegisterScreenState extends State<PropertyOwnerRegisterScree
               'mobile_phone': formattedPhone,
               'primary_property_location': propertyName.isNotEmpty ? propertyName : 'Paradise Island Beachfront',
               'tourism_license_number': license,
-              'property_typology': 'villa',
-              'estimated_portfolio_scale': '1-3 properties',
+              'property_typology': 'luxury_villa',
+              'estimated_portfolio_scale': '1_property',
             },
           });
         } else {

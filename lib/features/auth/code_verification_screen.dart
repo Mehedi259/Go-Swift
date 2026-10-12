@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/provider_application_service.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class CodeVerificationScreen extends StatefulWidget {
@@ -75,14 +77,19 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
         try {
           final prov = ProviderApplicationService();
           if (_providerType == 'property') {
+            final typologyRaw = _providerData!['property_typology']?.toString();
+            final scaleRaw = _providerData!['estimated_portfolio_scale']?.toString();
+            final typology = (typologyRaw == 'villa' || typologyRaw == null) ? 'luxury_villa' : typologyRaw;
+            final scale = (scaleRaw == '1-3 properties' || scaleRaw == null) ? '1_property' : scaleRaw;
+
             await prov.updatePropertyProfile(
               hostName: _providerData!['host_name']?.toString(),
               officialHostEmail: _providerData!['official_host_email']?.toString(),
               mobilePhone: _providerData!['mobile_phone']?.toString(),
               primaryPropertyLocation: _providerData!['primary_property_location']?.toString(),
               tourismLicenseNumber: _providerData!['tourism_license_number']?.toString(),
-              propertyTypology: _providerData!['property_typology']?.toString(),
-              estimatedPortfolioScale: _providerData!['estimated_portfolio_scale']?.toString(),
+              propertyTypology: typology,
+              estimatedPortfolioScale: scale,
             );
           } else if (_providerType == 'rental') {
             await prov.updateRentalProfile(
@@ -118,7 +125,19 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
               vehicleCategory: _providerData!['vehicle_category']?.toString(),
             );
           }
+
+          // Refresh user session so that role is updated to SERVICE_PROVIDER
+          try {
+            await AuthService().getProfile();
+          } catch (_) {}
         } catch (_) {}
+      }
+
+      if (_providerType != null) {
+        await LocalStorage.saveProviderCategory(_providerType!);
+        await LocalStorage.saveActivePortal('provider');
+      } else {
+        await LocalStorage.saveActivePortal('customer');
       }
 
       if (!mounted) return;

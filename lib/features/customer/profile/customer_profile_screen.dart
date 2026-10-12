@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/storage/local_storage.dart';
+import '../../../core/services/provider_application_service.dart';
 
 class CustomerProfileScreen extends StatelessWidget {
   final bool embedded;
@@ -159,6 +161,87 @@ class CustomerProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
+
+                if (auth.user?.role == 'SERVICE_PROVIDER' ||
+                    (LocalStorage.getUserRole() ?? '').toLowerCase() == 'service_provider') ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 24),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryTeal.withValues(alpha: 0.12),
+                          AppColors.gold.withValues(alpha: 0.12),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.primaryTeal.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryTeal,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.storefront_outlined, color: Colors.white, size: 24),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Provider Mode Active', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 2),
+                              Text('Switch to your Host / Provider Portal', style: AppTextStyles.bodySmall),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryTeal,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          ),
+                          onPressed: () async {
+                            await LocalStorage.saveActivePortal('provider');
+                            String? category = LocalStorage.getProviderCategory();
+                            if (category == null || category.isEmpty) {
+                              category = await ProviderApplicationService().detectActiveProviderCategory();
+                            }
+                            String dest = '/provider/property/listings';
+                            switch (category.toLowerCase()) {
+                              case 'driver':
+                              case 'chauffeur':
+                                dest = '/provider/driver/hub';
+                                break;
+                              case 'courier':
+                                dest = '/provider/courier/hub';
+                                break;
+                              case 'restaurant':
+                                dest = '/provider/restaurant/orders';
+                                break;
+                              case 'rental':
+                                dest = '/provider/rental/vehicles';
+                                break;
+                              case 'property':
+                              default:
+                                dest = '/provider/property/listings';
+                                break;
+                            }
+                            if (context.mounted) {
+                              Navigator.pushReplacementNamed(context, dest);
+                            }
+                          },
+                          child: const Text('Switch', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 // Wallet & Currency
                 Row(

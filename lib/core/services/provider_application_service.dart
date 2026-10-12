@@ -1,6 +1,7 @@
 import 'dart:io';
 import '../network/api_client.dart';
 import '../network/api_endpoints.dart';
+import '../storage/local_storage.dart';
 
 class ProviderApplicationService {
   final ApiClient _api = ApiClient.instance;
@@ -475,5 +476,56 @@ class ProviderApplicationService {
         ? await _api.multipartRequest('POST', ApiEndpoints.providerPropertySubmit, fields: fields, files: files)
         : await _api.post(ApiEndpoints.providerPropertySubmit, body: fields);
     return response as Map<String, dynamic>;
+  }
+
+  // =========================================================================
+  // 6. CATEGORY RESOLUTION FOR SERVICE PROVIDERS
+  // =========================================================================
+
+  Future<String> detectActiveProviderCategory() async {
+    final cached = LocalStorage.getProviderCategory();
+    if (cached != null && cached.isNotEmpty) return cached;
+
+    try {
+      final res = await getPropertyProfile();
+      if (res['id'] != null) {
+        await LocalStorage.saveProviderCategory('property');
+        return 'property';
+      }
+    } catch (_) {}
+
+    try {
+      final res = await getRentalProfile();
+      if (res['id'] != null) {
+        await LocalStorage.saveProviderCategory('rental');
+        return 'rental';
+      }
+    } catch (_) {}
+
+    try {
+      final res = await getRideProfile();
+      if (res['id'] != null) {
+        await LocalStorage.saveProviderCategory('driver');
+        return 'driver';
+      }
+    } catch (_) {}
+
+    try {
+      final res = await getRestaurantProfile();
+      if (res['id'] != null) {
+        await LocalStorage.saveProviderCategory('restaurant');
+        return 'restaurant';
+      }
+    } catch (_) {}
+
+    try {
+      final res = await getCourierProfile();
+      if (res['id'] != null) {
+        await LocalStorage.saveProviderCategory('courier');
+        return 'courier';
+      }
+    } catch (_) {}
+
+    return 'property';
   }
 }
