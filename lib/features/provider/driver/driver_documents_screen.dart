@@ -14,11 +14,11 @@ class DriverDocumentsScreen extends StatefulWidget {
 class _DriverDocumentsScreenState extends State<DriverDocumentsScreen> {
   final ProviderApplicationService _providerService = ProviderApplicationService();
   bool _isLoading = true;
-  String _licenseNumber = 'BS-DL-4920';
-  String _licensePlate = 'BS-942-EX';
-  String _vinNumber = '1GYS4HKJ8NR129482';
-  String _vehicleInfo = '2025 Cadillac Escalade';
-  String _verificationStatus = 'Verified';
+  String _licenseNumber = 'Pending Verification';
+  String _licensePlate = 'Pending Assignment';
+  String _vinNumber = 'Pending Verification';
+  String _vehicleInfo = 'Fleet Vehicle Pending';
+  String _verificationStatus = 'Under Review';
   bool _hasPublicServiceFile = false;
   bool _hasNidFile = false;
   bool _hasBahamianDlFile = false;

@@ -14,16 +14,10 @@ class RentalEarningsScreen extends StatefulWidget {
 class _RentalEarningsScreenState extends State<RentalEarningsScreen> {
   final CarRentalService _rentalService = CarRentalService();
   bool _isLoading = true;
-  String _totalMonthly = '\$4,200.00';
-  String _activeRentals = '1';
-  String _confirmedCount = '2';
+  String _totalMonthly = '\$0.00';
+  String _activeRentals = '0';
+  String _confirmedCount = '0';
   List<CarRentalBookingModel> _liveBookings = [];
-
-  final List<Map<String, String>> _fallbackPayouts = [
-    {'vehicle': 'Cadillac Escalade ESV', 'dates': 'Apr 21 – 25', 'payout': '\$1,140.00', 'renter': 'Alexander Vance'},
-    {'vehicle': 'Range Rover Sport', 'dates': 'Apr 14 – 18', 'payout': '\$980.00', 'renter': 'Victoria Stubbs'},
-    {'vehicle': 'Lamborghini Urus', 'dates': 'Apr 02 – 05', 'payout': '\$2,550.00', 'renter': 'David Sterling'},
-  ];
 
   @override
   void initState() {
@@ -32,6 +26,7 @@ class _RentalEarningsScreenState extends State<RentalEarningsScreen> {
   }
 
   Future<void> _loadData() async {
+    setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
         _rentalService.getProviderStats().catchError((_) => <String, dynamic>{}),
@@ -69,9 +64,13 @@ class _RentalEarningsScreenState extends State<RentalEarningsScreen> {
                 completed++;
               }
             }
-            if (total > 0) _totalMonthly = '\$${total.toStringAsFixed(2)}';
+            _totalMonthly = '\$${total.toStringAsFixed(2)}';
             if (active > 0) _activeRentals = '$active';
             if (completed > 0) _confirmedCount = '$completed';
+          } else {
+            _totalMonthly = '\$0.00';
+            _activeRentals = '0';
+            _confirmedCount = '0';
           }
         });
       }
@@ -82,15 +81,11 @@ class _RentalEarningsScreenState extends State<RentalEarningsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final useLive = _liveBookings.isNotEmpty;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: Text('Fleet Earnings', style: AppTextStyles.titleLarge),
-        centerTitle: false,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Container(
@@ -104,56 +99,85 @@ class _RentalEarningsScreenState extends State<RentalEarningsScreen> {
             child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
           ),
         ),
+        title: Text('Fleet Revenue', style: AppTextStyles.titleLarge),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: AppColors.primaryTeal),
+            onPressed: _loadData,
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.cyan))
           : RefreshIndicator(
+              color: AppColors.primaryTeal,
               onRefresh: _loadData,
-              color: AppColors.cyan,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Hero revenue card
                     Container(
                       padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(
                         color: AppColors.card,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(22),
                         border: Border.all(color: AppColors.border),
                         boxShadow: AppColors.cardShadow,
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Total Earnings This Month', style: AppTextStyles.bodyMedium),
-                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('FLEET REVENUE', style: AppTextStyles.caption.copyWith(letterSpacing: 1.2)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.goldLight,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text('BAHAMAS DISPATCH', style: AppTextStyles.goldLabel),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
                           Text(
                             _totalMonthly,
-                            style: AppTextStyles.price.copyWith(color: AppColors.gold, fontSize: 36),
+                            style: AppTextStyles.price.copyWith(fontSize: 42, color: AppColors.gold),
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Net payout deposited directly to Bahamas bank account',
+                            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Divider(color: AppColors.border, height: 1),
+                          ),
                           Row(
                             children: [
-                              Expanded(child: _statPill('Active Rentals', _activeRentals, AppColors.green)),
-                              const SizedBox(width: 12),
-                              Expanded(child: _statPill('Completed', _confirmedCount, AppColors.cyan)),
+                              Expanded(child: _subStat('ACTIVE RENTALS', _activeRentals)),
+                              Expanded(child: _subStat('COMPLETED', _confirmedCount)),
                             ],
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Recent Rental Payouts', style: AppTextStyles.headlineSmall),
-                        if (useLive)
-                          Text('${_liveBookings.length} bookings', style: AppTextStyles.bodySmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
+                    Text('Fleet Performance', style: AppTextStyles.headlineSmall),
                     const SizedBox(height: 12),
-                    if (useLive)
+                    _breakdownRow('Rental Daily Base Fees', _totalMonthly),
+                    _breakdownRow('Concierge Fleet Handover Fees', '\$0.00'),
+                    _breakdownRow('Insurance Reimbursements', 'Included'),
+                    const SizedBox(height: 24),
+                    Text('Rental Payouts & Bookings', style: AppTextStyles.headlineSmall),
+                    const SizedBox(height: 12),
+                    if (_liveBookings.isNotEmpty)
                       ..._liveBookings.map((b) => Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
@@ -196,44 +220,25 @@ class _RentalEarningsScreenState extends State<RentalEarningsScreen> {
                             ),
                           ))
                     else
-                      ..._fallbackPayouts.map((p) => Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.card,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.border),
-                              boxShadow: AppColors.cardShadow,
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.cardTouchpoint,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(Icons.directions_car, color: AppColors.cyan, size: 22),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(p['vehicle']!, style: AppTextStyles.titleMedium),
-                                      const SizedBox(height: 2),
-                                      Text('${p['renter']} • ${p['dates']}', style: AppTextStyles.bodySmall),
-                                    ],
-                                  ),
-                                ),
-                                Text(
-                                  p['payout']!,
-                                  style: AppTextStyles.titleLarge.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          )),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              const Icon(Icons.receipt_long_outlined, size: 36, color: AppColors.textSecondary),
+                              const SizedBox(height: 8),
+                              Text('No Rental Payouts Recorded Yet', style: AppTextStyles.titleMedium),
+                              const SizedBox(height: 4),
+                              Text('Confirmed rental bookings will stream into your fleet ledger here.', style: AppTextStyles.bodySmall, textAlign: TextAlign.center),
+                            ],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -241,18 +246,28 @@ class _RentalEarningsScreenState extends State<RentalEarningsScreen> {
     );
   }
 
-  Widget _statPill(String label, String value, Color color) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+  Widget _subStat(String l, String v) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l, style: AppTextStyles.caption.copyWith(letterSpacing: 1)),
+          const SizedBox(height: 2),
+          Text(v, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        ],
+      );
+
+  Widget _breakdownRow(String l, String v) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.cardTouchpoint,
-          borderRadius: BorderRadius.circular(14),
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.border),
         ),
-        child: Column(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(value, style: AppTextStyles.titleLarge.copyWith(color: color, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 2),
-            Text(label, style: AppTextStyles.bodySmall),
+            Text(l, style: AppTextStyles.bodyMedium),
+            Text(v, style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
           ],
         ),
       );

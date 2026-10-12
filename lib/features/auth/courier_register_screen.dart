@@ -14,12 +14,23 @@ class CourierRegisterScreen extends StatefulWidget {
 }
 
 class _CourierRegisterScreenState extends State<CourierRegisterScreen> {
-  final _nameController = TextEditingController(text: 'Marcus Rolle');
-  final _emailController = TextEditingController(text: 'marcus.rolle@swiftcourier.bs');
-  final _phoneController = TextEditingController(text: '+1 (242) 555-0182');
-  final _licenseController = TextEditingController(text: 'BL-94281-NP');
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _licenseController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = LocalStorage.getUser();
+    if (user != null) {
+      if (user.fullName.isNotEmpty) _nameController.text = user.fullName;
+      if (user.email.isNotEmpty) _emailController.text = user.email;
+      if (user.phone.isNotEmpty) _phoneController.text = user.phone;
+    }
+  }
 
   @override
   void dispose() {
@@ -116,7 +127,7 @@ class _CourierRegisterScreenState extends State<CourierRegisterScreen> {
               style: AppTextStyles.bodyMedium,
             ),
             const SizedBox(height: 28),
-            _field('Full Legal Name', Icons.person_outline, 'e.g. James Thompson', controller: _nameController),
+            _field('Full Legal Name', Icons.person_outline, 'e.g. Full Legal Name', controller: _nameController),
             const SizedBox(height: 16),
             _field('Business / Email Address', Icons.mail_outline, 'business@example.bs', controller: _emailController),
             const SizedBox(height: 16),

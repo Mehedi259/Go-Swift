@@ -214,7 +214,7 @@ class _RideWaitingScreenState extends State<RideWaitingScreen> {
                     Center(
                       child: GestureDetector(
                         onTap: () => Navigator.pushNamed(context, '/customer/ride/driver-accepted', arguments: ride),
-                        child: Text('Simulate: Driver Accepted →', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
+                        child: Text('View Chauffeur Dispatch Status →', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
                       ),
                     ),
                     const SizedBox(height: 24),

@@ -38,8 +38,23 @@ class _CourierActiveDeliveryScreenState extends State<CourierActiveDeliveryScree
           _delivery = args;
           _status = args.status.isNotEmpty ? args.status : 'in_transit';
         });
+      } else {
+        _fetchActiveDelivery();
       }
     }
+  }
+
+  Future<void> _fetchActiveDelivery() async {
+    try {
+      final list = await _courierService.getProviderRequests();
+      final active = list.where((d) => d.status != 'delivered' && d.status != 'cancelled').toList();
+      if (active.isNotEmpty && mounted) {
+        setState(() {
+          _delivery = active.first;
+          _status = _delivery!.status.isNotEmpty ? _delivery!.status : 'in_transit';
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _handleStatusProgression() async {
@@ -104,12 +119,12 @@ class _CourierActiveDeliveryScreenState extends State<CourierActiveDeliveryScree
   @override
   Widget build(BuildContext context) {
     final d = _delivery;
-    final trackNum = d != null ? d.trackingNumber : '#CS-3182';
-    final pickup = d != null && d.pickupAddress.isNotEmpty ? d.pickupAddress : 'Graycliff Boutique, Nassau';
-    final dropoff = d != null && d.dropoffAddress.isNotEmpty ? d.dropoffAddress : 'The Ocean Club, Paradise Island';
+    final trackNum = d != null ? d.trackingNumber : 'ACTIVE DISPATCH';
+    final pickup = d != null && d.pickupAddress.isNotEmpty ? d.pickupAddress : 'Designated Dispatch Point';
+    final dropoff = d != null && d.dropoffAddress.isNotEmpty ? d.dropoffAddress : 'Designated Drop-off Destination';
     final recipient = d?.recipientName ?? 'Concierge Desk';
-    final packageDesc = d?.packageDescription ?? d?.packageSize ?? 'Standard Parcel';
-    final fee = d != null ? '\$${d.fee.toStringAsFixed(2)}' : '\$42.00';
+    final packageDesc = d?.packageDescription ?? d?.packageSize ?? 'Bonded Courier Parcel';
+    final fee = d != null ? '\$${d.fee.toStringAsFixed(2)}' : 'Escrow Protected';
 
     return Scaffold(
       backgroundColor: AppColors.background,

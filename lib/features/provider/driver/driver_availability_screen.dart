@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/ride_model.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/services/provider_application_service.dart';
 import '../../../core/services/ride_service.dart';
 import 'driver_earnings_screen.dart';
@@ -18,10 +19,10 @@ class DriverAvailabilityScreen extends StatefulWidget {
 class _DriverAvailabilityScreenState extends State<DriverAvailabilityScreen> {
   bool _online = true;
   int _nav = 0;
-  String _driverName = 'Captain Terrence Rolle';
-  String _driverTitle = 'VIP Chauffeur • #CH-402';
-  String _todayEarnings = '\$284.00';
-  String _tripsCount = '8';
+  String _driverName = LocalStorage.getUser()?.fullName.isNotEmpty == true ? LocalStorage.getUser()!.fullName : 'VIP Chauffeur';
+  String _driverTitle = 'VIP Chauffeur • Verified';
+  String _todayEarnings = '\$0.00';
+  String _tripsCount = '0';
   List<RideModel> _incomingRequests = [];
 
   @override
@@ -395,11 +396,46 @@ class _RideRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tripCode = ride != null ? '#SW-${ride!.id}' : 'TRIP #SW-8521';
-    final pickup = ride?.pickupAddress ?? "Lynden Pindling Int'l Airport (NAS)";
-    final destination = ride?.destinationAddress ?? 'The Ocean Club, Paradise Island';
-    final fare = ride?.estimatedFare != null ? '\$${ride!.estimatedFare}' : '\$118.50';
-    final dist = ride?.distanceKm != null ? '${ride!.distanceKm} km' : '14.2 km';
+    if (ride == null) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 8),
+                Text('DISPATCH LISTENER ACTIVE', style: AppTextStyles.labelSmall.copyWith(color: AppColors.green, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text('Awaiting Chauffeur Requests', style: AppTextStyles.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              'Listening for dispatch requests across New Providence. You will be prompted instantly when a VIP booking is dispatched.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final tripCode = '#SW-${ride!.id}';
+    final pickup = ride!.pickupAddress;
+    final destination = ride!.destinationAddress;
+    final fare = '\$${ride!.estimatedFare.toStringAsFixed(2)}';
+    final dist = ride!.distanceKm != null ? '${ride!.distanceKm} km' : 'En Route';
 
     return Container(
       padding: const EdgeInsets.all(16),

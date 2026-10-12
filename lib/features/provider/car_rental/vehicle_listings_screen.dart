@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/car_rental_model.dart';
 import '../../../core/services/car_rental_service.dart';
+import '../../../core/widgets/gs_button.dart';
 
 class VehicleListingsScreen extends StatefulWidget {
   const VehicleListingsScreen({super.key});
@@ -15,15 +16,9 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
   final CarRentalService _rentalService = CarRentalService();
   List<CarRentalVehicleModel> _liveVehicles = [];
   bool _isLoading = true;
-  String _totalFleet = '3';
-  String _activeRentals = '1';
-  String _monthlyEarnings = '\$4,200';
-
-  final List<Map<String, dynamic>> _fallbackVehicles = [
-    {'name': 'Cadillac Escalade ESV', 'plate': 'BS-942-EX', 'status': 'Active Rental', 'rate': '\$285/day', 'color': AppColors.green},
-    {'name': 'Range Rover Sport', 'plate': 'BS-441-YZ', 'status': 'Available', 'rate': '\$245/day', 'color': AppColors.cyan},
-    {'name': 'Lamborghini Urus', 'plate': 'BS-009-LM', 'status': 'Maintenance', 'rate': '\$850/day', 'color': AppColors.gold},
-  ];
+  String _totalFleet = '0';
+  String _activeRentals = '0';
+  String _monthlyEarnings = '\$0';
 
   @override
   void initState() {
@@ -32,6 +27,7 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
   }
 
   Future<void> _loadFleetData() async {
+    setState(() => _isLoading = true);
     try {
       final stats = await _rentalService.getProviderStats();
       if (mounted && stats.isNotEmpty) {
@@ -61,12 +57,20 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
       if (mounted) {
         setState(() {
           _liveVehicles = list;
+          _totalFleet = '${list.length}';
           _isLoading = false;
         });
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _deleteVehicle(int id) async {
+    try {
+      await _rentalService.deleteVehicle(id);
+      _loadFleetData();
+    } catch (_) {}
   }
 
   void _showAddVehicleDialog() {
@@ -79,38 +83,43 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Add Fleet Vehicle', style: AppTextStyles.headlineSmall),
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Add Fleet Vehicle', style: AppTextStyles.titleLarge),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: makeCtrl,
-                decoration: const InputDecoration(labelText: 'Make', hintText: 'e.g. Mercedes-Benz'),
+                style: AppTextStyles.bodyMedium,
+                decoration: const InputDecoration(labelText: 'Make (e.g. Cadillac, Mercedes)'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: modelCtrl,
-                decoration: const InputDecoration(labelText: 'Model', hintText: 'e.g. G 63 AMG'),
+                style: AppTextStyles.bodyMedium,
+                decoration: const InputDecoration(labelText: 'Model (e.g. Escalade ESV)'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: yearCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Year', hintText: '2024'),
+                style: AppTextStyles.bodyMedium,
+                decoration: const InputDecoration(labelText: 'Year'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: plateCtrl,
-                decoration: const InputDecoration(labelText: 'License Plate', hintText: 'BS-882-VIP'),
+                style: AppTextStyles.bodyMedium,
+                decoration: const InputDecoration(labelText: 'License Plate (e.g. BS-942-EX)'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: rateCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Daily Rate (\$)', hintText: '350.00'),
+                style: AppTextStyles.bodyMedium,
+                decoration: const InputDecoration(labelText: 'Daily Rate USD / BSD'),
               ),
             ],
           ),
@@ -155,9 +164,6 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final useLive = _liveVehicles.isNotEmpty;
-    final count = useLive ? _liveVehicles.length : _fallbackVehicles.length;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -236,92 +242,113 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: count,
-                    itemBuilder: (c, i) {
-                      final String name;
-                      final String plate;
-                      final String status;
-                      final String rate;
-                      final Color statusColor;
+                : RefreshIndicator(
+                    color: AppColors.primaryTeal,
+                    onRefresh: _loadFleetData,
+                    child: _liveVehicles.isEmpty
+                        ? _buildEmptyState()
+                        : ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: _liveVehicles.length,
+                            itemBuilder: (c, i) {
+                              final v = _liveVehicles[i];
+                              final name = '${v.make ?? ''} ${v.model ?? ''} (${v.year ?? ''})'.trim();
+                              final plate = v.licensePlate ?? 'BS-NP';
+                              final status = v.isAvailable ? 'Available' : 'Booked';
+                              final rate = '\$${v.dailyRate.toStringAsFixed(0)}/day';
+                              final statusColor = v.isAvailable ? AppColors.cyan : AppColors.green;
 
-                      if (useLive) {
-                        final v = _liveVehicles[i];
-                        name = '${v.make ?? ''} ${v.model ?? ''} (${v.year ?? ''})'.trim();
-                        plate = v.licensePlate ?? 'BS-NP';
-                        status = v.isAvailable ? 'Available' : 'Booked';
-                        rate = '\$${v.dailyRate}/day';
-                        statusColor = v.isAvailable ? AppColors.cyan : AppColors.green;
-                      } else {
-                        final v = _fallbackVehicles[i];
-                        name = v['name'] as String;
-                        plate = v['plate'] as String;
-                        status = v['status'] as String;
-                        rate = v['rate'] as String;
-                        statusColor = v['color'] as Color;
-                      }
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: AppColors.cardShadow,
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              height: 110,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14),
-                                color: AppColors.cardTouchpoint,
-                              ),
-                              child: const Center(
-                                child: Icon(Icons.directions_car, size: 54, color: AppColors.cyan),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(name, style: AppTextStyles.titleMedium),
-                                    const SizedBox(height: 2),
-                                    Text(plate, style: AppTextStyles.bodySmall),
-                                  ],
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.card,
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(color: AppColors.border),
+                                  boxShadow: AppColors.cardShadow,
                                 ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                child: Column(
                                   children: [
-                                    Text(
-                                      rate,
-                                      style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
-                                    ),
-                                    const SizedBox(height: 2),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      height: 110,
                                       decoration: BoxDecoration(
-                                        color: statusColor.withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(14),
+                                        color: AppColors.cardTouchpoint,
                                       ),
-                                      child: Text(
-                                        status,
-                                        style: AppTextStyles.caption.copyWith(color: statusColor, fontWeight: FontWeight.bold),
+                                      child: Stack(
+                                        children: [
+                                          Center(
+                                            child: Icon(
+                                              Icons.directions_car,
+                                              size: 54,
+                                              color: AppColors.cyan.withValues(alpha: 0.4),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            top: 8,
+                                            left: 8,
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(alpha: 0.9),
+                                                borderRadius: BorderRadius.circular(6),
+                                                border: Border.all(color: AppColors.border),
+                                              ),
+                                              child: Text(plate, style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            top: 8,
+                                            right: 8,
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: statusColor.withValues(alpha: 0.15),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(status, style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontWeight: FontWeight.bold)),
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(name, style: AppTextStyles.titleMedium),
+                                        Text(rate, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold)),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () => _deleteVehicle(v.id),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(vertical: 10),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.error.withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  'Remove',
+                                                  style: AppTextStyles.labelSmall.copyWith(color: AppColors.error, fontWeight: FontWeight.bold),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                              );
+                            },
+                          ),
                   ),
           ),
         ],
@@ -329,22 +356,57 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
     );
   }
 
-  Widget _stat(String val, String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppColors.cardShadow,
-      ),
-      child: Column(
-        children: [
-          Text(val, style: AppTextStyles.price.copyWith(color: color, fontSize: 20)),
-          const SizedBox(height: 2),
-          Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
-        ],
+  Widget _buildEmptyState() {
+    return Center(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.cardTouchpoint,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Icon(Icons.directions_car_outlined, size: 38, color: AppColors.primaryTeal),
+            ),
+            const SizedBox(height: 20),
+            Text('No Fleet Vehicles Registered', style: AppTextStyles.headlineSmall, textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(
+              'Add your luxury SUVs and executive fleet vehicles to receive guest bookings in the Bahamas.',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            GSButton(
+              label: 'Add Vehicle to Fleet →',
+              onTap: _showAddVehicleDialog,
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  Widget _stat(String v, String l, Color c) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Column(
+          children: [
+            Text(v, style: AppTextStyles.headlineSmall.copyWith(color: c, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(l, style: AppTextStyles.caption),
+          ],
+        ),
+      );
 }

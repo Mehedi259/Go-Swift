@@ -154,6 +154,8 @@ class ActiveHistoryCard extends StatelessWidget {
 
   Widget _buildDetailsBox(String type) {
     if (type == 'ride') {
+      final pickup = data['pickup'] as String? ?? 'Island Departure';
+      final dest = data['destination'] as String? ?? (data['title'] as String? ?? 'VIP Destination');
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -164,21 +166,20 @@ class ActiveHistoryCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.access_time, color: AppColors.primaryTeal, size: 14),
                   const SizedBox(width: 6),
-                  Text('ARRIVING IN 4 MINS', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                  Text('EN ROUTE TRANSIT', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
                 ],
               ),
-              Text('78% Completed', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+              Text(data['status'] as String? ?? 'ACTIVE', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 10),
-          // Progress Bar
           Container(
             height: 6,
             width: double.infinity,
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(3)),
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
-              widthFactor: 0.78,
+              widthFactor: 0.85,
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.primaryTeal,
@@ -188,23 +189,25 @@ class ActiveHistoryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          _locationRow(AppColors.primaryTeal, 'Odyssey Aviation FBO Terminal', 'Pickup'),
+          _locationRow(AppColors.primaryTeal, pickup, 'Pickup'),
           const SizedBox(height: 8),
-          _locationRow(AppColors.gold, 'Albany Marina & Resort', 'VIP Dock', isCyanText: true),
+          _locationRow(AppColors.gold, dest, 'Dropoff', isCyanText: true),
         ],
       );
     } else if (type == 'food') {
+      final items = data['items'] as String? ?? 'Curated Culinary Delivery';
+      final dest = data['destination'] as String? ?? (data['subtitle'] as String? ?? 'VIP Villa Drop-off');
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Yellowfin Tuna Tartare, Wagyu Beef Filet  2 items', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+          Text(items, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
           const SizedBox(height: 10),
           Row(
             children: [
               const Icon(Icons.pedal_bike, color: AppColors.primaryTeal, size: 16),
               const SizedBox(width: 8),
-              Expanded(child: Text('Devon Rolle (Electric Chilled Box)', style: AppTextStyles.bodySmall)),
-              Text('12 - 15 mins', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+              Expanded(child: Text(data['title'] as String? ?? 'Culinary Dispatch', style: AppTextStyles.bodySmall)),
+              Text('In Transit', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 8),
@@ -213,12 +216,14 @@ class ActiveHistoryCard extends StatelessWidget {
             children: [
               const Padding(padding: EdgeInsets.only(top: 2), child: Icon(Icons.location_on_outlined, color: AppColors.textSecondary, size: 14)),
               const SizedBox(width: 8),
-              Expanded(child: Text('Drop-off: Lyford Cay Gate Guardhouse & Villa', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary))),
+              Expanded(child: Text('Drop-off: $dest', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary))),
             ],
           ),
         ],
       );
     } else if (type == 'courier') {
+      final from = data['pickup'] as String? ?? (data['subtitle'] as String? ?? 'Origin');
+      final to = data['destination'] as String? ?? (data['title'] as String? ?? 'Destination');
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -229,10 +234,10 @@ class ActiveHistoryCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.check_circle_outline, color: AppColors.primaryTeal, size: 16),
                   const SizedBox(width: 8),
-                  Text('Passed Cable Beach\nCheckpoint', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                  Text('Secure Escort in Progress', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                 ],
               ),
-              Text('ETA 18\nMINS', textAlign: TextAlign.right, style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+              Text('ACTIVE', textAlign: TextAlign.right, style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
             ],
           ),
           const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(color: AppColors.border, height: 1)),
@@ -240,7 +245,7 @@ class ActiveHistoryCard extends StatelessWidget {
             children: [
               Text('From:', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
               const SizedBox(width: 12),
-              Expanded(child: Text('Lyford Cay Club Concierge Desk', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary), textAlign: TextAlign.right)),
+              Expanded(child: Text(from, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary), textAlign: TextAlign.right)),
             ],
           ),
           const SizedBox(height: 6),
@@ -248,37 +253,14 @@ class ActiveHistoryCard extends StatelessWidget {
             children: [
               Text('To:', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
               const SizedBox(width: 12),
-              Expanded(child: Text('Parliament Square, Nassau Chamber', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary), textAlign: TextAlign.right)),
-            ],
-          ),
-        ],
-      );
-    } else if (type == 'prep') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Black Cod Miso, Yellowtail Jalapeño, Rol  3 items', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              const Icon(Icons.soup_kitchen, color: AppColors.primaryTeal, size: 16),
-              const SizedBox(width: 8),
-              Expanded(child: Text('Chef Escort: Kendal Cartwright\n(Dual-Thermal Safe)', style: AppTextStyles.bodySmall)),
-              Text('ETA 25 - 30\nmins', textAlign: TextAlign.right, style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(padding: EdgeInsets.only(top: 2), child: Icon(Icons.location_on_outlined, color: AppColors.textSecondary, size: 14)),
-              const SizedBox(width: 8),
-              Expanded(child: Text('Drop-off: Albany Marina & Yacht Slip #42', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary))),
+              Expanded(child: Text(to, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary), textAlign: TextAlign.right)),
             ],
           ),
         ],
       );
     } else if (type == 'rental') {
+      final subtitle = data['subtitle'] as String? ?? 'Active Booking Window';
+      final title = data['title'] as String? ?? 'Luxury Vehicle';
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -286,15 +268,38 @@ class ActiveHistoryCard extends StatelessWidget {
             children: [
               const Icon(Icons.key, color: AppColors.primaryTeal, size: 16),
               const SizedBox(width: 8),
-              Expanded(child: Text('Odyssey FBO -> Coral\nHarbour', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600))),
+              Expanded(child: Text(title, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600))),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Scheduled Return:', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
-              Text('Nov 18, 12:00 PM (Albany Bay)', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+              Text('Booking Period:', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+              Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ],
+      );
+    } else if (type == 'property') {
+      final subtitle = data['subtitle'] as String? ?? 'Active Stay';
+      final title = data['title'] as String? ?? 'Luxury Estate';
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.hotel_outlined, color: AppColors.primaryTeal, size: 16),
+              const SizedBox(width: 8),
+              Expanded(child: Text(title, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600))),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Reservation:', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+              Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
             ],
           ),
         ],

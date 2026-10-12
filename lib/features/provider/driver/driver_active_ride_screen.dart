@@ -38,8 +38,31 @@ class _DriverActiveRideScreenState extends State<DriverActiveRideScreen> {
           _ride = args;
           _status = args.status.isNotEmpty ? args.status : 'in_progress';
         });
+      } else {
+        _fetchActiveRide();
       }
     }
+  }
+
+  Future<void> _fetchActiveRide() async {
+    try {
+      final rides = await _rideService.getMyRides();
+      RideModel? active;
+      for (final r in rides) {
+        final s = r.status.toLowerCase();
+        if (s == 'accepted' || s == 'arrived' || s == 'in_progress' || s == 'in_transit') {
+          active = r;
+          break;
+        }
+      }
+      final currentActive = active;
+      if (currentActive != null && mounted) {
+        setState(() {
+          _ride = currentActive;
+          _status = currentActive.status.isNotEmpty ? currentActive.status : 'in_progress';
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _handleNextAction() async {
@@ -104,13 +127,13 @@ class _DriverActiveRideScreenState extends State<DriverActiveRideScreen> {
   @override
   Widget build(BuildContext context) {
     final r = _ride;
-    final tripId = r != null ? '#SW-${r.id}' : '#SW-8521';
-    final riderName = r?.customerName ?? 'Alexander Vance';
-    final pickup = r != null && r.pickupAddress.isNotEmpty ? r.pickupAddress : 'Lynden Pindling Int\'l Airport (NAS)';
-    final destination = r != null && r.destinationAddress.isNotEmpty ? r.destinationAddress : 'The Ocean Club, Four Seasons';
-    final fare = r != null ? '\$${r.estimatedFare.toStringAsFixed(2)}' : '\$118.50';
-    final dist = r?.distanceKm != null ? '${r!.distanceKm} km' : '6.4 km';
-    final eta = r?.estimatedDurationMinutes != null ? '${r!.estimatedDurationMinutes} min' : '8 min';
+    final tripId = r != null ? '#SW-${r.id}' : '#SW-ACTIVE';
+    final riderName = (r != null && r.customerName.isNotEmpty) ? r.customerName : 'VIP Passenger';
+    final pickup = r != null && r.pickupAddress.isNotEmpty ? r.pickupAddress : 'Designated Pickup Location';
+    final destination = r != null && r.destinationAddress.isNotEmpty ? r.destinationAddress : 'Designated Destination';
+    final fare = r != null ? '\$${(r.finalFare ?? r.estimatedFare).toStringAsFixed(2)}' : '\$0.00';
+    final dist = r?.distanceKm != null ? '${r!.distanceKm} km' : 'En Route';
+    final eta = r?.estimatedDurationMinutes != null ? '${r!.estimatedDurationMinutes} min' : 'Active';
 
     return Scaffold(
       backgroundColor: AppColors.background,

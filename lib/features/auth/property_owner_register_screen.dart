@@ -14,13 +14,24 @@ class PropertyOwnerRegisterScreen extends StatefulWidget {
 }
 
 class _PropertyOwnerRegisterScreenState extends State<PropertyOwnerRegisterScreen> {
-  final _nameController = TextEditingController(text: 'Victoria Stubbs');
-  final _propertyController = TextEditingController(text: 'Ocean Club Villa #4');
-  final _emailController = TextEditingController(text: 'victoria.stubbs@islandvillas.bs');
-  final _phoneController = TextEditingController(text: '+1 (242) 555-0177');
-  final _licenseController = TextEditingController(text: 'HPL-20419-NP');
+  final _nameController = TextEditingController();
+  final _propertyController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _licenseController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = LocalStorage.getUser();
+    if (user != null) {
+      if (user.fullName.isNotEmpty) _nameController.text = user.fullName;
+      if (user.email.isNotEmpty) _emailController.text = user.email;
+      if (user.phone.isNotEmpty) _phoneController.text = user.phone;
+    }
+  }
 
   @override
   void dispose() {
@@ -119,11 +130,11 @@ class _PropertyOwnerRegisterScreenState extends State<PropertyOwnerRegisterScree
               style: AppTextStyles.bodyMedium,
             ),
             const SizedBox(height: 28),
-            _field('Full Legal Name', Icons.person_outline, 'e.g. Victoria Stubbs', controller: _nameController),
+            _field('Full Legal Name', Icons.person_outline, 'e.g. Full Legal Name', controller: _nameController),
             const SizedBox(height: 16),
             _field('Property Name', Icons.villa_outlined, 'e.g. Ocean Club Villa #4', controller: _propertyController),
             const SizedBox(height: 16),
-            _field('Email Address', Icons.mail_outline, 'victoria@villaresort.bs', controller: _emailController),
+            _field('Email Address', Icons.mail_outline, 'e.g. host@example.com', controller: _emailController),
             const SizedBox(height: 16),
             _field('Bahamas Mobile', Icons.phone_outlined, '+1 (242) 555-0000', controller: _phoneController),
             const SizedBox(height: 16),

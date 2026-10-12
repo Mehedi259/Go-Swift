@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -16,20 +17,23 @@ class _DriverRideRequestsScreenState extends State<DriverRideRequestsScreen> {
   final RideService _rideService = RideService();
   List<RideModel> _liveRequests = [];
   bool _isLoading = true;
-
-  final List<Map<String, String>> _fallbackRequests = [
-    {'fare': '\$85.00', 'from': 'Lynden Pindling Int\'l (NAS)', 'to': 'The Ocean Club, Paradise Island', 'passenger': 'Alexander Vance', 'dist': '14.2 km'},
-    {'fare': '\$105.00', 'from': 'Baha Mar Resort, Cable Beach', 'to': 'Albany Luxury Marina', 'passenger': 'Sarah Jenkins', 'dist': '18.6 km'},
-    {'fare': '\$125.00', 'from': 'Atlantis Paradise Island', 'to': 'Lyford Cay Club', 'passenger': 'David Sterling', 'dist': '24.1 km'},
-  ];
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _fetchRequests();
+    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _fetchRequests(silent: true));
   }
 
-  Future<void> _fetchRequests() async {
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchRequests({bool silent = false}) async {
+    if (!silent) setState(() => _isLoading = true);
     try {
       final rides = await _rideService.getAvailableRides();
       if (mounted) {
@@ -43,23 +47,21 @@ class _DriverRideRequestsScreenState extends State<DriverRideRequestsScreen> {
     }
   }
 
-  Future<void> _handleAccept(int? rideId, RideModel? liveRide) async {
-    RideModel? accepted = liveRide;
-    if (rideId != null) {
-      try {
-        accepted = await _rideService.acceptRide(rideId);
-      } catch (_) {}
-    }
-    if (mounted) {
-      Navigator.pushNamed(context, '/provider/driver/active-ride', arguments: accepted);
+  Future<void> _handleAccept(int rideId, RideModel liveRide) async {
+    try {
+      final accepted = await _rideService.acceptRide(rideId);
+      if (mounted) {
+        Navigator.pushNamed(context, '/provider/driver/active-ride', arguments: accepted);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pushNamed(context, '/provider/driver/active-ride', arguments: liveRide);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final useLive = _liveRequests.isNotEmpty;
-    final count = useLive ? _liveRequests.length : _fallbackRequests.length;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -80,132 +82,173 @@ class _DriverRideRequestsScreenState extends State<DriverRideRequestsScreen> {
         ),
         title: Text('Ride Requests', style: AppTextStyles.titleLarge),
         centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: AppColors.primaryTeal),
+            onPressed: () => _fetchRequests(),
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
-          : ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: count,
-              itemBuilder: (c, i) {
-                final String fare;
-                final String from;
-                final String to;
-                final String passenger;
-                final String dist;
-                int? rideId;
+          : RefreshIndicator(
+              color: AppColors.primaryTeal,
+              onRefresh: () => _fetchRequests(),
+              child: _liveRequests.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(20),
+                      itemCount: _liveRequests.length,
+                      itemBuilder: (c, i) {
+                        final r = _liveRequests[i];
+                        final fare = '\$${r.estimatedFare.toStringAsFixed(2)}';
+                        final from = r.pickupAddress;
+                        final to = r.destinationAddress;
+                        final passenger = r.customerName;
+                        final dist = r.distanceKm != null ? '${r.distanceKm} km' : '12.0 km';
+                        final category = (r.requestedVehicleCategory ?? 'LUXURY SEDAN').replaceAll('_', ' ').toUpperCase();
 
-                if (useLive) {
-                  final r = _liveRequests[i];
-                  rideId = r.id;
-                  fare = '\$${r.estimatedFare}';
-                  from = r.pickupAddress;
-                  to = r.destinationAddress;
-                  passenger = r.customerName;
-                  dist = r.distanceKm != null ? '${r.distanceKm} km' : '12.0 km';
-                } else {
-                  final req = _fallbackRequests[i];
-                  fare = req['fare']!;
-                  from = req['from']!;
-                  to = req['to']!;
-                  passenger = req['passenger']!;
-                  dist = req['dist']!;
-                }
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: AppColors.card,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: AppColors.cardShadow,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.goldLight,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text('NEW REQUEST', style: AppTextStyles.goldLabel),
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: AppColors.card,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: AppColors.border),
+                            boxShadow: AppColors.cardShadow,
                           ),
-                          Text(
-                            fare,
-                            style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.goldLight,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text('NEW DISPATCH • $category', style: AppTextStyles.goldLabel),
+                                  ),
+                                  Text(
+                                    fare,
+                                    style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.cardTouchpoint,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.person, color: AppColors.cyan, size: 18),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(passenger, style: AppTextStyles.titleMedium),
+                                  const Spacer(),
+                                  Text(dist, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                                ],
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                child: Divider(color: AppColors.border, height: 1),
+                              ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.radio_button_checked, color: AppColors.cyan, size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(from, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary)),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.location_on, color: AppColors.gold, size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(to, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary)),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: GSButton(
+                                      label: 'Decline',
+                                      isSecondary: true,
+                                      onTap: () {
+                                        setState(() {
+                                          _liveRequests.removeAt(i);
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    flex: 2,
+                                    child: GSButton(
+                                      label: 'Accept Dispatch →',
+                                      onTap: () => _handleAccept(r.id, r),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: const BoxDecoration(
-                              color: AppColors.cardTouchpoint,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.person, color: AppColors.cyan, size: 18),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(passenger, style: AppTextStyles.titleMedium),
-                          const Spacer(),
-                          Text(dist, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
-                        ],
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Divider(color: AppColors.border, height: 1),
-                      ),
-                      Row(
-                        children: [
-                          const Icon(Icons.radio_button_checked, color: AppColors.cyan, size: 16),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(from, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on, color: AppColors.gold, size: 16),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(to, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: GSButton(
-                              label: 'Decline',
-                              isSecondary: true,
-                              onTap: () {},
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 2,
-                            child: GSButton(
-                              label: 'Accept →',
-                              onTap: () => _handleAccept(rideId, useLive ? _liveRequests[i] : null),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
+                        );
+                      },
+                    ),
             ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.cardTouchpoint,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Icon(Icons.local_taxi_outlined, size: 38, color: AppColors.primaryTeal),
+            ),
+            const SizedBox(height: 20),
+            Text('No Active Ride Requests', style: AppTextStyles.headlineSmall, textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(
+              'All passenger trips in Nassau & Paradise Island are currently assigned. Stay on this screen or pull down to check for new VIP requests.',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            GSButton(
+              label: 'Refresh Requests',
+              isSecondary: true,
+              onTap: () => _fetchRequests(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

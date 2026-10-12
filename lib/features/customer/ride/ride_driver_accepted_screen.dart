@@ -10,13 +10,13 @@ class RideDriverAcceptedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ride = ModalRoute.of(context)?.settings.arguments as RideModel?;
-    final tripCode = ride != null ? '#SW-${ride.id}' : '#SW-8492';
-    final driverName = ride?.driver?.legalName ?? 'Captain Terrence Rolle';
+    final tripCode = ride != null ? '#SW-${ride.id}' : '#SW-ESCORT';
+    final driverName = ride?.driver?.legalName ?? 'Assigned Chauffeur';
     final vehicleName = ride?.driver != null && ride!.driver!.vehicleMake != null
         ? '${ride.driver!.vehicleMake} ${ride.driver!.vehicleModel ?? ''}'.trim()
-        : (ride?.requestedVehicleCategory != null ? ride!.requestedVehicleCategory!.replaceAll('_', ' ').toUpperCase() : 'Cadillac Escalade ESV');
-    final licensePlate = ride?.driver?.licensePlate ?? 'BS-942-EX';
-    final rating = ride?.driver?.rating != null ? ride!.driver!.rating!.toStringAsFixed(2) : '4.98';
+        : (ride?.requestedVehicleCategory != null ? ride!.requestedVehicleCategory!.replaceAll('_', ' ').toUpperCase() : 'Luxury Escort Vehicle');
+    final licensePlate = ride?.driver?.licensePlate ?? 'BS-PENDING';
+    final rating = ride?.driver?.rating != null ? ride!.driver!.rating!.toStringAsFixed(1) : '5.0';
 
     return Scaffold(
       backgroundColor: AppColors.background,

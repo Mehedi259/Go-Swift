@@ -185,4 +185,8 @@ class CarRentalService {
     );
     return RentalVehicleModel.fromJson(response as Map<String, dynamic>);
   }
+
+  Future<void> deleteVehicle(int id) async {
+    await _api.delete(ApiEndpoints.rentalProviderVehicleDetail(id));
+  }
 }

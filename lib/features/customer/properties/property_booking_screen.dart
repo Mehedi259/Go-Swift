@@ -45,9 +45,9 @@ class _PropertyBookingScreenState extends State<PropertyBookingScreen> {
         if (user.email.isNotEmpty) _emailController.text = user.email;
         if (user.phone.isNotEmpty) _phoneController.text = user.phone;
       } else {
-        _nameController.text = 'Alexander Vance';
-        _emailController.text = 'alexander@goswift.bs';
-        _phoneController.text = '+1 (242) 555-0199';
+        _nameController.text = 'VIP Guest';
+        _emailController.text = 'guest@goswift.bs';
+        _phoneController.text = '+1 (242) 555-0100';
       }
     }
   }

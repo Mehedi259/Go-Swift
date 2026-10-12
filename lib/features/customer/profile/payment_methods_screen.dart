@@ -132,7 +132,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     controller: nameCtrl,
                     decoration: const InputDecoration(
                       labelText: 'Cardholder Name',
-                      hintText: 'e.g. Alexander Vance',
+                      hintText: 'e.g. Cardholder Name',
                       prefixIcon: Icon(Icons.person_outline, color: AppColors.primaryTeal),
                     ),
                   ),

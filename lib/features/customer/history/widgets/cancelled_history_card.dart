@@ -102,7 +102,7 @@ class CancelledHistoryCard extends StatelessWidget {
             child: _buildMiddleSection(type),
           ),
 
-          if (type == 'ride') ...[
+          if (type == 'ride' && data['driverName'] != null) ...[
             const SizedBox(height: 14),
             Row(
               children: [
@@ -111,14 +111,15 @@ class CancelledHistoryCard extends StatelessWidget {
                   height: 36,
                   decoration: const BoxDecoration(color: AppColors.cardTouchpoint, shape: BoxShape.circle),
                   alignment: Alignment.center,
-                  child: Text('MV', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                  child: Text('VIP', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Driver Marcus Vance', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                    Text('Mercedes-Maybach S580 • Obsidian Black', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                    Text(data['driverName'] as String, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                    if (data['vehicle'] != null)
+                      Text(data['vehicle'] as String, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
                   ],
                 ),
               ],
@@ -128,37 +129,25 @@ class CancelledHistoryCard extends StatelessWidget {
           const Padding(padding: EdgeInsets.symmetric(vertical: 14), child: Divider(color: AppColors.border, height: 1)),
 
           // Bottom Footer (Pricing & Button)
-          _buildFooter(type, data['actionLabel'] as String, data['actionIcon'] as IconData?),
+          _buildFooter(type, data['actionLabel'] as String? ?? 'Rebook', data['actionIcon'] as IconData?),
         ],
       ),
     );
   }
 
   Widget _buildMiddleSection(String type) {
-    if (type == 'ride') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _locationRow(AppColors.primaryTeal, "Lynden Pindling Int'l (NAS) Odyssey FBO"),
-          _dashedLine(),
-          _locationRow(Colors.transparent, 'Direct Chauffeur Corridor • Nassau West', isRoute: true),
-          _dashedLine(),
-          _locationRow(AppColors.gold, 'Rosewood Baha Mar, Cable Beach'),
-        ],
-      );
-    } else if (type == 'food') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _locationRow(AppColors.primaryTeal, 'Nobu Atlantis • Paradise Island'),
-          _dashedLine(),
-          _locationRow(Colors.transparent, 'Squall Advisory On Route • Sea Channel', isRoute: true, color: AppColors.red),
-          _dashedLine(),
-          _locationRow(AppColors.gold, 'Albany Marina Yacht Slip #14'),
-        ],
-      );
-    }
-    return const SizedBox();
+    final from = data['pickup'] as String? ?? (data['subtitle'] as String? ?? 'Origin Departure');
+    final to = data['destination'] as String? ?? (data['title'] as String? ?? 'Destination Arrival');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _locationRow(AppColors.primaryTeal, from),
+        _dashedLine(),
+        _locationRow(Colors.transparent, 'Reservation Terminated / Refunded', isRoute: true),
+        _dashedLine(),
+        _locationRow(AppColors.gold, to),
+      ],
+    );
   }
 
   Widget _locationRow(Color dotColor, String label, {bool isRoute = false, Color? color}) {
@@ -189,47 +178,26 @@ class CancelledHistoryCard extends StatelessWidget {
   }
 
   Widget _buildFooter(String type, String actionLabel, IconData? actionIcon) {
+    final fare = data['fare'] as String? ?? '\$0.00';
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (type == 'ride') ...[
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('\$110.00', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, decoration: TextDecoration.lineThrough)),
-                  Text('BSD', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('\$0.00', style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-                  Text('BSD', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-                ],
-              ),
-              const Spacer(),
-            ] else if (type == 'food') ...[
-              Expanded(
-                child: Text('RTD-REF-8842 • 0 BSD Fee Applied', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('\$195.00', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, decoration: TextDecoration.lineThrough)),
-                  Text('BSD', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-                ],
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Visa ••••', style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal, fontSize: 14)),
-                  Text('4242', style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal, fontSize: 14)),
-                ],
-              ),
-            ],
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Original Estimate', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                Text(fare, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, decoration: TextDecoration.lineThrough)),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('Net Settled (100% Refund)', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                Text('\$0.00 BSD', style: AppTextStyles.titleMedium.copyWith(color: AppColors.green, fontWeight: FontWeight.bold)),
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 16),

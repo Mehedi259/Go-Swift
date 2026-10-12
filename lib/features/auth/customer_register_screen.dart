@@ -153,7 +153,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
               controller: _nameController,
               style: AppTextStyles.bodyLarge,
               decoration: const InputDecoration(
-                hintText: 'e.g. Alexander Vance',
+                hintText: 'e.g. Marcus Pendelton',
                 prefixIcon: Icon(Icons.person_outline, color: AppColors.textSecondary, size: 20),
               ),
             ),

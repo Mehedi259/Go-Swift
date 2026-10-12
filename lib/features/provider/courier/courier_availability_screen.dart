@@ -19,11 +19,12 @@ class _CourierAvailabilityScreenState extends State<CourierAvailabilityScreen> {
   final ProviderApplicationService _providerService = ProviderApplicationService();
   bool _online = true;
   int _nav = 0;
-  String _courierName = 'Marcus Rolle';
-  String _badgeNumber = 'Bonded Courier • #BC-182';
-  String _todayEarnings = '\$182.00';
-  String _todayDeliveries = '6';
+  String _courierName = 'Verified Courier';
+  String _badgeNumber = 'Bonded Courier';
+  String _todayEarnings = '\$0.00';
+  String _todayDeliveries = '0';
   List<CourierOrderModel> _incomingRequests = [];
+  List<CourierDeliveryModel> _history = [];
 
   @override
   void initState() {
@@ -68,6 +69,25 @@ class _CourierAvailabilityScreenState extends State<CourierAvailabilityScreen> {
       if (mounted) {
         setState(() {
           _incomingRequests = requests;
+        });
+      }
+    } catch (_) {}
+
+    try {
+      final history = await _courierService.getProviderHistory();
+      if (mounted) {
+        setState(() {
+          _history = history;
+          if (_todayDeliveries == '0' && history.isNotEmpty) {
+            _todayDeliveries = '${history.length}';
+          }
+          if (_todayEarnings == '\$0.00' && history.isNotEmpty) {
+            double total = 0;
+            for (final h in history) {
+              total += h.fee;
+            }
+            _todayEarnings = '\$${total.toStringAsFixed(2)}';
+          }
         });
       }
     } catch (_) {}
@@ -248,86 +268,107 @@ class _CourierAvailabilityScreenState extends State<CourierAvailabilityScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Request card
-                  Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: AppColors.cardShadow,
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.goldLight,
-                                borderRadius: BorderRadius.circular(20),
+                  // Request card or empty state
+                  if (topRequest == null)
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.inventory_2_outlined, size: 40, color: AppColors.cyan),
+                          const SizedBox(height: 12),
+                          Text('No Incoming Requests', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 6),
+                          Text(
+                            'You are online and actively listening for bonded parcel dispatches in your island zone.',
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.goldLight,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text('PARCEL #${topRequest.id}', style: AppTextStyles.goldLabel),
                               ),
-                              child: Text(topRequest != null ? 'PARCEL #${topRequest.id}' : 'BONDED PARCEL', style: AppTextStyles.goldLabel),
-                            ),
-                            const Spacer(),
-                            Text(
-                              topRequest != null ? '\$${topRequest.fee}' : '\$42.00',
-                              style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on_outlined, color: AppColors.cyan, size: 18),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                topRequest?.pickupAddress ?? 'Graycliff Boutique, Nassau',
-                                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w500),
+                              const Spacer(),
+                              Text(
+                                '\$${topRequest.fee.toStringAsFixed(2)}',
+                                style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.flag_outlined, color: AppColors.gold, size: 18),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                topRequest?.deliveryAddress ?? 'The Ocean Club, Paradise Island',
-                                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w500),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on_outlined, color: AppColors.cyan, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  topRequest.pickupAddress,
+                                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w500),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(child: GSButton(label: 'Decline', isSecondary: true, onTap: () {})),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              flex: 2,
-                              child: GSButton(
-                                label: 'Accept →',
-                                onTap: () async {
-                                  if (topRequest != null) {
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.flag_outlined, color: AppColors.gold, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  topRequest.deliveryAddress,
+                                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(child: GSButton(label: 'Decline', isSecondary: true, onTap: () {})),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: GSButton(
+                                  label: 'Accept →',
+                                  onTap: () async {
                                     try {
                                       await _courierService.acceptDelivery(topRequest.id);
                                     } catch (_) {}
-                                  }
-                                  if (context.mounted) {
-                                    Navigator.pushNamed(context, '/provider/courier/active');
-                                  }
-                                },
+                                    if (context.mounted) {
+                                      Navigator.pushNamed(context, '/provider/courier/active', arguments: topRequest);
+                                    }
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -340,12 +381,6 @@ class _CourierAvailabilityScreenState extends State<CourierAvailabilityScreen> {
 
   // ─── Earnings Tab ──────────────────────────────────────────────────────────
   Widget _earningsTab() {
-    final txns = [
-      {'from': 'Graycliff Boutique', 'to': 'Ocean Club', 'id': '#CS-3182', 'amount': '\$42.00', 'date': 'Today 2:10 PM'},
-      {'from': 'Baha Mar Shops', 'to': 'Atlantis', 'id': '#CS-3171', 'amount': '\$38.00', 'date': 'Today 11:30 AM'},
-      {'from': 'Bay St. Legal', 'to': 'Lyford Cay', 'id': '#CS-3160', 'amount': '\$65.00', 'date': 'Yesterday 4:00 PM'},
-      {'from': 'Paradise Island', 'to': 'NAS Airport', 'id': '#CS-3145', 'amount': '\$37.00', 'date': 'Apr 19, 9:00 AM'},
-    ];
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -372,7 +407,7 @@ class _CourierAvailabilityScreenState extends State<CourierAvailabilityScreen> {
                     children: [
                       Expanded(child: _stat('Completed', _todayDeliveries, AppColors.cyan)),
                       const SizedBox(width: 12),
-                      Expanded(child: _stat('Avg. Payout', '\$44.50', AppColors.gold)),
+                      Expanded(child: _stat('Active Fleet', 'Verified', AppColors.gold)),
                     ],
                   ),
                 ],
@@ -381,44 +416,57 @@ class _CourierAvailabilityScreenState extends State<CourierAvailabilityScreen> {
             const SizedBox(height: 24),
             Text('Dispatch Log', style: AppTextStyles.headlineSmall),
             const SizedBox(height: 12),
-            ...txns.map((t) => Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.card,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: AppColors.cardShadow,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.cardTouchpoint,
-                          borderRadius: BorderRadius.circular(12),
+            if (_history.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Center(
+                  child: Text('No completed dispatches logged yet.', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                ),
+              )
+            else
+              ..._history.map((t) => Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: AppColors.cardShadow,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.cardTouchpoint,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.delivery_dining, color: AppColors.cyan, size: 22),
                         ),
-                        child: const Icon(Icons.delivery_dining, color: AppColors.cyan, size: 22),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('${t['from']} → ${t['to']}', style: AppTextStyles.titleMedium),
-                            const SizedBox(height: 2),
-                            Text('${t['id']}  •  ${t['date']}', style: AppTextStyles.bodySmall),
-                          ],
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('${t.pickupAddress} → ${t.dropoffAddress}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.titleMedium),
+                              const SizedBox(height: 2),
+                              Text('${t.trackingNumber}  •  ${t.createdAt != null && t.createdAt!.length >= 10 ? t.createdAt!.substring(0, 10) : "Completed"}', style: AppTextStyles.bodySmall),
+                            ],
+                          ),
                         ),
-                      ),
-                      Text(
-                        t['amount']!,
-                        style: AppTextStyles.titleLarge.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                )),
+                        Text(
+                          '\$${t.fee.toStringAsFixed(2)}',
+                          style: AppTextStyles.titleLarge.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  )),
           ],
         ),
       ),

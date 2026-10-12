@@ -13,13 +13,13 @@ class ActiveCarRentalScreen extends StatelessWidget {
     final args = ModalRoute.of(context)?.settings.arguments;
     final CarRentalBookingModel? activeBooking = booking ?? (args is CarRentalBookingModel ? args : null);
 
-    final bookingCode = activeBooking != null ? '#CR-${activeBooking.id}' : '#CR-5821';
-    final vehicleTitle = activeBooking?.vehicleName ?? 'Cadillac Escalade ESV';
-    final vehiclePlate = activeBooking?.licensePlate ?? 'BS-942-EX';
-    final returnDate = activeBooking?.endDate ?? 'Apr 25, 2026';
+    final bookingCode = activeBooking != null ? (activeBooking.bookingNumber ?? '#CR-${activeBooking.id}') : '#CR-RENTAL';
+    final vehicleTitle = activeBooking?.vehicleName ?? 'Prestige Fleet Vehicle';
+    final vehiclePlate = activeBooking?.licensePlate ?? 'Assigned at Handover';
+    final returnDate = activeBooking?.endDate.isNotEmpty == true ? activeBooking!.endDate.split('T').first : 'Scheduled';
     final totalFare = activeBooking?.totalPrice != null
         ? '\$${activeBooking!.totalPrice.toStringAsFixed(2)}'
-        : '\$1,140.00';
+        : '\$0.00';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -64,12 +64,12 @@ class ActiveCarRentalScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Text(vehicleTitle, style: AppTextStyles.displayMedium),
             const SizedBox(height: 2),
-            Text('$vehiclePlate • Onyx Black', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w600)),
+            Text(vehiclePlate, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w600)),
             const SizedBox(height: 20),
             // Stats
             Row(
               children: [
-                Expanded(child: _stat('Days Remaining', '2 of 4', Icons.calendar_today_outlined, AppColors.primaryTeal)),
+                Expanded(child: _stat('Rental Period', '${activeBooking?.totalDays ?? 1} Days', Icons.calendar_today_outlined, AppColors.primaryTeal)),
                 const SizedBox(width: 12),
                 Expanded(child: _stat('Return Date', returnDate, Icons.flag_outlined, const Color(0xFF8A5300))),
               ],

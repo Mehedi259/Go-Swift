@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/services/courier_service.dart';
 import '../../../core/services/provider_application_service.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class CourierProfileScreen extends StatefulWidget {
@@ -15,15 +16,15 @@ class CourierProfileScreen extends StatefulWidget {
 
 class _CourierProfileScreenState extends State<CourierProfileScreen> {
   final ProviderApplicationService _providerService = ProviderApplicationService();
-  String _name = 'Marcus Rolle';
-  String _badge = 'Bonded Courier • VAN / TRUCK';
-  String _phone = '+1 (242) 555-0182';
-  String _rating = '4.92 ★';
-  String _deliveries = '2,450';
-  String _earned = '\$12,400';
-  String _license = 'BL-94281-NP • Active';
-  String _licenseNumber = 'BL-94281-NP';
-  String _zone = 'Nassau • Paradise Island';
+  String _name = LocalStorage.getUser()?.fullName.isNotEmpty == true ? LocalStorage.getUser()!.fullName : 'Bonded Courier';
+  String _badge = 'Bonded Courier • Verified';
+  String _phone = LocalStorage.getUser()?.phone ?? '';
+  String _rating = '5.00 ★';
+  String _deliveries = '0';
+  String _earned = '\$0.00';
+  String _license = 'Verified Partner';
+  String _licenseNumber = '';
+  String _zone = 'Nassau & Paradise Island';
   String _transportMode = 'van';
 
   @override
@@ -119,17 +120,17 @@ class _CourierProfileScreenState extends State<CourierProfileScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Full Legal Name', hintText: 'Marcus Rolle'),
+                  decoration: const InputDecoration(labelText: 'Full Legal Name', hintText: 'Enter legal full name'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: phoneCtrl,
-                  decoration: const InputDecoration(labelText: 'Direct Mobile Phone', hintText: '+1 (242) 555-0182'),
+                  decoration: const InputDecoration(labelText: 'Direct Mobile Phone', hintText: '+1 (242) ...'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: licenseCtrl,
-                  decoration: const InputDecoration(labelText: 'Driver / Courier License No.', hintText: 'BL-94281-NP'),
+                  decoration: const InputDecoration(labelText: 'Driver / Courier License No.', hintText: 'e.g. BL-XXXXX-NP'),
                 ),
                 const SizedBox(height: 12),
                 TextField(

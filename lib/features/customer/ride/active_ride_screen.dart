@@ -1,21 +1,138 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/ride_model.dart';
+import '../../../core/services/ride_service.dart';
+import '../../../core/widgets/gs_button.dart';
 
-class ActiveRideScreen extends StatelessWidget {
-  const ActiveRideScreen({super.key});
+class ActiveRideScreen extends StatefulWidget {
+  final RideModel? ride;
+  const ActiveRideScreen({super.key, this.ride});
+
+  @override
+  State<ActiveRideScreen> createState() => _ActiveRideScreenState();
+}
+
+class _ActiveRideScreenState extends State<ActiveRideScreen> {
+  final RideService _rideService = RideService();
+  RideModel? _ride;
+  Timer? _pollTimer;
+  bool _initialized = false;
+  bool _isCancelling = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is RideModel) {
+        _ride = args;
+      } else if (widget.ride != null) {
+        _ride = widget.ride;
+      }
+      _startPolling();
+    }
+  }
+
+  void _startPolling() {
+    final rideId = _ride?.id;
+    if (rideId == null) return;
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
+      try {
+        final updated = await _rideService.getRideDetail(rideId);
+        if (!mounted) return;
+        setState(() {
+          _ride = updated;
+        });
+        final s = updated.status.toLowerCase();
+        if (s == 'completed') {
+          _pollTimer?.cancel();
+          Navigator.pushReplacementNamed(
+            context,
+            '/customer/ride/completed',
+            arguments: updated,
+          );
+        } else if (s == 'cancelled') {
+          _pollTimer?.cancel();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Trip was cancelled.'), backgroundColor: AppColors.red),
+          );
+          Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
+        }
+      } catch (_) {}
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _handleCancelRide() async {
+    final rideId = _ride?.id;
+    if (rideId == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Cancel VIP Transit?', style: AppTextStyles.titleLarge),
+        content: Text(
+          'Are you sure you want to cancel Trip #${_ride?.id ?? rideId}? Your chauffeur has already been dispatched.',
+          style: AppTextStyles.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Keep Ride', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Cancel Ride'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isCancelling = true);
+    try {
+      await _rideService.cancelRide(rideId, reason: 'Passenger cancelled');
+      _pollTimer?.cancel();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ride cancelled.'), backgroundColor: AppColors.red),
+        );
+        Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isCancelling = false);
+        Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final ride = ModalRoute.of(context)?.settings.arguments as RideModel?;
-    final tripCode = ride != null ? '#SW-${ride.id}' : '#SW-8492';
-    final driverName = ride?.driver?.legalName ?? 'Captain Terrence Rolle';
+    final ride = _ride;
+    final tripCode = ride != null ? '#SW-${ride.id}' : '#SW-ACTIVE';
+    final driverName = ride?.driver?.legalName ?? 'Assigned Chauffeur';
     final vehicleName = ride?.driver != null && ride!.driver!.vehicleMake != null
         ? '${ride.driver!.vehicleMake} ${ride.driver!.vehicleModel ?? ''}'.trim()
-        : (ride?.requestedVehicleCategory != null ? ride!.requestedVehicleCategory!.replaceAll('_', ' ').toUpperCase() : 'Cadillac Escalade ESV');
-    final licensePlate = ride?.driver?.licensePlate ?? 'BS-942-EX';
-    final rating = ride?.driver?.rating != null ? ride!.driver!.rating!.toStringAsFixed(2) : '4.98';
+        : (ride?.requestedVehicleCategory != null ? ride!.requestedVehicleCategory!.replaceAll('_', ' ').toUpperCase() : 'Luxury Escort Vehicle');
+    final licensePlate = ride?.driver?.licensePlate ?? 'BS-PENDING';
+    final rating = ride?.driver?.rating != null ? ride!.driver!.rating!.toStringAsFixed(1) : '5.0';
+    final dist = ride?.distanceKm != null ? '${ride!.distanceKm} km' : 'En Route';
+    final estMins = ride?.estimatedDurationMinutes != null ? '${ride!.estimatedDurationMinutes} mins' : 'Calculating...';
+    final status = ride?.status.toLowerCase() ?? 'in_transit';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -42,10 +159,18 @@ class ActiveRideScreen extends StatelessWidget {
                   ),
                   const Spacer(),
                   Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(color: AppColors.primaryTeal, shape: BoxShape.circle),
-                    child: const Icon(Icons.person, color: Colors.white, size: 22),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.badgeTeal,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      status.replaceAll('_', ' ').toUpperCase(),
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.primaryTeal,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -67,7 +192,7 @@ class ActiveRideScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('18 mins remaining', style: AppTextStyles.displayMedium),
+                        Text('$estMins remaining', style: AppTextStyles.displayMedium),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
@@ -81,7 +206,7 @@ class ActiveRideScreen extends StatelessWidget {
                             children: [
                               const Icon(Icons.route, size: 14, color: AppColors.primaryTeal),
                               const SizedBox(width: 6),
-                              Text('14.2 km', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                              Text(dist, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -90,6 +215,52 @@ class ActiveRideScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     // Light Map
                     _MapView(),
+                    const SizedBox(height: 16),
+                    // Route locations
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.radio_button_checked, color: AppColors.primaryTeal, size: 16),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  ride?.pickupAddress ?? "Lynden Pindling Int'l Airport (NAS)",
+                                  style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 7),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(width: 2, height: 16, color: AppColors.border),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on, color: AppColors.gold, size: 16),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  ride?.destinationAddress ?? "The Ocean Club, Paradise Island",
+                                  style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     // Driver card
                     Container(
@@ -137,22 +308,19 @@ class ActiveRideScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 14),
-                          GestureDetector(
-                            onTap: () {},
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: AppColors.cyanPill,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.phone_outlined, color: AppColors.primaryTeal, size: 16),
-                                  const SizedBox(width: 8),
-                                  Text('Call Chauffeur', style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: AppColors.cyanPill,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.phone_outlined, color: AppColors.primaryTeal, size: 16),
+                                const SizedBox(width: 8),
+                                Text('Call Chauffeur', style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 14),
@@ -189,26 +357,19 @@ class ActiveRideScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Navigate to completed
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/customer/ride/completed', arguments: ride),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.green.withValues(alpha: 0.3)),
-                          boxShadow: AppColors.cardShadow,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.flag_outlined, color: AppColors.green, size: 18),
-                            const SizedBox(width: 8),
-                            Text('Simulate: Trip Completed →', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.green, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
+                    GSButton(
+                      label: 'Complete Trip & View Receipt →',
+                      onTap: () {
+                        _pollTimer?.cancel();
+                        Navigator.pushNamed(context, '/customer/ride/completed', arguments: ride);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    GSButton(
+                      label: _isCancelling ? 'Cancelling...' : 'Cancel Transit',
+                      isSecondary: true,
+                      isLoading: _isCancelling,
+                      onTap: _isCancelling ? () {} : _handleCancelRide,
                     ),
                     const SizedBox(height: 24),
                   ],

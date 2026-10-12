@@ -31,8 +31,20 @@ class _ActiveRentalManagementScreenState extends State<ActiveRentalManagementScr
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is CarRentalBookingModel) {
         setState(() => _booking = args);
+      } else {
+        _fetchActiveBooking();
       }
     }
+  }
+
+  Future<void> _fetchActiveBooking() async {
+    try {
+      final list = await _rentalService.getFleetBookings();
+      final active = list.where((b) => b.status.toLowerCase() != 'completed' && b.status.toLowerCase() != 'cancelled').toList();
+      if (active.isNotEmpty && mounted) {
+        setState(() => _booking = active.first);
+      }
+    } catch (_) {}
   }
 
   Future<void> _handleCompleteReturn() async {
@@ -71,11 +83,11 @@ class _ActiveRentalManagementScreenState extends State<ActiveRentalManagementScr
   @override
   Widget build(BuildContext context) {
     final b = _booking;
-    final bookingId = b != null ? (b.bookingNumber ?? '#CR-${b.id}') : '#CR-5821';
-    final vehicle = b?.vehicleName ?? 'Cadillac Escalade ESV';
-    final renter = b?.customerName ?? 'Alexander Vance';
-    final period = b != null ? '${b.startDate.split('T').first} – ${b.endDate.split('T').first}' : 'Apr 21 – Apr 25, 2026';
-    final total = b != null ? '\$${b.totalPrice.toStringAsFixed(2)}' : '\$1,140.00';
+    final bookingId = b != null ? (b.bookingNumber ?? '#CR-${b.id}') : 'ACTIVE RESERVATION';
+    final vehicle = b?.vehicleName ?? 'Fleet Vehicle';
+    final renter = (b?.customerName != null && b!.customerName.isNotEmpty) ? b.customerName : 'VIP Client';
+    final period = b != null ? '${b.startDate.split('T').first} – ${b.endDate.split('T').first}' : 'Active Duration';
+    final total = b != null ? '\$${b.totalPrice.toStringAsFixed(2)}' : 'Escrow Protected';
     final status = b?.status.toUpperCase() ?? 'ACTIVE';
 
     return Scaffold(

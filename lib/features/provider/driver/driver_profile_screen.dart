@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/services/provider_application_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
@@ -14,15 +15,15 @@ class DriverProfileScreen extends StatefulWidget {
 
 class _DriverProfileScreenState extends State<DriverProfileScreen> {
   final ProviderApplicationService _providerService = ProviderApplicationService();
-  String _name = 'Captain Terrence Rolle';
-  String _role = 'VIP Chauffeur • LUXURY SEDAN';
-  String _phone = '+1 (242) 555-0402';
-  String _license = 'PSL-40291-NP • Active';
-  String _vehicle = 'Cadillac Escalade ESV • BS-942-EX';
-  String _zone = 'Nassau • Paradise Island • Cable Beach';
-  String _vehicleMake = 'Cadillac';
-  String _vehicleModel = 'Escalade ESV';
-  String _licensePlate = 'BS-942-EX';
+  String _name = LocalStorage.getUser()?.fullName.isNotEmpty == true ? LocalStorage.getUser()!.fullName : 'VIP Chauffeur';
+  String _role = 'VIP Chauffeur • Verified';
+  String _phone = LocalStorage.getUser()?.phone ?? '';
+  String _license = 'PSL Verified';
+  String _vehicle = 'Fleet Vehicle';
+  String _zone = 'Nassau • Paradise Island';
+  String _vehicleMake = '';
+  String _vehicleModel = '';
+  String _licensePlate = '';
 
   @override
   void initState() {
@@ -103,7 +104,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Full Legal Name', hintText: 'Captain Terrence Rolle'),
+                  decoration: const InputDecoration(labelText: 'Full Legal Name', hintText: 'Enter full legal name'),
                 ),
                 const SizedBox(height: 12),
                 TextField(

@@ -76,8 +76,8 @@ class _CarRentalRatingScreenState extends State<CarRentalRatingScreen> {
     final args = ModalRoute.of(context)?.settings.arguments;
     final CarRentalBookingModel? booking = widget.booking ?? (args is CarRentalBookingModel ? args : null);
 
-    final vehicleName = booking?.vehicleName ?? 'Cadillac Escalade ESV';
-    final bookingCode = booking != null ? '#CR-${booking.id}' : '#CR-5821';
+    final vehicleName = booking?.vehicleName ?? 'Prestige Fleet Vehicle';
+    final bookingCode = booking != null ? (booking.bookingNumber ?? '#CR-${booking.id}') : '#CR-RENTAL';
 
     return Scaffold(
       backgroundColor: AppColors.background,

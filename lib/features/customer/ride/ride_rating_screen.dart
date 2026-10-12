@@ -57,8 +57,8 @@ class _RideRatingScreenState extends State<RideRatingScreen> {
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
     int? resolvedRideId = widget.rideId;
-    String driverName = 'Captain Terrence Rolle';
-    String tripLabel = 'Trip #SW-8492';
+    String driverName = 'Assigned Chauffeur';
+    String tripLabel = widget.rideId != null ? 'Trip #SW-${widget.rideId}' : 'VIP Trip';
 
     if (args is RideModel) {
       resolvedRideId = args.id;

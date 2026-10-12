@@ -58,6 +58,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       final newCancelled = <Map<String, dynamic>>[];
 
       for (final r in rides) {
+        final fareStr = '\$${(r.finalFare ?? r.estimatedFare).toStringAsFixed(2)}';
+        final driver = r.driver?.legalName ?? 'VIP Chauffeur';
+        final vehicle = r.driver != null && r.driver!.vehicleMake != null
+            ? '${r.driver!.vehicleMake} ${r.driver!.vehicleModel ?? ''}'.trim()
+            : (r.requestedVehicleCategory != null ? r.requestedVehicleCategory!.replaceAll('_', ' ').toUpperCase() : 'Luxury Chauffeur');
+
         final map = {
           'type': 'ride',
           'status': r.status.toUpperCase(),
@@ -68,6 +74,14 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           'subtitle': 'Pickup: ${r.pickupAddress}',
           'category': 'Ride Service',
           'date': r.createdAt != null && r.createdAt!.length >= 10 ? r.createdAt!.substring(0, 10) : 'Recent',
+          'pickup': r.pickupAddress,
+          'destination': r.destinationAddress,
+          'driverName': driver,
+          'vehicle': vehicle,
+          'fare': fareStr,
+          'cancelReason': r.status == 'cancelled' ? 'CANCELLED' : null,
+          'actionLabel': 'Rebook Ride',
+          'actionIcon': Icons.replay,
         };
         if (r.status == 'cancelled') {
           newCancelled.add(map);
@@ -79,16 +93,28 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       }
 
       for (final o in orders) {
+        final itemsStr = o.items.isNotEmpty
+            ? o.items.map((i) => '${i.name} (x${i.quantity})').join(', ')
+            : 'Curated Dining Order';
+        final fareStr = '\$${o.totalAmount.toStringAsFixed(2)}';
+
         final map = {
           'type': 'food',
           'status': o.status.toUpperCase(),
           'id': '#BS-FD-${o.id}',
           'icon': Icons.restaurant,
           'color': const Color(0xFFC78400),
-          'title': o.restaurantName,
-          'subtitle': o.deliveryAddress,
+          'title': o.restaurantName ?? 'Fine Dining',
+          'subtitle': o.deliveryAddress ?? 'Customer Villa',
           'category': 'Dining Delivery',
           'date': o.createdAt != null && o.createdAt!.length >= 10 ? o.createdAt!.substring(0, 10) : 'Recent',
+          'restaurant': o.restaurantName ?? 'Fine Dining',
+          'destination': o.deliveryAddress ?? 'Customer Villa',
+          'items': itemsStr,
+          'fare': fareStr,
+          'cancelReason': o.status == 'cancelled' ? 'VOIDED' : null,
+          'actionLabel': 'Order Again',
+          'actionIcon': Icons.shopping_bag_outlined,
         };
         if (o.status == 'cancelled') {
           newCancelled.add(map);
@@ -100,6 +126,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       }
 
       for (final d in deliveries) {
+        final fareStr = '\$${d.fee.toStringAsFixed(2)}';
         final map = {
           'type': 'courier',
           'status': d.status.toUpperCase(),
@@ -110,6 +137,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           'subtitle': 'Pickup: ${d.pickupAddress}',
           'category': 'Courier Service',
           'date': d.createdAt != null && d.createdAt!.length >= 10 ? d.createdAt!.substring(0, 10) : 'Recent',
+          'pickup': d.pickupAddress,
+          'destination': d.dropoffAddress,
+          'fare': fareStr,
+          'cancelReason': d.status == 'cancelled' ? 'CANCELLED' : null,
+          'actionLabel': 'Dispatch Again',
+          'actionIcon': Icons.replay,
         };
         if (d.status == 'cancelled') {
           newCancelled.add(map);
@@ -121,6 +154,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       }
 
       for (final rn in rentals) {
+        final fareStr = '\$${rn.totalPrice.toStringAsFixed(2)}';
         final map = {
           'type': 'rental',
           'status': rn.status.toUpperCase(),
@@ -128,9 +162,16 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           'icon': Icons.vpn_key_outlined,
           'color': const Color(0xFFB8860B),
           'title': rn.vehicleName,
-          'subtitle': '${rn.startDate} to ${rn.endDate}',
+          'subtitle': '${rn.startDate.split('T').first} to ${rn.endDate.split('T').first}',
           'category': 'Car Rental',
-          'date': rn.startDate,
+          'date': rn.startDate.split('T').first,
+          'vehicle': rn.vehicleName,
+          'pickup': 'FBO / Marina Handover',
+          'destination': 'Escort Return Point',
+          'fare': fareStr,
+          'cancelReason': rn.status == 'cancelled' ? 'CANCELLED' : null,
+          'actionLabel': 'Rent Again',
+          'actionIcon': Icons.replay,
         };
         if (rn.status == 'cancelled') {
           newCancelled.add(map);
@@ -142,6 +183,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       }
 
       for (final rm in rooms) {
+        final fareStr = '\$${rm.totalPrice.toStringAsFixed(2)}';
         final map = {
           'type': 'property',
           'status': rm.status.toUpperCase(),
@@ -149,9 +191,16 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           'icon': Icons.hotel_outlined,
           'color': AppColors.primaryTeal,
           'title': rm.propertyTitle ?? 'Luxury Villa',
-          'subtitle': '${rm.checkInDate} to ${rm.checkOutDate}',
+          'subtitle': '${rm.checkInDate.isNotEmpty ? rm.checkInDate.split('T').first : ''} to ${rm.checkOutDate.isNotEmpty ? rm.checkOutDate.split('T').first : ''}',
           'category': 'Room Service',
-          'date': rm.checkInDate,
+          'date': rm.checkInDate.isNotEmpty ? rm.checkInDate.split('T').first : '',
+          'property': rm.propertyTitle ?? 'Luxury Villa',
+          'pickup': 'Check-in: ${rm.checkInDate.isNotEmpty ? rm.checkInDate.split('T').first : ''}',
+          'destination': 'Check-out: ${rm.checkOutDate.isNotEmpty ? rm.checkOutDate.split('T').first : ''}',
+          'fare': fareStr,
+          'cancelReason': rm.status == 'cancelled' ? 'CANCELLED' : null,
+          'actionLabel': 'Book Again',
+          'actionIcon': Icons.replay,
         };
         if (rm.status == 'cancelled') {
           newCancelled.add(map);
@@ -178,142 +227,27 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
     }
   }
 
-  final _activeData = [
-    {
-      'type': 'ride',
-      'status': 'IN PROGRESS • EN ROUTE',
-      'id': '#BS-RD-8492',
-      'icon': Icons.directions_car,
-      'color': AppColors.primaryTeal,
-      'title': 'Cadillac Escalade-V Sovereign',
-      'subtitle': 'Chauffeur Marcus Vance • Black Edition',
-      'rating': 5.0,
-      'actions': [
-        {'label': 'Live Tracking', 'icon': null, 'trailingIcon': Icons.arrow_forward, 'isPrimary': true},
-        {'label': 'Call Driver', 'icon': Icons.phone, 'trailingIcon': null, 'isPrimary': false},
-      ],
-    },
-    {
-      'type': 'food',
-      'status': 'COURIER DISPATCHED • IN TRANSIT',
-      'id': '#BS-FD-8924',
-      'icon': Icons.restaurant,
-      'color': const Color(0xFFC78400),
-      'title': 'Dune at The Ocean Club',
-      'subtitle': 'Paradise Island • White-Glove Butler Route',
-      'actions': [
-        {'label': 'Track Delivery', 'icon': null, 'trailingIcon': Icons.arrow_forward, 'isPrimary': true},
-      ],
-    },
-    {
-      'type': 'courier',
-      'status': 'ESCORT IN PROGRESS • SECURE COURIER',
-      'id': '#BS-CR-3158',
-      'icon': Icons.shield_outlined,
-      'color': AppColors.primaryTeal,
-      'title': 'Tamper-Evident Legal Dossier',
-      'subtitle': 'Courier Liam Pinder • Escorted Transit (< 5 lbs)',
-      'actions': [
-        {'label': 'Live Courier Map', 'icon': null, 'trailingIcon': Icons.my_location, 'isPrimary': true},
-      ],
-    },
-    {
-      'type': 'prep',
-      'status': 'PREPARING IN KITCHEN • CHEF DISPATCH',
-      'id': '#BS-FD-9154',
-      'icon': Icons.restaurant,
-      'color': const Color(0xFF5E5CE6),
-      'title': 'Nobu Atlantis • Bahamas',
-      'subtitle': 'Paradise Island • Teppanyaki & Sushi Omakase',
-      'actions': [
-        {'label': 'Track Kitchen', 'icon': null, 'trailingIcon': Icons.arrow_forward, 'isPrimary': true},
-        {'label': 'Order Details', 'icon': Icons.receipt_long, 'trailingIcon': null, 'isPrimary': false},
-      ],
-    },
-    {
-      'type': 'rental',
-      'status': 'ACTIVE ON TRANSIT',
-      'id': '#BS-RN-8394',
-      'icon': Icons.vpn_key_outlined,
-      'color': const Color(0xFFB8860B),
-      'title': 'Range Rover Autobiography',
-      'subtitle': 'Renter: Alastair Vance • 68h remaining',
-    }
-  ];
+  List<Map<String, dynamic>> _getCurrentTabList() {
+    if (_activeTab == 0) return _liveActive;
+    if (_activeTab == 1) return _livePast;
+    return _liveCancelled;
+  }
 
-  final _pastData = [
-    {
-      'type': 'ride',
-      'category': 'Ride Service',
-      'id': '#BS-RD-8492',
-      'date': 'Yesterday,\nNov 14',
-      'icon': Icons.directions_car,
-      'color': AppColors.primaryTeal,
-      'status': 'Completed',
-    },
-    {
-      'type': 'food',
-      'category': 'Fine Dining Delivery',
-      'id': '#BS-FD-8539',
-      'date': 'Nov 12, 8:45\nPM',
-      'icon': Icons.restaurant,
-      'color': const Color(0xFF5E5CE6),
-      'status': 'Delivered',
-    },
-    {
-      'type': 'courier',
-      'category': 'Secure Courier Delivery',
-      'id': '#BS-CR-3158',
-      'date': 'Nov 10, 2:15\nPM',
-      'icon': Icons.local_shipping,
-      'color': AppColors.primaryTeal,
-      'status': 'Completed',
-    },
-    {
-      'type': 'rental',
-      'category': 'Luxury Car Rental',
-      'id': '#BS-RENT-2041',
-      'date': 'Nov 05 - Nov\n08 (3 Days)',
-      'icon': Icons.vpn_key_outlined,
-      'color': const Color(0xFFB8860B),
-      'status': 'Returned &\nSettled',
-    },
-    {
-      'type': 'property',
-      'category': 'Luxury Villa Stay',
-      'id': '#BS-STAY-4071',
-      'date': 'Sep 18 - Sep 22',
-      'icon': Icons.home_work_outlined,
-      'color': const Color(0xFFC78400),
-      'status': 'Completed',
-    },
-  ];
-
-  final _cancelledData = [
-    {
-      'type': 'ride',
-      'category': 'Ride Service',
-      'id': 'SW-8471',
-      'date': 'Oct 11, 2024 • 4:15 PM',
-      'icon': Icons.directions_car,
-      'cancelReason': 'CANCELLED BY PAX',
-      'actionLabel': 'Rebook Ride',
-      'actionIcon': Icons.replay,
-    },
-    {
-      'type': 'food',
-      'category': 'Dining & Fine Delivery',
-      'id': 'SW-8439',
-      'date': 'Sep 22, 2024 • 6:30 PM',
-      'icon': Icons.restaurant,
-      'cancelReason': 'VOIDED BY CONCIERGE',
-      'actionLabel': 'Order Again',
-      'actionIcon': Icons.shopping_bag_outlined,
+  List<Map<String, dynamic>> _getFilteredList() {
+    final list = _getCurrentTabList();
+    if (_selectedFilter == 1) {
+      return list.where((item) => item['type'] == 'ride').toList();
+    } else if (_selectedFilter == 2) {
+      return list.where((item) => item['type'] == 'food').toList();
     }
-  ];
+    return list;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final currentTabList = _getCurrentTabList();
+    final filteredList = _getFilteredList();
+
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -390,9 +324,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
               const SizedBox(height: 6),
               Text(
                 _activeTab == 0
-                    ? 'Archived concierge itineraries, VIP dispatches, and tax-ready settled waybills.'
+                    ? 'Active concierge itineraries, VIP dispatches, and real-time transit.'
                     : _activeTab == 1
-                        ? 'Archived luxury transit, maritime deliveries, and concierge ledgers.'
+                        ? 'Archived luxury transit, maritime deliveries, and settled concierge ledgers.'
                         : 'Refunded reservations, voided dispatches, and zero-fee escrows.',
                 style: AppTextStyles.bodyMedium,
               ),
@@ -411,9 +345,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
             ),
             child: Row(
               children: [
-                _buildSegment(0, 'Active', '1'),
-                _buildSegment(1, 'Past', '41'),
-                _buildSegment(2, 'Cancelled', '2'),
+                _buildSegment(0, 'Active', '${_liveActive.length}'),
+                _buildSegment(1, 'Past', '${_livePast.length}'),
+                _buildSegment(2, 'Cancelled', '${_liveCancelled.length}'),
               ],
             ),
           ),
@@ -426,11 +360,11 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
-              _buildFilterChip(0, 'All Bookings', count: 42),
+              _buildFilterChip(0, 'All Bookings', count: currentTabList.length),
               const SizedBox(width: 8),
-              _buildFilterChip(1, 'Rides & VIP Transit', icon: Icons.directions_car_outlined),
+              _buildFilterChip(1, 'Rides & VIP Transit', icon: Icons.directions_car_outlined, count: currentTabList.where((x) => x['type'] == 'ride').length),
               const SizedBox(width: 8),
-              _buildFilterChip(2, 'Dining', icon: Icons.restaurant_outlined),
+              _buildFilterChip(2, 'Dining', icon: Icons.restaurant_outlined, count: currentTabList.where((x) => x['type'] == 'food').length),
             ],
           ),
         ),
@@ -443,27 +377,53 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
               : RefreshIndicator(
                   onRefresh: _loadHistory,
                   color: AppColors.primaryTeal,
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              itemCount: _activeTab == 0
-                  ? (_liveActive.length + _activeData.length)
-                  : _activeTab == 1
-                      ? (_livePast.length + _pastData.length)
-                      : (_liveCancelled.length + _cancelledData.length),
-              itemBuilder: (c, i) {
-                if (_activeTab == 0) {
-                  final list = [..._liveActive, ..._activeData];
-                  return ActiveHistoryCard(data: list[i]);
-                } else if (_activeTab == 1) {
-                  final list = [..._livePast, ..._pastData];
-                  return PastHistoryCard(data: list[i]);
-                } else {
-                  final list = [..._liveCancelled, ..._cancelledData];
-                  return CancelledHistoryCard(data: list[i]);
-                }
-              },
-            ),
-          ),
+                  child: filteredList.isEmpty
+                      ? Center(
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 64,
+                                  height: 64,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.cyanPill,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.history_outlined, size: 32, color: AppColors.primaryTeal),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No ${_activeTab == 0 ? "Active" : _activeTab == 1 ? "Past" : "Cancelled"} Itineraries',
+                                  style: AppTextStyles.headlineSmall,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Your verified concierge bookings and live itineraries will appear here in real time.',
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          itemCount: filteredList.length,
+                          itemBuilder: (c, i) {
+                            final item = filteredList[i];
+                            if (_activeTab == 0) {
+                              return ActiveHistoryCard(data: item);
+                            } else if (_activeTab == 1) {
+                              return PastHistoryCard(data: item);
+                            } else {
+                              return CancelledHistoryCard(data: item);
+                            }
+                          },
+                        ),
+                ),
         ),
       ],
     );

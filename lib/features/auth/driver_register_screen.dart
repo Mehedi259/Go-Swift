@@ -14,10 +14,21 @@ class DriverRegisterScreen extends StatefulWidget {
 class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   int _vehicleType = 0;
   bool _isLoading = false;
-  final _nameController = TextEditingController(text: 'Terrence Rolle');
-  final _emailController = TextEditingController(text: 'terrence.rolle@swiftpartner.bs');
-  final _phoneController = TextEditingController(text: '555-0188');
-  final _licenseController = TextEditingController(text: 'PSL-40291-NP');
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _licenseController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final user = LocalStorage.getUser();
+    if (user != null) {
+      if (user.fullName.isNotEmpty) _nameController.text = user.fullName;
+      if (user.email.isNotEmpty) _emailController.text = user.email;
+      if (user.phone.isNotEmpty) _phoneController.text = user.phone.replaceAll('+1 (242) ', '').trim();
+    }
+  }
 
   final _vehicles = [
     'Luxury SUV\nCadillac Escalade, Lincoln Navigator, Yukon Denali',
@@ -220,9 +231,9 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    _buildField('Full Legal Name', 'As on official driver badge', 'e.g. Terrence Rolle', Icons.badge_outlined, controller: _nameController),
+                    _buildField('Full Legal Name', 'As on official driver badge', 'e.g. John Smith', Icons.badge_outlined, controller: _nameController),
                     const SizedBox(height: 16),
-                    _buildField('Email Address', null, 'e.g. terrence.rolle@swiftpartner.bs', Icons.mail_outline, controller: _emailController),
+                    _buildField('Email Address', null, 'e.g. chauffeur@example.com', Icons.mail_outline, controller: _emailController),
                     const SizedBox(height: 16),
                     _buildField('Mobile Phone Number', 'For instant VIP ride dispatch alerts & SMS verification.', '555-0188', Icons.phone_outlined, prefix: '🇧🇸 +1 (242) ', controller: _phoneController),
                     const SizedBox(height: 16),

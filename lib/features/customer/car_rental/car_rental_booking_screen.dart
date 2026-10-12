@@ -45,8 +45,8 @@ class _CarRentalBookingScreenState extends State<CarRentalBookingScreen> {
           _addressController.text = 'The Ocean Club, Paradise Island';
         }
       } else {
-        _nameController.text = 'Alexander Vance';
-        _phoneController.text = '+1 (242) 555-0199';
+        _nameController.text = 'VIP Guest';
+        _phoneController.text = '+1 (242) 555-0100';
         _addressController.text = 'The Ocean Club, Paradise Island';
       }
 

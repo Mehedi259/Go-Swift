@@ -49,8 +49,8 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
       return;
     }
 
-    final emailToVerify = _email.isNotEmpty ? _email : 'marcus.vance@swiftbahamas.com';
     final authProvider = context.read<AuthProvider>();
+    final emailToVerify = _email.isNotEmpty ? _email : (authProvider.user?.email ?? 'guest@goswift.com');
     final success = await authProvider.verifyRegistrationOTP(email: emailToVerify, otp: otp);
 
     if (!mounted) return;

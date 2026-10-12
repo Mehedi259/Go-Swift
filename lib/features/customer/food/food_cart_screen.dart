@@ -18,12 +18,6 @@ class _FoodCartScreenState extends State<FoodCartScreen> {
   bool _initialized = false;
   final TextEditingController _instructionCtrl = TextEditingController();
 
-  final List<Map<String, dynamic>> _fallbackItems = [
-    {'id': 1, 'name': 'Yellowfin Tuna Tartare', 'price': 38.0, 'qty': 1},
-    {'id': 2, 'name': 'Crispy Black Cod Miso', 'price': 68.0, 'qty': 1},
-    {'id': 3, 'name': 'Bahamian Lobster Bisque', 'price': 42.0, 'qty': 2},
-  ];
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -51,22 +45,19 @@ class _FoodCartScreenState extends State<FoodCartScreen> {
   }
 
   double get _subtotal {
-    if (_cart.isNotEmpty && _menu.isNotEmpty) {
-      double total = 0.0;
-      for (final entry in _cart.entries) {
-        final item = _menu.firstWhere(
-          (m) => m.id == entry.key,
-          orElse: () => FoodItemModel(id: entry.key, name: 'Item #${entry.key}', price: 38.0),
-        );
-        total += item.price * entry.value;
-      }
-      return total;
+    double total = 0.0;
+    for (final entry in _cart.entries) {
+      final item = _menu.firstWhere(
+        (m) => m.id == entry.key,
+        orElse: () => FoodItemModel(id: entry.key, name: 'Dish #${entry.key}', price: 38.0),
+      );
+      total += item.price * entry.value;
     }
-    return _fallbackItems.fold(0.0, (sum, i) => sum + (i['price'] as double) * (i['qty'] as int));
+    return total;
   }
 
-  double get _serviceFee => 12.50;
-  double get _deliveryFee => 0.00; // Free yacht delivery included
+  double get _serviceFee => _cart.isNotEmpty ? 12.50 : 0.0;
+  double get _deliveryFee => 0.00; // Free dock/villa delivery included
   double get _total => _subtotal + _serviceFee + _deliveryFee;
 
   void _increment(int itemId) {
@@ -78,10 +69,10 @@ class _FoodCartScreenState extends State<FoodCartScreen> {
   void _decrement(int itemId) {
     setState(() {
       final current = _cart[itemId] ?? 0;
-      if (current > 1) {
-        _cart[itemId] = current - 1;
-      } else {
+      if (current <= 1) {
         _cart.remove(itemId);
+      } else {
+        _cart[itemId] = current - 1;
       }
     });
   }
@@ -90,7 +81,7 @@ class _FoodCartScreenState extends State<FoodCartScreen> {
   Widget build(BuildContext context) {
     final restName = _restaurant?.name ?? 'Dune by Jean-Georges';
     final restHub = _restaurant?.islandHub ?? 'Ocean Club, Paradise Island';
-    final hasRealCart = _cart.isNotEmpty && _menu.isNotEmpty;
+    final isCartEmpty = _cart.isEmpty;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -110,102 +101,132 @@ class _FoodCartScreenState extends State<FoodCartScreen> {
             child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
           ),
         ),
-        title: Text('Your Order Cart', style: AppTextStyles.titleLarge),
+        title: Text('Your Dining Cart', style: AppTextStyles.titleLarge),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(restName, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.primaryTeal)),
-                  const SizedBox(height: 4),
-                  Text(restHub, style: AppTextStyles.bodySmall),
-                  const SizedBox(height: 20),
-                  if (hasRealCart)
-                    ..._cart.entries.map((entry) {
-                      final item = _menu.firstWhere(
-                        (m) => m.id == entry.key,
-                        orElse: () => FoodItemModel(id: entry.key, name: 'Dish #${entry.key}', price: 38.0),
-                      );
-                      return _buildCartRow(
-                        name: item.name,
-                        qty: entry.value,
-                        price: item.price * entry.value,
-                        onAdd: () => _increment(item.id),
-                        onRemove: () => _decrement(item.id),
-                      );
-                    })
-                  else
-                    ..._fallbackItems.map((item) => _buildCartRow(
-                          name: item['name'] as String,
-                          qty: item['qty'] as int,
-                          price: (item['price'] as double) * (item['qty'] as int),
-                          onAdd: () {},
-                          onRemove: () {},
-                        )),
-                  const SizedBox(height: 16),
-                  // Delivery note
-                  TextFormField(
-                    controller: _instructionCtrl,
-                    maxLines: 2,
-                    style: AppTextStyles.bodyMedium,
-                    decoration: const InputDecoration(
-                      hintText: 'Special instructions for your chef or delivery (e.g. yacht slip #12)',
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: AppColors.cardShadow,
-                    ),
+      body: isCartEmpty
+          ? _buildEmptyCart()
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _row('Subtotal', '\$${_subtotal.toStringAsFixed(2)}'),
-                        _row('Delivery Fee', '\$0.00', sub: 'FREE (Yacht delivery included)'),
-                        _row('Service Fee', '\$${_serviceFee.toStringAsFixed(2)}'),
-                        const Divider(color: AppColors.border, height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('TOTAL', style: AppTextStyles.headlineSmall),
-                            Text('\$${_total.toStringAsFixed(2)}', style: AppTextStyles.price.copyWith(fontSize: 22)),
-                          ],
+                        Text(restName, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.primaryTeal)),
+                        const SizedBox(height: 4),
+                        Text(restHub, style: AppTextStyles.bodySmall),
+                        const SizedBox(height: 20),
+                        ..._cart.entries.map((entry) {
+                          final item = _menu.firstWhere(
+                            (m) => m.id == entry.key,
+                            orElse: () => FoodItemModel(id: entry.key, name: 'Dish #${entry.key}', price: 38.0),
+                          );
+                          return _buildCartRow(
+                            name: item.name,
+                            qty: entry.value,
+                            price: item.price * entry.value,
+                            onAdd: () => _increment(item.id),
+                            onRemove: () => _decrement(item.id),
+                          );
+                        }),
+                        const SizedBox(height: 16),
+                        // Delivery note
+                        TextFormField(
+                          controller: _instructionCtrl,
+                          maxLines: 2,
+                          style: AppTextStyles.bodyMedium,
+                          decoration: const InputDecoration(
+                            hintText: 'Special instructions for your chef or delivery (e.g. yacht slip #12)',
+                          ),
                         ),
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
+                            boxShadow: AppColors.cardShadow,
+                          ),
+                          child: Column(
+                            children: [
+                              _row('Subtotal', '\$${_subtotal.toStringAsFixed(2)}'),
+                              _row('VIP Island Service Fee', '\$${_serviceFee.toStringAsFixed(2)}'),
+                              _row('Dockside & Villa Delivery', 'Free', sub: 'Complimentary on Paradise Island'),
+                              const Divider(color: AppColors.border, height: 20),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('TOTAL', style: AppTextStyles.headlineSmall),
+                                  Text('\$${_total.toStringAsFixed(2)}', style: AppTextStyles.price.copyWith(fontSize: 22)),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
-                ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: GSButton(
+                    label: 'Proceed to Checkout • \$${_total.toStringAsFixed(2)} →',
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/customer/food/checkout',
+                        arguments: {
+                          'restaurant': _restaurant,
+                          'cart': _cart,
+                          'menu': _menu,
+                          'subtotal': _subtotal,
+                          'total': _total,
+                          'note': _instructionCtrl.text.trim(),
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildEmptyCart() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.cardTouchpoint,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border),
               ),
+              child: const Icon(Icons.shopping_bag_outlined, size: 38, color: AppColors.primaryTeal),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: GSButton(
-              label: 'Proceed to Checkout →',
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  '/customer/food/checkout',
-                  arguments: {
-                    'restaurant': _restaurant,
-                    'cart': _cart,
-                    'menu': _menu,
-                    'subtotal': _subtotal,
-                    'total': _total,
-                    'note': _instructionCtrl.text.trim(),
-                  },
-                );
-              },
+            const SizedBox(height: 20),
+            Text('Your Dining Cart is Empty', style: AppTextStyles.headlineSmall, textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(
+              'Explore our curated fine dining restaurants and private chef selections in Nassau & Paradise Island.',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            GSButton(
+              label: 'Explore Menus →',
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
       ),
     );
   }

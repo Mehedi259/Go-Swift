@@ -179,6 +179,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         name: item.name,
                         desc: item.description ?? 'Curated fresh island ingredients',
                         price: '\$${item.price.toStringAsFixed(0)}',
+                        item: item,
                       ))
                     else
                       ...[
@@ -212,9 +213,24 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     );
   }
 
-  Widget _buildItemCard({required int id, required String name, required String desc, required String price}) {
+  Widget _buildItemCard({required int id, required String name, required String desc, required String price, FoodItemModel? item}) {
+    final foodItem = item ?? FoodItemModel(
+      id: id,
+      name: name,
+      description: desc,
+      price: double.tryParse(price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 38.0,
+    );
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/customer/food/item'),
+      onTap: () => Navigator.pushNamed(
+        context,
+        '/customer/food/item',
+        arguments: {
+          'item': foodItem,
+          'restaurant': _restaurant ?? widget.restaurant,
+          'cart': _cart,
+          'menu': _menuItems,
+        },
+      ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),

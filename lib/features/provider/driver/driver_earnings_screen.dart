@@ -17,16 +17,9 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   List<RideModel> _rides = [];
   bool _isLoading = true;
 
-  double _totalWeek = 1284.50;
-  double _totalToday = 284.00;
-  double _totalMonth = 4820.00;
-
-  final List<Map<String, String>> _fallbackTransactions = [
-    {'id': '#SW-8521', 'from': 'NAS Airport', 'to': 'Ocean Club', 'fare': '\$118.50', 'date': 'Today 4:18 PM'},
-    {'id': '#SW-8498', 'from': 'Atlantis', 'to': 'Cable Beach', 'fare': '\$65.00', 'date': 'Today 2:00 PM'},
-    {'id': '#SW-8471', 'from': 'Baha Mar', 'to': 'NAS Airport', 'fare': '\$98.00', 'date': 'Yesterday 9:00 AM'},
-    {'id': '#SW-8450', 'from': 'Lyford Cay', 'to': 'Paradise Island', 'fare': '\$145.00', 'date': 'Apr 19, 3:00 PM'},
-  ];
+  double _totalWeek = 0.0;
+  double _totalToday = 0.0;
+  double _totalMonth = 0.0;
 
   @override
   void initState() {
@@ -35,6 +28,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
   }
 
   Future<void> _loadEarnings() async {
+    setState(() => _isLoading = true);
     try {
       final list = await _rideService.getDriverRideHistory();
       if (mounted) {
@@ -67,9 +61,14 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                 weekSum += fare;
               }
             }
-            if (weekSum > 0) _totalWeek = weekSum;
-            if (todaySum > 0) _totalToday = todaySum;
-            if (monthSum > 0) _totalMonth = monthSum;
+
+            _totalWeek = weekSum;
+            _totalToday = todaySum;
+            _totalMonth = monthSum;
+          } else {
+            _totalWeek = 0.0;
+            _totalToday = 0.0;
+            _totalMonth = 0.0;
           }
         });
       }
@@ -80,63 +79,86 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final useLive = _rides.isNotEmpty;
-
     final content = _isLoading
         ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
         : RefreshIndicator(
+            color: AppColors.primaryTeal,
             onRefresh: _loadEarnings,
-            color: AppColors.cyan,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.embedded) ...[
-                    Text('Earnings', style: AppTextStyles.headlineLarge),
-                    const SizedBox(height: 16),
-                  ],
-                  // Hero Stats Card in Sovereign Light Theme
+                  if (widget.embedded) Text('Driver Earnings', style: AppTextStyles.headlineLarge),
+                  if (widget.embedded) const SizedBox(height: 16),
+                  // Hero card in Sovereign Gold
                   Container(
                     padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
                       color: AppColors.card,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(22),
                       border: Border.all(color: AppColors.border),
                       boxShadow: AppColors.cardShadow,
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Total Earnings This Week', style: AppTextStyles.bodyMedium),
-                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('THIS WEEK', style: AppTextStyles.caption.copyWith(letterSpacing: 1.2)),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.goldLight,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text('WEEKLY PAYOUT', style: AppTextStyles.goldLabel),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
                         Text(
                           '\$${_totalWeek.toStringAsFixed(2)}',
-                          style: AppTextStyles.price.copyWith(color: AppColors.gold, fontSize: 36),
+                          style: AppTextStyles.price.copyWith(fontSize: 42, color: AppColors.gold),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Direct deposit scheduled for Sunday midnight',
+                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Divider(color: AppColors.border, height: 1),
+                        ),
                         Row(
                           children: [
-                            Expanded(child: _eBox('Today', '\$${_totalToday.toStringAsFixed(2)}', AppColors.cyan)),
-                            const SizedBox(width: 12),
-                            Expanded(child: _eBox('This Month', '\$${_totalMonth.toStringAsFixed(2)}', AppColors.gold)),
+                            Expanded(child: _subStat('TODAY', '\$${_totalToday.toStringAsFixed(2)}')),
+                            Expanded(child: _subStat('THIS MONTH', '\$${_totalMonth.toStringAsFixed(2)}')),
                           ],
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
+                  // Breakdown
+                  Text('Earnings Breakdown', style: AppTextStyles.headlineSmall),
+                  const SizedBox(height: 12),
+                  _breakdownRow('Fares & Base Rates', '\$${(_totalWeek * 0.85).toStringAsFixed(2)}'),
+                  _breakdownRow('VIP Passenger Tips (100% Kept)', '\$${(_totalWeek * 0.15).toStringAsFixed(2)}'),
+                  _breakdownRow('Island Dispatch Fees', '\$0.00'),
+                  const SizedBox(height: 24),
+                  // Recent Transactions
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Transaction History', style: AppTextStyles.headlineSmall),
-                      if (useLive)
-                        Text('${_rides.length} trips', style: AppTextStyles.bodySmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.w600)),
+                      Text('Recent Transactions', style: AppTextStyles.headlineSmall),
+                      Text('${_rides.length} trips', style: AppTextStyles.bodySmall),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  if (useLive)
+                  if (_rides.isNotEmpty)
                     ..._rides.map((r) => Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(16),
@@ -162,10 +184,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      '${r.pickupAddress.split(',').first} → ${r.destinationAddress.split(',').first}',
-                                      style: AppTextStyles.titleMedium,
-                                    ),
+                                    Text('${r.pickupAddress.split(',').first} → ${r.destinationAddress.split(',').first}', style: AppTextStyles.titleMedium),
                                     const SizedBox(height: 2),
                                     Text(
                                       '#SW-${r.id}  •  ${r.createdAt != null ? r.createdAt!.split('T').first : "Completed"}',
@@ -182,89 +201,86 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                           ),
                         ))
                   else
-                    ..._fallbackTransactions.map((t) => Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.card,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                            boxShadow: AppColors.cardShadow,
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: AppColors.cardTouchpoint,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(Icons.directions_car, color: AppColors.cyan, size: 22),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('${t['from']} → ${t['to']}', style: AppTextStyles.titleMedium),
-                                    const SizedBox(height: 2),
-                                    Text('${t['id']}  •  ${t['date']}', style: AppTextStyles.bodySmall),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                t['fare']!,
-                                style: AppTextStyles.titleLarge.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                        )),
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            const Icon(Icons.receipt_long_outlined, size: 36, color: AppColors.textSecondary),
+                            const SizedBox(height: 8),
+                            Text('No Trip Transactions Yet', style: AppTextStyles.titleMedium),
+                            const SizedBox(height: 4),
+                            Text('Complete rides to view earnings and direct deposit ledger here.', style: AppTextStyles.bodySmall, textAlign: TextAlign.center),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
           );
 
-    return widget.embedded
-        ? content
-        : Scaffold(
-            backgroundColor: AppColors.background,
-            appBar: AppBar(
-              backgroundColor: AppColors.background,
-              elevation: 0,
-              leading: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: AppColors.cardShadow,
-                  ),
-                  child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
-                ),
-              ),
-              title: Text('Earnings', style: AppTextStyles.titleLarge),
-              centerTitle: false,
+    if (widget.embedded) return content;
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+              boxShadow: AppColors.cardShadow,
             ),
-            body: content,
-          );
+            child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+          ),
+        ),
+        title: Text('Earnings & Payouts', style: AppTextStyles.titleLarge),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: AppColors.primaryTeal),
+            onPressed: _loadEarnings,
+          ),
+        ],
+      ),
+      body: content,
+    );
   }
 
-  Widget _eBox(String l, String v, Color color) => Container(
-        padding: const EdgeInsets.all(14),
+  Widget _subStat(String l, String v) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l, style: AppTextStyles.caption.copyWith(letterSpacing: 1)),
+          const SizedBox(height: 2),
+          Text(v, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        ],
+      );
+
+  Widget _breakdownRow(String l, String v) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.cardTouchpoint,
-          borderRadius: BorderRadius.circular(14),
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.border),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(l, style: AppTextStyles.bodySmall),
-            const SizedBox(height: 4),
-            Text(v, style: AppTextStyles.headlineSmall.copyWith(color: color, fontWeight: FontWeight.bold)),
+            Text(l, style: AppTextStyles.bodyMedium),
+            Text(v, style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
           ],
         ),
       );

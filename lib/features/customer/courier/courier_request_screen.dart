@@ -17,10 +17,10 @@ class _CourierRequestScreenState extends State<CourierRequestScreen> {
   bool _isSubmitting = false;
   bool _initialized = false;
 
-  final TextEditingController _pickupController = TextEditingController(text: 'Graycliff Boutique, Downtown Nassau');
-  final TextEditingController _dropoffController = TextEditingController(text: 'The Ocean Club, Paradise Island');
-  final TextEditingController _recipientNameController = TextEditingController(text: 'Captain Devon Butler');
-  final TextEditingController _recipientPhoneController = TextEditingController(text: '+1 (242) 555-0199');
+  final TextEditingController _pickupController = TextEditingController();
+  final TextEditingController _dropoffController = TextEditingController();
+  final TextEditingController _recipientNameController = TextEditingController();
+  final TextEditingController _recipientPhoneController = TextEditingController();
 
   @override
   void didChangeDependencies() {

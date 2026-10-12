@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/food_model.dart';
 import '../../../core/services/food_service.dart';
 import '../../../core/services/provider_application_service.dart';
+import '../../../core/widgets/gs_button.dart';
 
 class OrdersListScreen extends StatefulWidget {
   const OrdersListScreen({super.key});
@@ -18,20 +20,24 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   List<FoodOrderModel> _liveOrders = [];
   bool _isLoading = true;
   bool _acceptingOrders = true;
-
-  final List<Map<String, String>> _fallbackOrders = [
-    {'id': '#GS-2847', 'customer': 'Alexander Vance', 'items': '3 items • Black Cod Miso', 'total': '\$202.50', 'status': 'Preparing', 'time': '1:15 PM'},
-    {'id': '#GS-2840', 'customer': 'Victoria Stubbs', 'items': '5 items • Bahamian Lobster', 'total': '\$312.00', 'status': 'New', 'time': '12:58 PM'},
-    {'id': '#GS-2821', 'customer': 'Marcus Thompson', 'items': '2 items • Wagyu Tenderloin', 'total': '\$98.00', 'status': 'Ready', 'time': '12:30 PM'},
-  ];
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _fetchData();
+    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _fetchData(silent: true));
   }
 
-  Future<void> _fetchData() async {
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchData({bool silent = false}) async {
+    if (!silent) setState(() => _isLoading = true);
+
     try {
       final p = await _providerService.getRestaurantProfile();
       if (mounted && p.isNotEmpty && p['accepting_orders'] != null) {
@@ -59,14 +65,22 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     setState(() => _acceptingOrders = next);
     try {
       await _providerService.updateRestaurantProfile(acceptingOrders: next);
-    } catch (_) {}
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next ? 'Kitchen is now ACCEPTING orders' : 'Kitchen is now CLOSED for new orders'),
+            backgroundColor: next ? AppColors.green : AppColors.gold,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) setState(() => _acceptingOrders = !next);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final useLive = _liveOrders.isNotEmpty;
-    final count = useLive ? _liveOrders.length : _fallbackOrders.length;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -97,6 +111,11 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             icon: const Icon(Icons.person_outline, color: AppColors.cyan),
             tooltip: 'Profile',
             onPressed: () => Navigator.pushNamed(context, '/provider/restaurant/profile'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: AppColors.cyan),
+            tooltip: 'Refresh',
+            onPressed: () => _fetchData(),
           ),
           const SizedBox(width: 8),
         ],
@@ -143,110 +162,132 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: count,
-                    itemBuilder: (c, i) {
-                      final String id;
-                      final String customer;
-                      final String items;
-                      final String total;
-                      final String status;
-                      int? orderId;
+                : RefreshIndicator(
+                    color: AppColors.primaryTeal,
+                    onRefresh: () => _fetchData(),
+                    child: _liveOrders.isEmpty
+                        ? _buildEmptyState()
+                        : ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: _liveOrders.length,
+                            itemBuilder: (c, i) {
+                              final o = _liveOrders[i];
+                              final id = o.orderNumber ?? '#GS-${o.id}';
+                              final customer = o.customerName;
+                              final items = o.items.isNotEmpty
+                                  ? '${o.items.length} items • ${o.items.first.name}'
+                                  : (o.deliveryAddress ?? 'Yacht / Villa Delivery');
+                              final total = '\$${o.totalAmount.toStringAsFixed(2)}';
+                              final status = o.status.toUpperCase();
 
-                      if (useLive) {
-                        final o = _liveOrders[i];
-                        orderId = o.id;
-                        id = '#GS-${o.id}';
-                        customer = o.customerName;
-                        items = '${o.items.length} items • ${o.deliveryAddress}';
-                        total = '\$${o.totalAmount}';
-                        status = o.status.toUpperCase();
-                      } else {
-                        final o = _fallbackOrders[i];
-                        id = o['id']!;
-                        customer = o['customer']!;
-                        items = o['items']!;
-                        total = o['total']!;
-                        status = o['status']!;
-                      }
+                              final Color statusColor;
+                              final Color statusBg;
+                              if (status.contains('NEW') || status.contains('PLACED') || status.contains('PENDING')) {
+                                statusColor = AppColors.gold;
+                                statusBg = AppColors.goldLight;
+                              } else if (status.contains('PREPARING')) {
+                                statusColor = AppColors.cyan;
+                                statusBg = AppColors.cyanLight;
+                              } else {
+                                statusColor = AppColors.green;
+                                statusBg = AppColors.greenLight;
+                              }
 
-                      final Color statusColor;
-                      final Color statusBg;
-                      if (status.contains('NEW') || status.contains('PENDING')) {
-                        statusColor = AppColors.gold;
-                        statusBg = AppColors.goldLight;
-                      } else if (status.contains('PREPARING')) {
-                        statusColor = AppColors.cyan;
-                        statusBg = AppColors.cyanLight;
-                      } else {
-                        statusColor = AppColors.green;
-                        statusBg = AppColors.greenLight;
-                      }
-
-                      return GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/provider/restaurant/order-detail', arguments: {'id': orderId ?? 2847}),
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 14),
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: AppColors.card,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: AppColors.border),
-                            boxShadow: AppColors.cardShadow,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(id, style: AppTextStyles.cyanLabel),
-                                  const Spacer(),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: statusBg,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      status,
-                                      style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontWeight: FontWeight.bold),
-                                    ),
+                              return GestureDetector(
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  '/provider/restaurant/order-detail',
+                                  arguments: {'id': o.id, 'order': o},
+                                ),
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 14),
+                                  padding: const EdgeInsets.all(18),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.card,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(color: AppColors.border),
+                                    boxShadow: AppColors.cardShadow,
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  const Icon(Icons.person_outline, size: 16, color: AppColors.cyan),
-                                  const SizedBox(width: 8),
-                                  Text(customer, style: AppTextStyles.headlineSmall.copyWith(fontSize: 17)),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(Icons.receipt_outlined, size: 16, color: AppColors.textSecondary),
-                                  const SizedBox(width: 8),
-                                  Expanded(child: Text(items, style: AppTextStyles.bodySmall)),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(total, style: AppTextStyles.titleLarge.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold)),
-                                  const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
-                                ],
-                              ),
-                            ],
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(id, style: AppTextStyles.titleMedium.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: statusBg,
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            child: Text(status, style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontWeight: FontWeight.bold)),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(customer, style: AppTextStyles.headlineSmall),
+                                      const SizedBox(height: 4),
+                                      Text(items, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 10),
+                                        child: Divider(color: AppColors.border, height: 1),
+                                      ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('TOTAL', style: AppTextStyles.caption.copyWith(letterSpacing: 1)),
+                                          Text(total, style: AppTextStyles.titleLarge.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                      );
-                    },
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.cardTouchpoint,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Icon(Icons.restaurant_menu_outlined, size: 38, color: AppColors.primaryTeal),
+            ),
+            const SizedBox(height: 20),
+            Text('No Pending Kitchen Orders', style: AppTextStyles.headlineSmall, textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(
+              'New guest culinary orders will stream in automatically when placed. Pull down to refresh.',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            GSButton(
+              label: 'Refresh Orders',
+              isSecondary: true,
+              onTap: () => _fetchData(),
+            ),
+          ],
+        ),
       ),
     );
   }

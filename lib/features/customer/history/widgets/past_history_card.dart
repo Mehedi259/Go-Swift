@@ -83,21 +83,25 @@ class PastHistoryCard extends StatelessWidget {
 
   Widget _buildMiddleSection(String type) {
     if (type == 'ride') {
+      final pickup = data['pickup'] as String? ?? 'Nassau Departure';
+      final dest = data['destination'] as String? ?? (data['title'] as String? ?? 'Arrival Terminal');
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _locationRow(AppColors.primaryTeal, 'PICKUP (FBO JET CENTER)', 'Odyssey Aviation FBO, Coral Harbour'),
+          _locationRow(AppColors.primaryTeal, 'PICKUP', pickup),
           const SizedBox(height: 10),
-          _locationRow(AppColors.gold, 'DROPOFF DESTINATION', 'Albany Marina & Resort, New Providence'),
+          _locationRow(AppColors.gold, 'DROPOFF DESTINATION', dest),
         ],
       );
     } else if (type == 'food') {
+      final restaurant = data['restaurant'] as String? ?? (data['title'] as String? ?? 'Bahamian Kitchen');
+      final items = data['items'] as String? ?? (data['subtitle'] as String? ?? 'Curated Selection');
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('RESTAURANT / CULINARY PARTNER', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary, letterSpacing: 0.5)),
           const SizedBox(height: 4),
-          Text('Dune at The Ocean Club, Paradise Island', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+          Text(restaurant, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(12),
@@ -106,66 +110,43 @@ class PastHistoryCard extends StatelessWidget {
               children: [
                 const Icon(Icons.inventory_2_outlined, color: AppColors.primaryTeal, size: 16),
                 const SizedBox(width: 12),
-                Expanded(child: Text('Yellowfin Tuna Tartare, Prime Beef\nTenderloin (2 curated items)', style: AppTextStyles.bodySmall)),
+                Expanded(child: Text(items, style: AppTextStyles.bodySmall)),
               ],
             ),
           ),
         ],
       );
     } else if (type == 'courier') {
+      final from = data['pickup'] as String? ?? 'Dispatch Point';
+      final to = data['destination'] as String? ?? (data['title'] as String? ?? 'Delivery Point');
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _locationRow(AppColors.primaryTeal, 'DISPATCH POINT', 'Lyford Cay Club Concierge Desk'),
+          _locationRow(AppColors.primaryTeal, 'DISPATCH POINT', from),
           const SizedBox(height: 10),
-          _locationRow(AppColors.primaryTeal, 'SECURED DESTINATION', 'Parliament Square, Downtown Nassau'),
+          _locationRow(AppColors.primaryTeal, 'SECURED DESTINATION', to),
         ],
       );
     } else if (type == 'rental') {
+      final title = data['vehicle'] as String? ?? (data['title'] as String? ?? 'Luxury Fleet Vehicle');
+      final sub = data['subtitle'] as String? ?? 'Completed Rental Period';
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('2024 Porsche 911 Carrera Cabriolet', style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    const Icon(Icons.palette_outlined, color: AppColors.gold, size: 14),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text('Chalk White /\nBordeaux Leather', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary))),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Row(
-                  children: [
-                    Container(width: 4, height: 4, decoration: const BoxDecoration(color: AppColors.textMuted, shape: BoxShape.circle)),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text('Lyford Cay Marina\nHandover', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary))),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          Text(title, style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Text(sub, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
         ],
       );
     } else if (type == 'property') {
+      final title = data['property'] as String? ?? (data['title'] as String? ?? 'Luxury Villa Stay');
+      final sub = data['subtitle'] as String? ?? 'Completed Reservation';
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('The Sovereign Ocean Villa', style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(Icons.location_on_outlined, color: AppColors.textSecondary, size: 14),
-              const SizedBox(width: 6),
-              Text('Ocean Club Estates, Paradise Island', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
-            ],
-          ),
+          Text(title, style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          Text('Host: Julian Turnquest [Superhost] • 4 Private Beachfront Nights', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textMuted)),
+          Text(sub, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
         ],
       );
     }
@@ -173,114 +154,38 @@ class PastHistoryCard extends StatelessWidget {
   }
 
   Widget _buildFooter(String type) {
-    if (type == 'ride') {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: const BoxDecoration(color: AppColors.cardTouchpoint, shape: BoxShape.circle),
-                alignment: Alignment.center,
-                child: Text('MV', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+    final fare = data['fare'] as String? ?? '\$0.00';
+    final driverName = data['driverName'] as String?;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(color: AppColors.cardTouchpoint, borderRadius: BorderRadius.circular(8)),
+              child: Text(
+                'Settled',
+                style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text('Driver Marcus Vance', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 6),
-                      const Icon(Icons.star, color: AppColors.gold, size: 12),
-                      Text('5.0', style: AppTextStyles.labelSmall.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  Text('Mercedes-Maybach S580 • Obsidian Black', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textMuted)),
-                ],
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('Total Paid', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-              Text('\$165.00', style: AppTextStyles.titleLarge.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-              Text('BSD', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ],
-      );
-    } else if (type == 'courier') {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                const Icon(Icons.verified_user_outlined, color: AppColors.primaryTeal, size: 16),
-                const SizedBox(width: 8),
-                Expanded(child: Text('Tamper-Evident Legal Dossier (< 5 lbs)', style: AppTextStyles.bodySmall)),
-              ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('Delivery Fee', textAlign: TextAlign.right, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-              Text('\$85.00', style: AppTextStyles.titleLarge.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-              Text('BSD', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ],
-      );
-    } else if (type == 'property') {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Escrow Disposition', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(Icons.lock_outline, color: AppColors.green, size: 14),
-                  const SizedBox(width: 6),
-                  Text('100% Released & Audited', style: AppTextStyles.labelSmall.copyWith(color: AppColors.green, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('Total Settled', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-              Text('\$11,400.00 BSD', style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ],
-      );
-    } else {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(type == 'rental' ? 'Settled Total' : 'Bill Total (VAT incl.)', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-              const SizedBox(height: 4),
-              Text(type == 'rental' ? '\$1,386.00 BSD' : '\$248.50 BSD', style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ],
-      );
-    }
+            const SizedBox(width: 8),
+            Text(
+              driverName ?? 'VAT & Fees Included',
+              style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text('Total Paid', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+            Text(fare, style: AppTextStyles.titleLarge.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _locationRow(Color dotColor, String label, String value) {

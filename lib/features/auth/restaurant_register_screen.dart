@@ -14,13 +14,24 @@ class RestaurantRegisterScreen extends StatefulWidget {
 }
 
 class _RestaurantRegisterScreenState extends State<RestaurantRegisterScreen> {
-  final _restaurantNameController = TextEditingController(text: 'Dune by Jean-Georges');
-  final _ownerNameController = TextEditingController(text: 'Jean-Georges Vongerichten');
-  final _emailController = TextEditingController(text: 'dune.nassau@swiftculinary.bs');
-  final _phoneController = TextEditingController(text: '+1 (242) 555-0899');
-  final _licenseController = TextEditingController(text: 'BL-44281-NP');
+  final _restaurantNameController = TextEditingController();
+  final _ownerNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _licenseController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = LocalStorage.getUser();
+    if (user != null) {
+      if (user.fullName.isNotEmpty) _ownerNameController.text = user.fullName;
+      if (user.email.isNotEmpty) _emailController.text = user.email;
+      if (user.phone.isNotEmpty) _phoneController.text = user.phone;
+    }
+  }
 
   @override
   void dispose() {

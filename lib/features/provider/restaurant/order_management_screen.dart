@@ -26,7 +26,12 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     if (!_initialized) {
       _initialized = true;
       final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-      final int orderId = args?['id'] ?? 2847;
+      if (args?['order'] is FoodOrderModel) {
+        _liveOrder = args!['order'] as FoodOrderModel;
+        _status = _liveOrder!.status.toUpperCase();
+        _isLoading = false;
+      }
+      final int orderId = args?['id'] ?? _liveOrder?.id ?? 1;
       _loadOrderDetail(orderId);
     }
   }
@@ -69,7 +74,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final int orderId = args?['id'] ?? 2847;
+    final int orderId = args?['id'] ?? _liveOrder?.id ?? 1;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -97,162 +102,145 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(
-                color: AppColors.cyanLight,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
-              ),
-              child: Text(
-                '$_status  •  ORDER #GS-$orderId',
-                style: AppTextStyles.cyanLabel.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(_liveOrder?.customerName ?? 'Alexander Vance', style: AppTextStyles.headlineLarge),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.directions_boat_outlined, size: 16, color: AppColors.cyan),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    _liveOrder?.deliveryAddress ?? 'Yacht delivery • Slip #12, Albany Marina',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
-            Text('Order Items', style: AppTextStyles.headlineSmall),
-            const SizedBox(height: 12),
-            if (_liveOrder != null && _liveOrder!.items.isNotEmpty)
-              ..._liveOrder!.items.map((item) => Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: AppColors.cardShadow,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(color: AppColors.cyan, shape: BoxShape.circle),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            '×${item.quantity} ${item.name}',
-                            style: AppTextStyles.titleMedium,
-                          ),
-                        ),
-                        Text(
-                          '\$${(item.price * item.quantity).toStringAsFixed(2)}',
-                          style: AppTextStyles.titleMedium.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ))
-            else
-              ...[
-                {'name': 'Yellowfin Tuna Tartare', 'qty': 1, 'price': '\$38.00'},
-                {'name': 'Crispy Black Cod Miso', 'qty': 1, 'price': '\$68.00'},
-                {'name': 'Bahamian Lobster Bisque', 'qty': 2, 'price': '\$84.00'},
-              ].map((item) => Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: AppColors.cardShadow,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(color: AppColors.cyan, shape: BoxShape.circle),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            '×${item['qty']} ${item['name']}',
-                            style: AppTextStyles.titleMedium,
-                          ),
-                        ),
-                        Text(
-                          item['price'] as String,
-                          style: AppTextStyles.titleMedium.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  )),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-                boxShadow: AppColors.cardShadow,
-              ),
-              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _row('Subtotal', _liveOrder != null ? '\$${_liveOrder!.totalAmount.toStringAsFixed(2)}' : '\$190.00'),
-                  _row('Delivery Fee', _liveOrder?.deliveryFee != null ? '\$${_liveOrder!.deliveryFee!.toStringAsFixed(2)}' : 'Assigned (Paid)'),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Divider(color: AppColors.border),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppColors.cyanLight,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      '$_status  •  ORDER #GS-$orderId',
+                      style: AppTextStyles.cyanLabel.copyWith(fontWeight: FontWeight.bold),
+                    ),
                   ),
+                  const SizedBox(height: 14),
+                  Text(_liveOrder?.customerName ?? 'VIP Guest', style: AppTextStyles.headlineLarge),
+                  const SizedBox(height: 4),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('TOTAL', style: AppTextStyles.headlineSmall),
-                      Text(
-                        _liveOrder != null ? '\$${_liveOrder!.totalAmount.toStringAsFixed(2)}' : '\$202.50',
-                        style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
+                      const Icon(Icons.location_on_outlined, size: 16, color: AppColors.cyan),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          _liveOrder?.deliveryAddress ?? 'Ocean Club Suite Delivery, Paradise Island',
+                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                        ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 22),
+                  Text('Order Items', style: AppTextStyles.headlineSmall),
+                  const SizedBox(height: 12),
+                  if (_liveOrder != null && _liveOrder!.items.isNotEmpty)
+                    ..._liveOrder!.items.map((item) => Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.card,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
+                            boxShadow: AppColors.cardShadow,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: const BoxDecoration(color: AppColors.cyan, shape: BoxShape.circle),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  '×${item.quantity} ${item.name}',
+                                  style: AppTextStyles.titleMedium,
+                                ),
+                              ),
+                              Text(
+                                '\$${(item.price * item.quantity).toStringAsFixed(2)}',
+                                style: AppTextStyles.titleMedium.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ))
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Text('Curated chef order items being prepared by kitchen.', style: AppTextStyles.bodyMedium),
+                    ),
+                  const SizedBox(height: 24),
+                  // Total summary card
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('TOTAL REVENUE', style: AppTextStyles.titleMedium),
+                        Text(
+                          '\$${(_liveOrder?.totalAmount ?? 118.0).toStringAsFixed(2)}',
+                          style: AppTextStyles.price.copyWith(fontSize: 20),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('Update Order Progression', style: AppTextStyles.headlineSmall),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: ['PREPARING', 'READY FOR COURIER', 'IN TRANSIT', 'DELIVERED'].map((s) {
+                      final isCurrent = _status == s;
+                      return GestureDetector(
+                        onTap: () => _updateStatus(s, orderId),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isCurrent ? AppColors.cyan : AppColors.card,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: isCurrent ? AppColors.cyan : AppColors.border),
+                            boxShadow: AppColors.cardShadow,
+                          ),
+                          child: Text(
+                            s,
+                            style: AppTextStyles.labelMedium.copyWith(
+                              color: isCurrent ? Colors.white : AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 28),
+                  GSButton(
+                    label: _isUpdating ? 'Updating Kitchen Status...' : 'Advance Status →',
+                    isLoading: _isUpdating,
+                    onTap: () {
+                      final next = _status == 'PREPARING'
+                          ? 'READY FOR COURIER'
+                          : _status == 'READY FOR COURIER'
+                              ? 'IN TRANSIT'
+                              : 'DELIVERED';
+                      _updateStatus(next, orderId);
+                    },
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-            GSButton(
-              label: _isUpdating ? 'Updating Status...' : (_status == 'READY' ? 'Ready for Courier Pickup ✓' : 'Ready for Pickup →'),
-              onTap: _isUpdating
-                  ? () {}
-                  : () async {
-                      if (_status != 'READY') {
-                        await _updateStatus('ready', orderId);
-                      } else {
-                        Navigator.pop(context);
-                      }
-                    },
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
     );
   }
-
-  Widget _row(String label, String value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: AppTextStyles.bodyMedium),
-            Text(value, style: AppTextStyles.titleMedium),
-          ],
-        ),
-      );
 }

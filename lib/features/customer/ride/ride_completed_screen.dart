@@ -10,9 +10,18 @@ class RideCompletedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ride = ModalRoute.of(context)?.settings.arguments as RideModel?;
-    final tripCode = ride != null ? '#SW-${ride.id}' : '#SW-8492';
-    final dest = ride?.destinationAddress ?? 'The Ocean Club, A Four Seasons Resort';
-    final totalFare = ride != null ? '\$${(ride.finalFare ?? ride.estimatedFare).toStringAsFixed(2)}' : '\$118.50';
+    final tripCode = ride != null ? '#SW-${ride.id}' : '#SW-COMPLETED';
+    final dest = ride?.destinationAddress ?? 'Destination Reached';
+    final finalAmount = (ride?.finalFare ?? ride?.estimatedFare ?? 0.0);
+    final totalFare = '\$${finalAmount.toStringAsFixed(2)}';
+    final baseFare = (finalAmount * 0.70).toStringAsFixed(2);
+    final distFare = (finalAmount * 0.22).toStringAsFixed(2);
+    final islandFee = (finalAmount * 0.08).toStringAsFixed(2);
+    final dateStr = (ride?.createdAt != null && ride!.createdAt!.length >= 16)
+        ? ride.createdAt!.substring(0, 16).replaceAll('T', ' ')
+        : 'Completed Recently';
+    final distStr = ride?.distanceKm != null ? '${ride!.distanceKm} km' : 'Direct Route';
+    final durationStr = ride?.estimatedDurationMinutes != null ? '${ride!.estimatedDurationMinutes} min' : 'Completed';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -78,13 +87,13 @@ class RideCompletedScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text('TRIP $tripCode', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
-                              Text('4:18 PM Apr 20', style: AppTextStyles.bodySmall),
+                              Text(dateStr, style: AppTextStyles.bodySmall),
                             ],
                           ),
                           const SizedBox(height: 16),
-                          _fareRow('Base Fare', '\$85.00'),
-                          _fareRow('Distance (14.2 km)', '\$28.40'),
-                          _fareRow('Island Service Fee', '\$5.10'),
+                          _fareRow('Base Chauffeur Rate', '\$$baseFare'),
+                          _fareRow('Distance Fare ($distStr)', '\$$distFare'),
+                          _fareRow('Island Service & VAT', '\$$islandFee'),
                           const Divider(color: AppColors.border, height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -104,7 +113,7 @@ class RideCompletedScreen extends StatelessWidget {
                               children: [
                                 const Icon(Icons.credit_card, color: AppColors.primaryTeal, size: 18),
                                 const SizedBox(width: 10),
-                                Text('Visa •••• 4291 — Paid', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary)),
+                                Text('Settled Digital Payment', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary)),
                                 const Spacer(),
                                 Text('SETTLED', style: AppTextStyles.labelSmall.copyWith(color: AppColors.green, fontWeight: FontWeight.bold)),
                               ],
@@ -117,9 +126,9 @@ class RideCompletedScreen extends StatelessWidget {
                     // Trip stats
                     Row(
                       children: [
-                        Expanded(child: _stat('Duration', '18 min', Icons.access_time)),
+                        Expanded(child: _stat('Duration', durationStr, Icons.access_time)),
                         const SizedBox(width: 12),
-                        Expanded(child: _stat('Distance', '14.2 km', Icons.route)),
+                        Expanded(child: _stat('Distance', distStr, Icons.route)),
                       ],
                     ),
                     const SizedBox(height: 24),

@@ -76,8 +76,8 @@ class _CourierRatingScreenState extends State<CourierRatingScreen> {
     final args = ModalRoute.of(context)?.settings.arguments;
     final CourierDeliveryModel? delivery = widget.delivery ?? (args is CourierDeliveryModel ? args : null);
 
-    final courierTitle = delivery?.courierName ?? 'Marcus Rolle';
-    final trackingCode = delivery?.trackingNumber ?? (delivery != null ? '#CS-${delivery.id}' : '#CS-3182');
+    final courierTitle = (delivery?.courierName != null && delivery!.courierName!.isNotEmpty) ? delivery.courierName! : 'Assigned Escort Courier';
+    final trackingCode = delivery != null ? delivery.trackingNumber : 'CONFIRMED DISPATCH';
 
     return Scaffold(
       backgroundColor: AppColors.background,

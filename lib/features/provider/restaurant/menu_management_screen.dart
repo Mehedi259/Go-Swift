@@ -4,6 +4,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/food_model.dart';
 import '../../../core/services/food_service.dart';
 import '../../../core/services/provider_application_service.dart';
+import '../../../core/widgets/gs_button.dart';
 
 class MenuManagementScreen extends StatefulWidget {
   const MenuManagementScreen({super.key});
@@ -19,14 +20,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   bool _isLoading = true;
   String _restaurantName = 'Dune by Jean-Georges';
   String _restaurantLocation = 'Ocean Club, Paradise Island';
-
-  final List<Map<String, dynamic>> _fallbackItems = [
-    {'name': 'Yellowfin Tuna Tartare', 'price': '\$38.00', 'available': true},
-    {'name': 'Crispy Black Cod Miso', 'price': '\$68.00', 'available': true},
-    {'name': 'Wagyu Beef Tenderloin', 'price': '\$145.00', 'available': false},
-    {'name': 'Bahamian Lobster Bisque', 'price': '\$42.00', 'available': true},
-    {'name': 'Truffle Risotto', 'price': '\$55.00', 'available': true},
-  ];
+  int? _activeCategoryId;
 
   @override
   void initState() {
@@ -34,9 +28,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     _loadMenuData();
   }
 
-  int? _activeCategoryId;
-
   Future<void> _loadMenuData() async {
+    setState(() => _isLoading = true);
     try {
       final p = await _providerService.getRestaurantProfile();
       if (mounted && p.isNotEmpty) {
@@ -142,9 +135,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final useLive = _liveItems.isNotEmpty;
-    final count = useLive ? _liveItems.length : _fallbackItems.length;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -164,9 +154,15 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           ),
         ),
         title: Text('Menu Management', style: AppTextStyles.titleLarge),
+        centerTitle: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long, color: AppColors.cyan),
+            tooltip: 'Orders',
+            onPressed: () => Navigator.pushNamed(context, '/provider/restaurant/orders'),
+          ),
           Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.only(right: 12),
             child: GestureDetector(
               onTap: _showAddItemDialog,
               child: Container(
@@ -180,10 +176,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                   children: [
                     const Icon(Icons.add, color: Colors.white, size: 16),
                     const SizedBox(width: 4),
-                    Text(
-                      'Add Item',
-                      style: AppTextStyles.labelMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
+                    Text('Add Item', style: AppTextStyles.labelMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -204,11 +197,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    _statCard('$count', 'Menu Items'),
+                    _statCard('${_liveItems.length}', 'Menu Items'),
                     const SizedBox(width: 10),
-                    _statCard('8', 'Active Orders'),
+                    _statCard('Active', 'Kitchen Status'),
                     const SizedBox(width: 10),
-                    _statCard('4.9 ★', 'Rating'),
+                    _statCard('4.9 ★', 'Guest Rating'),
                   ],
                 ),
               ],
@@ -217,66 +210,71 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: count,
-                    itemBuilder: (c, i) {
-                      final String name;
-                      final String price;
-                      final bool available;
+                : RefreshIndicator(
+                    color: AppColors.primaryTeal,
+                    onRefresh: _loadMenuData,
+                    child: _liveItems.isEmpty
+                        ? _buildEmptyState()
+                        : ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: _liveItems.length,
+                            itemBuilder: (c, i) {
+                              final item = _liveItems[i];
+                              final name = item.name;
+                              final price = '\$${item.price.toStringAsFixed(2)}';
+                              final available = item.isAvailable;
 
-                      if (useLive) {
-                        final item = _liveItems[i];
-                        name = item.name;
-                        price = '\$${item.price}';
-                        available = item.isAvailable;
-                      } else {
-                        final item = _fallbackItems[i];
-                        name = item['name'] as String;
-                        price = item['price'] as String;
-                        available = item['available'] as bool;
-                      }
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: AppColors.cardShadow,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: AppColors.cardTouchpoint,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(Icons.restaurant_menu, color: AppColors.cyan, size: 22),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(name, style: AppTextStyles.titleMedium),
-                                  const SizedBox(height: 2),
-                                  Text(price, style: AppTextStyles.cyanLabel),
-                                ],
-                              ),
-                            ),
-                            Switch(
-                              value: available,
-                              activeColor: AppColors.cyan,
-                              onChanged: (_) {},
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.card,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AppColors.border),
+                                  boxShadow: AppColors.cardShadow,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.cardTouchpoint,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(Icons.restaurant_menu, color: AppColors.cyan, size: 22),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(name, style: AppTextStyles.titleMedium),
+                                          const SizedBox(height: 2),
+                                          Text(price, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold)),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: available ? AppColors.greenLight : AppColors.goldLight,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        available ? 'Available' : 'Sold Out',
+                                        style: AppTextStyles.labelSmall.copyWith(
+                                          color: available ? AppColors.green : AppColors.gold,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                   ),
           ),
         ],
@@ -284,19 +282,56 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     );
   }
 
-  Widget _statCard(String val, String label) => Expanded(
+  Widget _buildEmptyState() {
+    return Center(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.cardTouchpoint,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Icon(Icons.menu_book_outlined, size: 38, color: AppColors.primaryTeal),
+            ),
+            const SizedBox(height: 20),
+            Text('No Menu Items Yet', style: AppTextStyles.headlineSmall, textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(
+              'Add signature dishes, appetizers, and beverages for guests across Nassau & Paradise Island.',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            GSButton(
+              label: 'Add First Dish →',
+              onTap: _showAddItemDialog,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statCard(String val, String lbl) => Expanded(
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.cardTouchpoint,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.border),
           ),
           child: Column(
             children: [
-              Text(val, style: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.bold)),
+              Text(val, style: AppTextStyles.titleLarge.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
               const SizedBox(height: 2),
-              Text(label, style: AppTextStyles.bodySmall),
+              Text(lbl, style: AppTextStyles.caption),
             ],
           ),
         ),
