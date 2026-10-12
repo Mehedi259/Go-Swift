@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/services/auth_service.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/provider_application_service.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
@@ -43,41 +44,125 @@ class _CourierRegisterScreenState extends State<CourierRegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final license = _licenseController.text.trim();
+    final password = _passwordController.text;
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your full legal name.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid email address.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    if (password.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password must be at least 8 characters long.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      if (!LocalStorage.isLoggedIn && _emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
-        try {
-          await AuthService().login(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
-        } catch (_) {}
-      }
+      final formattedPhone = phone.isNotEmpty
+          ? (phone.startsWith('+') ? phone : '+1 (242) $phone')
+          : null;
 
       if (LocalStorage.isLoggedIn) {
         await ProviderApplicationService().updateCourierProfile(
-          legalName: _nameController.text.trim(),
-          contactEmail: _emailController.text.trim(),
-          contactPhone: _phoneController.text.trim(),
-          driverLicenseNumber: _licenseController.text.trim(),
+          legalName: name,
+          contactEmail: email,
+          contactPhone: formattedPhone,
+          driverLicenseNumber: license,
           operatingIslandZone: 'New Providence & Paradise Island',
           transportMode: 'car',
         );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Courier profile configured successfully.'),
+              backgroundColor: AppColors.green,
+            ),
+          );
+          Navigator.pushNamedAndRemoveUntil(context, '/provider/courier/hub', (_) => false);
+        }
+      } else {
+        final authProvider = context.read<AuthProvider>();
+        final phoneForApi = phone.isNotEmpty
+            ? (phone.startsWith('+') ? phone : '+1242$phone')
+            : null;
+
+        final success = await authProvider.initiateRegistration(
+          fullName: name,
+          email: email,
+          password: password,
+          confirmPassword: password,
+          phoneNumber: phoneForApi,
+        );
+
+        if (!mounted) return;
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Verification code sent to $email. Please enter your OTP.'),
+              backgroundColor: AppColors.green,
+            ),
+          );
+
+          Navigator.pushNamed(context, '/verify-code', arguments: {
+            'email': email,
+            'destination': '/provider/courier/hub',
+            'providerType': 'courier',
+            'providerData': {
+              'legal_name': name,
+              'contact_email': email,
+              'contact_phone': formattedPhone,
+              'driver_license_number': license,
+              'operating_island_zone': 'New Providence & Paradise Island',
+            },
+          });
+        } else {
+          final errMsg = authProvider.errorMessage ?? 'Registration failed. If already registered, please Log In.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errMsg),
+              backgroundColor: AppColors.red,
+            ),
+          );
+        }
       }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Courier application submitted successfully.'),
-            backgroundColor: AppColors.green,
+          SnackBar(
+            content: Text('Registration error: $e'),
+            backgroundColor: AppColors.red,
           ),
         );
       }
-    } catch (_) {
-      // Allow seamless mock progression
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
-        Navigator.pushNamedAndRemoveUntil(context, '/provider/courier/hub', (_) => false);
       }
     }
   }

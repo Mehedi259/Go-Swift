@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/services/provider_application_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class CodeVerificationScreen extends StatefulWidget {
@@ -16,13 +17,27 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
   final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   String _email = '';
+  String _destination = '/customer/hub';
+  String? _providerType;
+  Map<String, dynamic>? _providerData;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map && args['email'] != null) {
-      _email = args['email'].toString();
+    if (args is Map) {
+      if (args['email'] != null) {
+        _email = args['email'].toString();
+      }
+      if (args['destination'] != null) {
+        _destination = args['destination'].toString();
+      }
+      if (args['providerType'] != null) {
+        _providerType = args['providerType'].toString();
+      }
+      if (args['providerData'] is Map) {
+        _providerData = Map<String, dynamic>.from(args['providerData'] as Map);
+      }
     }
   }
 
@@ -56,13 +71,65 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
     if (!mounted) return;
 
     if (success) {
+      if (_providerType != null && _providerData != null) {
+        try {
+          final prov = ProviderApplicationService();
+          if (_providerType == 'property') {
+            await prov.updatePropertyProfile(
+              hostName: _providerData!['host_name']?.toString(),
+              officialHostEmail: _providerData!['official_host_email']?.toString(),
+              mobilePhone: _providerData!['mobile_phone']?.toString(),
+              primaryPropertyLocation: _providerData!['primary_property_location']?.toString(),
+              tourismLicenseNumber: _providerData!['tourism_license_number']?.toString(),
+              propertyTypology: _providerData!['property_typology']?.toString(),
+              estimatedPortfolioScale: _providerData!['estimated_portfolio_scale']?.toString(),
+            );
+          } else if (_providerType == 'rental') {
+            await prov.updateRentalProfile(
+              companyOrHostLegalName: _providerData!['company_or_host_legal_name']?.toString(),
+              operationalContactName: _providerData!['operational_contact_name']?.toString(),
+              businessContactNumber: _providerData!['business_contact_number']?.toString(),
+              contactEmail: _providerData!['contact_email']?.toString(),
+              rentalLicenseNumber: _providerData!['rental_license_number']?.toString(),
+            );
+          } else if (_providerType == 'restaurant') {
+            await prov.updateRestaurantProfile(
+              restaurantName: _providerData!['restaurant_name']?.toString(),
+              managerOrHeadChefName: _providerData!['manager_or_head_chef_name']?.toString(),
+              contactEmail: _providerData!['contact_email']?.toString(),
+              contactPhone: _providerData!['contact_phone']?.toString(),
+              commercialLine: _providerData!['commercial_line']?.toString(),
+              businessLicenseNumber: _providerData!['business_license_number']?.toString(),
+            );
+          } else if (_providerType == 'courier') {
+            await prov.updateCourierProfile(
+              legalName: _providerData!['legal_name']?.toString(),
+              contactEmail: _providerData!['contact_email']?.toString(),
+              contactPhone: _providerData!['contact_phone']?.toString(),
+              driverLicenseNumber: _providerData!['driver_license_number']?.toString(),
+              operatingIslandZone: _providerData!['operating_island_zone']?.toString(),
+            );
+          } else if (_providerType == 'driver') {
+            await prov.updateRideProfile(
+              legalName: _providerData!['legal_name']?.toString(),
+              contactEmail: _providerData!['contact_email']?.toString(),
+              contactPhone: _providerData!['contact_phone']?.toString(),
+              publicServiceDriverLicense: _providerData!['public_service_driver_license']?.toString(),
+              vehicleCategory: _providerData!['vehicle_category']?.toString(),
+            );
+          }
+        } catch (_) {}
+      }
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Identity verified successfully! Welcome to GO SWIFT.'),
           backgroundColor: AppColors.green,
         ),
       );
-      Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
+      Navigator.pushNamedAndRemoveUntil(context, _destination, (_) => false);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

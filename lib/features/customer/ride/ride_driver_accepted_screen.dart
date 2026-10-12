@@ -5,11 +5,12 @@ import '../../../core/models/ride_model.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class RideDriverAcceptedScreen extends StatelessWidget {
-  const RideDriverAcceptedScreen({super.key});
+  final RideModel? ride;
+  const RideDriverAcceptedScreen({super.key, this.ride});
 
   @override
   Widget build(BuildContext context) {
-    final ride = ModalRoute.of(context)?.settings.arguments as RideModel?;
+    final ride = this.ride ?? (ModalRoute.of(context)?.settings.arguments as RideModel?);
     final tripCode = ride != null ? '#SW-${ride.id}' : '#SW-ESCORT';
     final driverName = ride?.driver?.legalName ?? 'Assigned Chauffeur';
     final vehicleName = ride?.driver != null && ride!.driver!.vehicleMake != null

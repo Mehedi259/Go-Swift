@@ -5,11 +5,12 @@ import '../../../core/models/ride_model.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class RideCompletedScreen extends StatelessWidget {
-  const RideCompletedScreen({super.key});
+  final RideModel? ride;
+  const RideCompletedScreen({super.key, this.ride});
 
   @override
   Widget build(BuildContext context) {
-    final ride = ModalRoute.of(context)?.settings.arguments as RideModel?;
+    final ride = this.ride ?? (ModalRoute.of(context)?.settings.arguments as RideModel?);
     final tripCode = ride != null ? '#SW-${ride.id}' : '#SW-COMPLETED';
     final dest = ride?.destinationAddress ?? 'Destination Reached';
     final finalAmount = (ride?.finalFare ?? ride?.estimatedFare ?? 0.0);

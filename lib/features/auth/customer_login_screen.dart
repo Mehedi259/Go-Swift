@@ -214,6 +214,25 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                       label: authProvider.isLoading ? 'Signing In...' : 'Sign In →',
                       onTap: authProvider.isLoading ? () {} : _handleLogin,
                     ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/customer/register'),
+                      child: RichText(
+                        text: TextSpan(
+                          text: 'New to GO SWIFT Bahamas? ',
+                          style: AppTextStyles.bodyMedium,
+                          children: [
+                            TextSpan(
+                              text: 'Create Account',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.primaryTeal,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     // Quick Role Switcher for seamless simulator & QA testing
                     Container(

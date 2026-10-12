@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/services/auth_service.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/provider_application_service.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
@@ -45,45 +46,132 @@ class _RestaurantRegisterScreenState extends State<RestaurantRegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
+    final restaurantName = _restaurantNameController.text.trim();
+    final ownerName = _ownerNameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final license = _licenseController.text.trim();
+    final password = _passwordController.text;
+
+    if (ownerName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter owner / head chef name.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid email address.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    if (password.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password must be at least 8 characters long.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      // Auto-authenticate if credentials are provided and not yet logged in
-      if (!LocalStorage.isLoggedIn && _emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
-        try {
-          await AuthService().login(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
-        } catch (_) {}
-      }
+      final formattedPhone = phone.isNotEmpty
+          ? (phone.startsWith('+') ? phone : '+1 (242) $phone')
+          : null;
 
       if (LocalStorage.isLoggedIn) {
         await ProviderApplicationService().updateRestaurantProfile(
-          restaurantName: _restaurantNameController.text.trim(),
-          managerOrHeadChefName: _ownerNameController.text.trim(),
-          contactEmail: _emailController.text.trim(),
-          contactPhone: _phoneController.text.trim(),
-          commercialLine: _phoneController.text.trim(),
-          businessLicenseNumber: _licenseController.text.trim(),
+          restaurantName: restaurantName.isNotEmpty ? restaurantName : 'Bespoke Dining Nassau',
+          managerOrHeadChefName: ownerName,
+          contactEmail: email,
+          contactPhone: formattedPhone,
+          commercialLine: formattedPhone,
+          businessLicenseNumber: license,
           islandServiceHub: 'Paradise Island & Ocean Club',
           cuisineConcept: 'French-Asian Island Fine Dining',
           averagePrepWindow: '25-35 min',
         );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Culinary partner profile configured successfully.'),
+              backgroundColor: AppColors.green,
+            ),
+          );
+          Navigator.pushNamedAndRemoveUntil(context, '/provider/restaurant/orders', (_) => false);
+        }
+      } else {
+        final authProvider = context.read<AuthProvider>();
+        final phoneForApi = phone.isNotEmpty
+            ? (phone.startsWith('+') ? phone : '+1242$phone')
+            : null;
+
+        final success = await authProvider.initiateRegistration(
+          fullName: ownerName,
+          email: email,
+          password: password,
+          confirmPassword: password,
+          phoneNumber: phoneForApi,
+        );
+
+        if (!mounted) return;
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Verification code sent to $email. Please enter your OTP.'),
+              backgroundColor: AppColors.green,
+            ),
+          );
+
+          Navigator.pushNamed(context, '/verify-code', arguments: {
+            'email': email,
+            'destination': '/provider/restaurant/orders',
+            'providerType': 'restaurant',
+            'providerData': {
+              'restaurant_name': restaurantName.isNotEmpty ? restaurantName : 'Bespoke Dining Nassau',
+              'manager_or_head_chef_name': ownerName,
+              'contact_email': email,
+              'contact_phone': formattedPhone,
+              'commercial_line': formattedPhone,
+              'business_license_number': license,
+              'island_service_hub': 'Paradise Island & Ocean Club',
+              'cuisine_concept': 'French-Asian Island Fine Dining',
+            },
+          });
+        } else {
+          final errMsg = authProvider.errorMessage ?? 'Registration failed. If already registered, please Log In.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errMsg),
+              backgroundColor: AppColors.red,
+            ),
+          );
+        }
       }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Culinary partner application submitted successfully.'),
-            backgroundColor: AppColors.green,
+          SnackBar(
+            content: Text('Registration error: $e'),
+            backgroundColor: AppColors.red,
           ),
         );
       }
-    } catch (_) {
-      // Graceful fallback
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
-        Navigator.pushNamedAndRemoveUntil(context, '/provider/restaurant/orders', (_) => false);
       }
     }
   }

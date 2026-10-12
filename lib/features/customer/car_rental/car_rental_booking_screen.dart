@@ -9,7 +9,8 @@ import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class CarRentalBookingScreen extends StatefulWidget {
-  const CarRentalBookingScreen({super.key});
+  final RentalVehicleModel? vehicle;
+  const CarRentalBookingScreen({super.key, this.vehicle});
 
   @override
   State<CarRentalBookingScreen> createState() => _CarRentalBookingScreenState();
@@ -112,7 +113,7 @@ class _CarRentalBookingScreenState extends State<CarRentalBookingScreen> {
     setState(() => _isSubmitting = true);
     try {
       final args = ModalRoute.of(context)?.settings.arguments;
-      int vehicleId = 1;
+      int vehicleId = widget.vehicle?.id ?? 1;
       if (args is RentalVehicleModel) {
         vehicleId = args.id;
       } else if (args is Map && args['id'] is int) {
@@ -156,7 +157,7 @@ class _CarRentalBookingScreenState extends State<CarRentalBookingScreen> {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
-    final RentalVehicleModel? vehicle = args is RentalVehicleModel ? args : null;
+    final RentalVehicleModel? vehicle = (args is RentalVehicleModel ? args : null) ?? widget.vehicle;
     final vehicleTitle = vehicle != null
         ? '${vehicle.make} ${vehicle.model}'
         : 'Cadillac Escalade ESV';

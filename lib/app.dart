@@ -91,10 +91,10 @@ class GoSwiftApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'GO SWIFT Bahamas',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      initialRoute: '/',
-      routes: {
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        initialRoute: '/',
+        routes: {
         '/': (c) => const SplashScreen(),
         '/choose-account': (c) => const ChooseAccountTypeScreen(),
         // Auth

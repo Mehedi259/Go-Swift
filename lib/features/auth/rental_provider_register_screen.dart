@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/services/auth_service.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/provider_application_service.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
@@ -43,42 +44,128 @@ class _RentalProviderRegisterScreenState extends State<RentalProviderRegisterScr
   }
 
   Future<void> _handleRegister() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final license = _licenseController.text.trim();
+    final password = _passwordController.text;
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter operational contact name.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid email address.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    if (password.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password must be at least 8 characters long.'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      if (!LocalStorage.isLoggedIn && _emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
-        try {
-          await AuthService().login(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
-        } catch (_) {}
-      }
+      final formattedPhone = phone.isNotEmpty
+          ? (phone.startsWith('+') ? phone : '+1 (242) $phone')
+          : null;
 
       if (LocalStorage.isLoggedIn) {
         await ProviderApplicationService().updateRentalProfile(
           companyOrHostLegalName: 'Prestige Fleet Bahamas Ltd.',
-          operationalContactName: _nameController.text.trim(),
-          businessContactNumber: _phoneController.text.trim(),
-          contactEmail: _emailController.text.trim(),
-          rentalLicenseNumber: _licenseController.text.trim(),
+          operationalContactName: name,
+          businessContactNumber: formattedPhone,
+          contactEmail: email,
+          rentalLicenseNumber: license,
           primaryOperatingBase: 'Downtown Nassau & Lynden Pindling FBO',
           estimatedActiveFleetSize: '5-15 vehicles',
         );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Car rental partner profile configured successfully.'),
+              backgroundColor: AppColors.green,
+            ),
+          );
+          Navigator.pushNamedAndRemoveUntil(context, '/provider/rental/vehicles', (_) => false);
+        }
+      } else {
+        final authProvider = context.read<AuthProvider>();
+        final phoneForApi = phone.isNotEmpty
+            ? (phone.startsWith('+') ? phone : '+1242$phone')
+            : null;
+
+        final success = await authProvider.initiateRegistration(
+          fullName: name,
+          email: email,
+          password: password,
+          confirmPassword: password,
+          phoneNumber: phoneForApi,
+        );
+
+        if (!mounted) return;
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Verification code sent to $email. Please enter your OTP.'),
+              backgroundColor: AppColors.green,
+            ),
+          );
+
+          Navigator.pushNamed(context, '/verify-code', arguments: {
+            'email': email,
+            'destination': '/provider/rental/vehicles',
+            'providerType': 'rental',
+            'providerData': {
+              'company_or_host_legal_name': 'Prestige Fleet Bahamas Ltd.',
+              'operational_contact_name': name,
+              'business_contact_number': formattedPhone,
+              'contact_email': email,
+              'rental_license_number': license,
+              'primary_operating_base': 'Downtown Nassau & Lynden Pindling FBO',
+              'estimated_active_fleet_size': '5-15 vehicles',
+            },
+          });
+        } else {
+          final errMsg = authProvider.errorMessage ?? 'Registration failed. If already registered, please Log In.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errMsg),
+              backgroundColor: AppColors.red,
+            ),
+          );
+        }
       }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Car rental partner application submitted successfully.'),
-            backgroundColor: AppColors.green,
+          SnackBar(
+            content: Text('Registration error: $e'),
+            backgroundColor: AppColors.red,
           ),
         );
       }
-    } catch (_) {
-      // Graceful fallback
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
-        Navigator.pushNamedAndRemoveUntil(context, '/provider/rental/vehicles', (_) => false);
       }
     }
   }
