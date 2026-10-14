@@ -307,7 +307,17 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
       bottomNavigationBar: GSBottomNav(
         currentIndex: 0,
         onTap: (idx) {
-          if (idx == 0) Navigator.pop(context);
+          if (idx == 0) {
+            Navigator.pop(context);
+          } else if (idx == 1) {
+            Navigator.pushNamed(context, '/customer/history');
+          } else if (idx == 2) {
+            Navigator.pushNamed(context, '/customer/favorites');
+          } else if (idx == 3) {
+            Navigator.pushNamed(context, '/customer/support');
+          } else if (idx == 4) {
+            Navigator.pushNamed(context, '/customer/profile');
+          }
         },
       ),
     );
