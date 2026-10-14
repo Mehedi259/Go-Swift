@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/courier_model.dart';
@@ -19,6 +20,7 @@ class _CourierAvailabilityScreenState extends State<CourierAvailabilityScreen> {
   final ProviderApplicationService _providerService = ProviderApplicationService();
   bool _online = true;
   int _nav = 0;
+  DateTime? _lastBackPressTime;
   String _courierName = 'Verified Courier';
   String _badgeNumber = 'Bonded Courier';
   String _todayEarnings = '\$0.00';
@@ -116,10 +118,32 @@ class _CourierAvailabilityScreenState extends State<CourierAvailabilityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: _body(),
-      bottomNavigationBar: _bottomNav(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_nav != 0) {
+          setState(() => _nav = 0);
+          return;
+        }
+        final now = DateTime.now();
+        if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+          _lastBackPressTime = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Press back again to exit Go-Swift'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: _body(),
+        bottomNavigationBar: _bottomNav(),
+      ),
     );
   }
 
@@ -358,7 +382,7 @@ class _CourierAvailabilityScreenState extends State<CourierAvailabilityScreen> {
                                     try {
                                       await _courierService.acceptDelivery(topRequest.id);
                                     } catch (_) {}
-                                    if (context.mounted) {
+                                    if (mounted) {
                                       Navigator.pushNamed(context, '/provider/courier/active', arguments: topRequest);
                                     }
                                   },

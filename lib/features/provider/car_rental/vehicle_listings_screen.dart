@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/car_rental_model.dart';
@@ -19,6 +20,7 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
   String _totalFleet = '0';
   String _activeRentals = '0';
   String _monthlyEarnings = '\$0';
+  DateTime? _lastBackPressTime;
 
   @override
   void initState() {
@@ -164,25 +166,38 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        final now = DateTime.now();
+        if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+          _lastBackPressTime = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Press back again to exit Go-Swift'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
+        appBar: AppBar(
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          leading: Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.cyanLight,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-              boxShadow: AppColors.cardShadow,
+              border: Border.all(color: AppColors.cyan.withValues(alpha: 0.2)),
             ),
-            child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+            child: const Icon(Icons.directions_car, color: AppColors.cyan, size: 20),
           ),
-        ),
-        title: Text('My Fleet', style: AppTextStyles.titleLarge),
+          title: Text('My Fleet', style: AppTextStyles.titleLarge),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_month_outlined, color: AppColors.cyan),
@@ -353,8 +368,9 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildEmptyState() {
     return Center(

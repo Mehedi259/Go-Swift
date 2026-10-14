@@ -11,7 +11,8 @@ import '../../../core/widgets/gs_button.dart';
 import '../../../core/widgets/gs_card.dart';
 
 class PropertyEarningsScreen extends StatefulWidget {
-  const PropertyEarningsScreen({super.key});
+  final bool embedded;
+  const PropertyEarningsScreen({super.key, this.embedded = false});
 
   @override
   State<PropertyEarningsScreen> createState() => _PropertyEarningsScreenState();
@@ -69,25 +70,27 @@ class _PropertyEarningsScreenState extends State<PropertyEarningsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-              boxShadow: AppColors.cardShadow,
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              backgroundColor: AppColors.background,
+              elevation: 0,
+              leading: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+                ),
+              ),
+              title: Text('Property Earnings & Metrics', style: AppTextStyles.titleLarge),
+              centerTitle: false,
             ),
-            child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
-          ),
-        ),
-        title: Text('Property Earnings & Metrics', style: AppTextStyles.titleLarge),
-        centerTitle: false,
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.cyan))
           : RefreshIndicator(
@@ -282,7 +285,8 @@ class _PropertyEarningsScreenState extends State<PropertyEarningsScreen> {
 }
 
 class PropertyOwnerProfileScreen extends StatefulWidget {
-  const PropertyOwnerProfileScreen({super.key});
+  final bool embedded;
+  const PropertyOwnerProfileScreen({super.key, this.embedded = false});
 
   @override
   State<PropertyOwnerProfileScreen> createState() => _PropertyOwnerProfileScreenState();
@@ -458,26 +462,28 @@ class _PropertyOwnerProfileScreenState extends State<PropertyOwnerProfileScreen>
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        title: Text('Owner Profile', style: AppTextStyles.titleLarge),
-        centerTitle: false,
-        leading: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-              boxShadow: AppColors.cardShadow,
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              backgroundColor: AppColors.background,
+              elevation: 0,
+              title: Text('Owner Profile', style: AppTextStyles.titleLarge),
+              centerTitle: false,
+              leading: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+                ),
+              ),
             ),
-            child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
-          ),
-        ),
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.cyan))
           : RefreshIndicator(
@@ -543,7 +549,7 @@ class _PropertyOwnerProfileScreenState extends State<PropertyOwnerProfileScreen>
                       onTap: () async {
                         await LocalStorage.saveActivePortal('customer');
                         if (context.mounted) {
-                          Navigator.pushReplacementNamed(context, '/customer/hub');
+                          Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
                         }
                       },
                     ),

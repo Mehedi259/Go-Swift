@@ -7,7 +7,8 @@ import '../../../core/widgets/gs_button.dart';
 import '../../../core/widgets/gs_card.dart';
 
 class BookingRequestsScreen extends StatefulWidget {
-  const BookingRequestsScreen({super.key});
+  final bool embedded;
+  const BookingRequestsScreen({super.key, this.embedded = false});
 
   @override
   State<BookingRequestsScreen> createState() => _BookingRequestsScreenState();
@@ -129,31 +130,33 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-              boxShadow: AppColors.cardShadow,
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              backgroundColor: AppColors.background,
+              elevation: 0,
+              leading: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+                ),
+              ),
+              title: Text('Booking Requests', style: AppTextStyles.titleLarge),
+              centerTitle: false,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, '/provider/property/past-bookings'),
+                  child: Text('History', style: AppTextStyles.titleMedium.copyWith(color: AppColors.cyan, fontSize: 14)),
+                ),
+              ],
             ),
-            child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
-          ),
-        ),
-        title: Text('Booking Requests', style: AppTextStyles.titleLarge),
-        centerTitle: false,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pushNamed(context, '/provider/property/past-bookings'),
-            child: Text('History', style: AppTextStyles.titleMedium.copyWith(color: AppColors.cyan, fontSize: 14)),
-          ),
-        ],
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.cyan))
           : RefreshIndicator(

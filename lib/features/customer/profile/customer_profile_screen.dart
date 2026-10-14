@@ -228,7 +228,7 @@ class CustomerProfileScreen extends StatelessWidget {
                                 break;
                             }
                             if (context.mounted) {
-                              Navigator.pushReplacementNamed(context, dest);
+                              Navigator.pushNamedAndRemoveUntil(context, dest, (_) => false);
                             }
                           },
                           child: Container(

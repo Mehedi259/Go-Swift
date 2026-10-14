@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/ride_model.dart';
@@ -19,6 +20,7 @@ class DriverAvailabilityScreen extends StatefulWidget {
 class _DriverAvailabilityScreenState extends State<DriverAvailabilityScreen> {
   bool _online = true;
   int _nav = 0;
+  DateTime? _lastBackPressTime;
   String _driverName = LocalStorage.getUser()?.fullName.isNotEmpty == true ? LocalStorage.getUser()!.fullName : 'VIP Chauffeur';
   String _driverTitle = 'VIP Chauffeur • Verified';
   String _todayEarnings = '\$0.00';
@@ -306,47 +308,69 @@ class _DriverAvailabilityScreenState extends State<DriverAvailabilityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Row(
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(color: AppColors.primaryTeal, borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.bolt, color: Colors.white, size: 20),
-                  ),
-                  const SizedBox(width: 10),
-                  Text('Driver Hub', style: AppTextStyles.titleLarge.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => Navigator.pushNamed(context, '/customer/notifications'),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                        boxShadow: AppColors.cardShadow,
-                      ),
-                      child: const Icon(Icons.notifications_none_outlined, color: AppColors.textPrimary, size: 22),
-                    ),
-                  ),
-                ],
-              ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_nav != 0) {
+          setState(() => _nav = 0);
+          return;
+        }
+        final now = DateTime.now();
+        if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+          _lastBackPressTime = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Press back again to exit Go-Swift'),
+              duration: Duration(seconds: 2),
             ),
-            Expanded(child: _body()),
-          ],
+          );
+        } else {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Top bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(color: AppColors.primaryTeal, borderRadius: BorderRadius.circular(8)),
+                      child: const Icon(Icons.bolt, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Text('Driver Hub', style: AppTextStyles.titleLarge.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/customer/notifications'),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.border),
+                          boxShadow: AppColors.cardShadow,
+                        ),
+                        child: const Icon(Icons.notifications_none_outlined, color: AppColors.textPrimary, size: 22),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(child: _body()),
+            ],
+          ),
         ),
+        bottomNavigationBar: _driverNav(),
       ),
-      bottomNavigationBar: _driverNav(),
     );
   }
 
