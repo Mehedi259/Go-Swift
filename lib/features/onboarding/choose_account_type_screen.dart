@@ -297,7 +297,13 @@ class _PortalCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.add_circle_outline, size: 14, color: AppColors.primaryTeal),
                   const SizedBox(width: 6),
-                  Text(badgeLabel, style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w700)),
+                  Flexible(
+                    child: Text(
+                      badgeLabel,
+                      style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w700),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
             ),

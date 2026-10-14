@@ -24,6 +24,7 @@ class GSButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: isLoading ? null : onTap,
       child: Container(
         height: isSmall ? 44 : 56,

@@ -109,6 +109,15 @@ class LocalStorage {
     return _prefs?.getString(_keyActivePortal);
   }
 
+  static Future<void> setString(String key, String value) async {
+    await init();
+    await _prefs!.setString(key, value);
+  }
+
+  static String? getString(String key) {
+    return _prefs?.getString(key);
+  }
+
   // --- LOGOUT / CLEAR ---
   static Future<void> clearAuth() async {
     await init();

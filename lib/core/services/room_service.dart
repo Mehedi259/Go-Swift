@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import '../models/property_model.dart';
 import '../network/api_client.dart';
 import '../network/api_endpoints.dart';
@@ -72,7 +75,7 @@ class RoomService {
         'primary_guest_full_legal_name': primaryGuestName,
         'primary_guest_contact_number': primaryGuestContact,
         'primary_guest_email': primaryGuestEmail,
-        if (guestNote != null) 'guest_note': guestNote,
+        ...?guestNote != null ? {'guest_note': guestNote} : null,
       },
     );
     return RoomBookingModel.fromJson(response as Map<String, dynamic>);
@@ -167,30 +170,90 @@ class RoomService {
 
   Future<PropertyListingModel> createListing({
     required String title,
-    required String propertyType,
+    String? propertyType,
     required String islandRegion,
     required String streetAddress,
     required double nightlyBaseRate,
     int bedrooms = 3,
-    int bathrooms = 3,
+    dynamic bathrooms = 2.0,
     int maxGuests = 6,
     String? description,
+    List<String>? amenities,
+    String? gatedCommunity,
   }) async {
+    final double parsedBaths = bathrooms is num ? bathrooms.toDouble() : (double.tryParse(bathrooms.toString()) ?? 2.0);
     final response = await _api.post(
       ApiEndpoints.propertyProviderListings,
       body: {
         'title': title,
-        'property_type': propertyType,
         'island_region': islandRegion,
         'street_address': streetAddress,
         'nightly_base_rate': nightlyBaseRate,
         'bedrooms': bedrooms,
-        'bathrooms': bathrooms,
+        'bathrooms': parsedBaths,
         'max_guests': maxGuests,
-        if (description != null) 'description': description,
+        'description': (description != null && description.isNotEmpty)
+            ? description
+            : 'Exclusive luxury residence in $islandRegion offering premium amenities and panoramic views.',
+        'amenities': (amenities != null && amenities.isNotEmpty)
+            ? amenities
+            : ['Private Pool', 'Ocean View', 'Butler Service', 'Private Beach'],
+        if (gatedCommunity != null && gatedCommunity.isNotEmpty) 'gated_community': gatedCommunity,
         'is_active': true,
       },
     );
     return PropertyListingModel.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<Map<String, dynamic>> uploadListingPhoto(
+    int listingId, {
+    File? file,
+    String? photoUrl,
+    bool isCover = true,
+    String caption = 'Cover Photo',
+  }) async {
+    File uploadFile;
+    if (file != null) {
+      uploadFile = file;
+    } else if (photoUrl != null && photoUrl.isNotEmpty) {
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = '${tempDir.path}/listing_${listingId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final res = await http.get(Uri.parse(photoUrl));
+      uploadFile = File(tempPath);
+      await uploadFile.writeAsBytes(res.bodyBytes);
+    } else {
+      throw Exception('No photo provided');
+    }
+
+    final response = await _api.multipartRequest(
+      'POST',
+      ApiEndpoints.propertyProviderListingPhotos(listingId),
+      fields: {
+        'is_cover': isCover.toString(),
+        'caption': caption,
+      },
+      files: {
+        'image': uploadFile,
+      },
+    );
+    return response is Map<String, dynamic> ? response : <String, dynamic>{};
+  }
+
+  Future<void> seedListingAvailability(int listingId, {int days = 14, double? rateOverride}) async {
+    final now = DateTime.now();
+    final futures = List.generate(days, (i) {
+      final date = now.add(Duration(days: i));
+      final dateStr = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      return _api.post(
+        ApiEndpoints.propertyProviderListingAvailability(listingId),
+        body: {
+          'date': dateStr,
+          'is_available': true,
+          ...?rateOverride != null ? {'nightly_rate_override': rateOverride} : null,
+          'note': 'Standard Open Availability',
+        },
+      ).catchError((_) => null);
+    });
+    await Future.wait(futures);
   }
 }

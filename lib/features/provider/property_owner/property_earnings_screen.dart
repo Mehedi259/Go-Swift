@@ -65,7 +65,7 @@ class _PropertyEarningsScreenState extends State<PropertyEarningsScreen> {
     final totalListings = _stats['total_listings']?.toString() ?? '0';
     final activeListings = _stats['active_listings']?.toString() ?? '0';
     final confirmedBookings = _stats['confirmed_bookings']?.toString() ?? '${_bookings.length}';
-    final rating = (_stats['average_rating'] != null) ? '${_stats['average_rating']}' : '4.98';
+    final rating = (_stats['average_rating'] != null && _stats['average_rating'].toString() != 'null') ? '${_stats['average_rating']}' : 'N/A';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -324,11 +324,14 @@ class _PropertyOwnerProfileScreenState extends State<PropertyOwnerProfileScreen>
   }
 
   Future<void> _editProfileDialog() async {
-    final hostNameCtrl = TextEditingController(text: _profile['host_name']?.toString() ?? _profile['brand_trade_name']?.toString() ?? '');
-    final phoneCtrl = TextEditingController(text: _profile['mobile_phone']?.toString() ?? _profile['contact_phone']?.toString() ?? '');
-    final emailCtrl = TextEditingController(text: _profile['official_host_email']?.toString() ?? _profile['contact_email']?.toString() ?? '');
-    final bankCtrl = TextEditingController(text: _profile['payout_bank_name']?.toString() ?? 'Commonwealth Bank');
-    final accountCtrl = TextEditingController(text: _profile['payout_account_number']?.toString() ?? '');
+    final hostNameCtrl = TextEditingController(text: _profile['host_name']?.toString() ?? '');
+    final locationCtrl = TextEditingController(text: _profile['primary_property_location']?.toString() ?? '');
+    final emailCtrl = TextEditingController(text: _profile['official_host_email']?.toString() ?? '');
+    final phoneCtrl = TextEditingController(text: _profile['mobile_phone']?.toString() ?? '');
+    final licenseCtrl = TextEditingController(text: _profile['tourism_license_number']?.toString() ?? '');
+    final taxCtrl = TextEditingController(text: _profile['taxpayer_identification_number']?.toString() ?? '');
+    final bankCtrl = TextEditingController(text: LocalStorage.getString('host_payout_bank') ?? '');
+    final accountCtrl = TextEditingController(text: LocalStorage.getString('host_payout_account') ?? '');
 
     final saved = await showDialog<bool>(
       context: context,
@@ -342,7 +345,12 @@ class _PropertyOwnerProfileScreenState extends State<PropertyOwnerProfileScreen>
             children: [
               TextField(
                 controller: hostNameCtrl,
-                decoration: const InputDecoration(labelText: 'Host / Legal Name'),
+                decoration: const InputDecoration(labelText: 'Host / Display Name'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: locationCtrl,
+                decoration: const InputDecoration(labelText: 'Primary Property Location'),
               ),
               const SizedBox(height: 10),
               TextField(
@@ -356,8 +364,18 @@ class _PropertyOwnerProfileScreenState extends State<PropertyOwnerProfileScreen>
               ),
               const SizedBox(height: 10),
               TextField(
+                controller: licenseCtrl,
+                decoration: const InputDecoration(labelText: 'Tourism License Number'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: taxCtrl,
+                decoration: const InputDecoration(labelText: 'Taxpayer TIN'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
                 controller: bankCtrl,
-                decoration: const InputDecoration(labelText: 'Payout Bank'),
+                decoration: const InputDecoration(labelText: 'Payout Bank Name'),
               ),
               const SizedBox(height: 10),
               TextField(
@@ -379,11 +397,18 @@ class _PropertyOwnerProfileScreenState extends State<PropertyOwnerProfileScreen>
               try {
                 await _providerService.updatePropertyProfile(data: {
                   'host_name': hostNameCtrl.text.trim(),
+                  'primary_property_location': locationCtrl.text.trim(),
                   'official_host_email': emailCtrl.text.trim(),
                   'mobile_phone': phoneCtrl.text.trim(),
-                  'payout_bank_name': bankCtrl.text.trim(),
-                  'payout_account_number': accountCtrl.text.trim(),
+                  'tourism_license_number': licenseCtrl.text.trim(),
+                  'taxpayer_identification_number': taxCtrl.text.trim(),
                 });
+                if (bankCtrl.text.trim().isNotEmpty) {
+                  await LocalStorage.setString('host_payout_bank', bankCtrl.text.trim());
+                }
+                if (accountCtrl.text.trim().isNotEmpty) {
+                  await LocalStorage.setString('host_payout_account', accountCtrl.text.trim());
+                }
                 if (ctx.mounted) Navigator.pop(ctx, true);
               } catch (e) {
                 if (ctx.mounted) {
@@ -403,17 +428,33 @@ class _PropertyOwnerProfileScreenState extends State<PropertyOwnerProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    final hostName = _profile['host_name']?.toString() ?? _profile['brand_trade_name']?.toString() ?? 'Bahamian Sovereign Host';
-    final location = _profile['primary_property_location']?.toString() ?? _profile['island_group']?.toString() ?? 'Nassau & Paradise Island';
-    final email = _profile['official_host_email']?.toString() ?? _profile['contact_email']?.toString() ?? 'host@bahamasovereign.bs';
-    final phone = _profile['mobile_phone']?.toString() ?? _profile['contact_phone']?.toString() ?? '+1 (242) 555-7721';
-    final bank = _profile['payout_bank_name']?.toString() ?? 'Commonwealth Bank';
-    final account = _profile['payout_account_number']?.toString() ?? '•••• 7721';
-    final taxId = _profile['taxpayer_identification_number']?.toString() ?? 'TIN-40192-NP';
-    final license = _profile['tourism_license_number']?.toString() ?? 'TL-2026-VIP';
+    final hostName = (_profile['host_name'] != null && _profile['host_name'].toString().trim().isNotEmpty)
+        ? _profile['host_name'].toString()
+        : 'Bahamian Property Host';
+    final location = (_profile['primary_property_location'] != null && _profile['primary_property_location'].toString().trim().isNotEmpty)
+        ? _profile['primary_property_location'].toString()
+        : 'Paradise Island';
+    final email = (_profile['official_host_email'] != null && _profile['official_host_email'].toString().trim().isNotEmpty)
+        ? _profile['official_host_email'].toString()
+        : (_profile['contact_email']?.toString() ?? 'Not provided');
+    final phone = (_profile['mobile_phone'] != null && _profile['mobile_phone'].toString().trim().isNotEmpty)
+        ? _profile['mobile_phone'].toString()
+        : (_profile['contact_phone']?.toString() ?? 'Not provided');
+    final savedBank = LocalStorage.getString('host_payout_bank');
+    final savedAccount = LocalStorage.getString('host_payout_account');
+    final payoutDisplay = (savedBank != null && savedBank.isNotEmpty && savedAccount != null && savedAccount.isNotEmpty)
+        ? '$savedBank • •••• ${savedAccount.length >= 4 ? savedAccount.substring(savedAccount.length - 4) : savedAccount}'
+        : 'Not Configured (Tap Edit to setup)';
+    final taxId = (_profile['taxpayer_identification_number'] != null && _profile['taxpayer_identification_number'].toString().trim().isNotEmpty)
+        ? _profile['taxpayer_identification_number'].toString()
+        : 'Not Registered';
+    final license = (_profile['tourism_license_number'] != null && _profile['tourism_license_number'].toString().trim().isNotEmpty)
+        ? _profile['tourism_license_number'].toString()
+        : 'Pending Submission';
 
-    final rating = (_stats['average_rating'] != null) ? '${_stats['average_rating']}' : '4.98';
-    final listingsCount = _stats['total_listings']?.toString() ?? '3';
+    final hasRating = _stats['average_rating'] != null && _stats['average_rating'].toString() != 'null';
+    final rating = hasRating ? '${_stats['average_rating']} ★' : 'New Host';
+    final listingsCount = _stats['total_listings']?.toString() ?? '0';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -423,6 +464,7 @@ class _PropertyOwnerProfileScreenState extends State<PropertyOwnerProfileScreen>
         title: Text('Owner Profile', style: AppTextStyles.titleLarge),
         centerTitle: false,
         leading: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: () => Navigator.pop(context),
           child: Container(
             margin: const EdgeInsets.all(8),
@@ -476,15 +518,18 @@ class _PropertyOwnerProfileScreenState extends State<PropertyOwnerProfileScreen>
                             children: [
                               const Icon(Icons.star, color: AppColors.gold, size: 16),
                               const SizedBox(width: 4),
-                              Text('$rating ★ • $listingsCount luxury properties listed', style: AppTextStyles.bodySmall),
+                              Text(
+                                hasRating ? '$rating • $listingsCount luxury properties listed' : 'New Host • $listingsCount luxury properties listed',
+                                style: AppTextStyles.bodySmall,
+                              ),
                             ],
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _infoTile(Icons.verified_outlined, 'Host Status', 'Superhost • Licensed Vacation Rental'),
-                    _infoTile(Icons.account_balance_outlined, 'Payout Account', '$bank • $account'),
+                    _infoTile(Icons.verified_outlined, 'Host Status', _profile['onboarding_status'] == 'completed' ? 'Verified Superhost • Licensed' : 'Host Account • Active'),
+                    _infoTile(Icons.account_balance_outlined, 'Payout Account', payoutDisplay),
                     _infoTile(Icons.email_outlined, 'Official Host Email', email),
                     _infoTile(Icons.phone_outlined, 'Contact Phone', phone),
                     _infoTile(Icons.receipt_long_outlined, 'Tax Registration', taxId),

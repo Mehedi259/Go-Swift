@@ -65,9 +65,11 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
+  Future<void> _handleLogin([String? overrideEmail, String? overridePassword]) async {
+    if (overrideEmail != null) _emailController.text = overrideEmail;
+    if (overridePassword != null) _passwordController.text = overridePassword;
+    final email = (overrideEmail ?? _emailController.text).trim();
+    final password = overridePassword ?? _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -296,6 +298,8 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
+                              _demoChip('⚡ Login Customer', Icons.login, () => _handleLogin('mmridul207@gmail.com', 'Test12342@')),
+                              _demoChip('⚡ Login Provider', Icons.business, () => _handleLogin('coderred27@gmail.com', 'Test12342@')),
                               _demoChip('Customer Hub', Icons.person, () => Navigator.pushNamed(context, '/customer/hub')),
                               _demoChip('Chauffeur Driver', Icons.directions_car, () => Navigator.pushNamed(context, '/provider/driver/hub')),
                               _demoChip('Restaurant Partner', Icons.restaurant, () => Navigator.pushNamed(context, '/provider/restaurant/orders')),
@@ -320,6 +324,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
 
   Widget _demoChip(String title, IconData icon, VoidCallback onTap) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

@@ -14,7 +14,7 @@ class PropertyListingModel {
   final double? cleaningFee;
   final List<String> amenities;
   final List<String> photos;
-  final double rating;
+  final double? rating;
   final bool isActive;
 
   PropertyListingModel({
@@ -33,7 +33,7 @@ class PropertyListingModel {
     this.cleaningFee,
     this.amenities = const [],
     this.photos = const [],
-    this.rating = 4.98,
+    this.rating,
     this.isActive = true,
   });
 
@@ -42,14 +42,32 @@ class PropertyListingModel {
   String get address => streetAddress ?? 'Paradise Island';
   String get propertyType => 'villa';
 
+  static const List<String> _curatedVillaPhotos = [
+    'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80',
+  ];
+
   factory PropertyListingModel.fromJson(Map<String, dynamic> json) {
     List<String> photoUrls = [];
     if (json['photos'] is List) {
       for (final p in json['photos'] as List) {
-        if (p is Map && p['image'] != null) {
+        if (p is Map && p['image'] != null && p['image'].toString().isNotEmpty) {
           photoUrls.add(p['image'].toString());
+        } else if (p is String && p.isNotEmpty) {
+          photoUrls.add(p);
         }
       }
+    }
+
+    final idVal = json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0;
+
+    // If no uploaded photos yet, use a curated Bahamian estate photo for a premium aesthetic
+    if (photoUrls.isEmpty) {
+      final fallbackIndex = idVal > 0 ? (idVal - 1) % _curatedVillaPhotos.length : 0;
+      photoUrls.add(_curatedVillaPhotos[fallbackIndex]);
     }
 
     List<String> amenitiesList = [];
@@ -57,8 +75,13 @@ class PropertyListingModel {
       amenitiesList = (json['amenities'] as List).map((e) => e.toString()).toList();
     }
 
+    double? avgRating;
+    if (json['average_rating'] != null) {
+      avgRating = double.tryParse(json['average_rating'].toString());
+    }
+
     return PropertyListingModel(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      id: idVal,
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString(),
       bedrooms: json['bedrooms'] is int ? json['bedrooms'] : int.tryParse(json['bedrooms']?.toString() ?? '3') ?? 3,
@@ -73,7 +96,7 @@ class PropertyListingModel {
       cleaningFee: double.tryParse(json['cleaning_fee']?.toString() ?? '0'),
       amenities: amenitiesList,
       photos: photoUrls,
-      rating: double.tryParse(json['average_rating']?.toString() ?? '4.98') ?? 4.98,
+      rating: avgRating,
       isActive: json['is_active'] != false,
     );
   }

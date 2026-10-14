@@ -57,7 +57,9 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
+        titleSpacing: 4,
         leading: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: () async {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
@@ -79,14 +81,15 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
             child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
           ),
         ),
-        title: Text('My Properties', style: AppTextStyles.titleLarge),
+        title: Text('Properties', style: AppTextStyles.titleLarge),
         actions: [
           IconButton(
+            visualDensity: VisualDensity.compact,
             tooltip: 'Booking Requests',
             icon: Stack(
               clipBehavior: Clip.none,
               children: [
-                const Icon(Icons.calendar_month_outlined, color: AppColors.cyan),
+                const Icon(Icons.calendar_month_outlined, color: AppColors.cyan, size: 22),
                 if ((_stats['requested_bookings'] ?? 0) > 0)
                   Positioned(
                     right: -2,
@@ -105,13 +108,15 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
             onPressed: () => Navigator.pushNamed(context, '/provider/property/requests').then((_) => _loadData()),
           ),
           IconButton(
+            visualDensity: VisualDensity.compact,
             tooltip: 'Earnings & Reviews',
-            icon: const Icon(Icons.bar_chart_rounded, color: AppColors.gold),
+            icon: const Icon(Icons.bar_chart_rounded, color: AppColors.gold, size: 22),
             onPressed: () => Navigator.pushNamed(context, '/provider/property/earnings'),
           ),
           IconButton(
+            visualDensity: VisualDensity.compact,
             tooltip: 'Host Profile',
-            icon: const Icon(Icons.account_circle_outlined, color: AppColors.textPrimary),
+            icon: const Icon(Icons.account_circle_outlined, color: AppColors.textPrimary, size: 22),
             onPressed: () => Navigator.pushNamed(context, '/provider/property/owner-profile'),
           ),
           Padding(
@@ -279,20 +284,16 @@ class _PropertyListingsScreenState extends State<PropertyListingsScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
                                     onTap: () {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Listing #${p.id} status: $statusLabel'),
-                                          backgroundColor: AppColors.cyan,
-                                        ),
-                                      );
+                                      Navigator.pushNamed(context, '/customer/properties/details', arguments: p);
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(vertical: 11),
                                       decoration: BoxDecoration(
                                         color: AppColors.cyanLight,
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                                        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
                                       ),
                                       child: Center(
                                         child: Text(

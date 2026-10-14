@@ -99,7 +99,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     final pGuests = listing?.maxGuests.toString() ?? '12';
     final pDesc = listing?.description ??
         'Exquisite oceanfront villa at The Ocean Club, Paradise Island. Features private infinity pool, direct beach access, dedicated butler service, and panoramic views of the Atlantic Ocean. Fully equipped gourmet kitchen, home cinema, and 24/7 concierge.';
-    final rating = listing?.rating ?? 4.98;
+    final double? rating = listing?.rating;
 
     final subtotal = ratePerNight * _nights;
     final taxesAndFees = subtotal * 0.10;
@@ -112,6 +112,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
           children: [
             Container(
               height: 240,
+              width: double.infinity,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)],
@@ -119,7 +120,33 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               ),
               child: Stack(
                 children: [
-                  Center(child: Icon(Icons.villa, color: AppColors.primaryTeal.withValues(alpha: 0.4), size: 72)),
+                  if (listing?.photos.isNotEmpty == true)
+                    Positioned.fill(
+                      child: Image.network(
+                        listing!.photos.first,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Icon(Icons.villa, color: AppColors.primaryTeal.withValues(alpha: 0.4), size: 72),
+                        ),
+                      ),
+                    )
+                  else
+                    Center(child: Icon(Icons.villa, color: AppColors.primaryTeal.withValues(alpha: 0.4), size: 72)),
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.35),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.45),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   Positioned(
                     top: 12,
                     left: 12,
@@ -182,7 +209,16 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: AppColors.cardShadow,
                       ),
-                      child: GSRatingRow(rating: rating, reviews: 87),
+                      child: rating != null
+                          ? GSRatingRow(rating: rating, reviews: 0)
+                          : const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star, color: AppColors.gold, size: 14),
+                                SizedBox(width: 4),
+                                Text('New Listing', style: TextStyle(color: AppColors.textPrimary, fontSize: 11, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                     ),
                   ),
                 ],

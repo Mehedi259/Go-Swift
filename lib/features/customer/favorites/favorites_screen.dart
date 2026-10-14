@@ -86,13 +86,19 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Saved Favorites', style: AppTextStyles.headlineLarge),
-                  const SizedBox(height: 2),
-                  Text('Your verified island chauffeurs, dining & villas', style: AppTextStyles.bodyMedium),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Saved Favorites', style: AppTextStyles.headlineLarge),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Your verified island chauffeurs, dining & villas',
+                      style: AppTextStyles.bodyMedium,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.refresh_rounded, color: AppColors.primaryTeal),
