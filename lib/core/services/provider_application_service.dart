@@ -482,9 +482,11 @@ class ProviderApplicationService {
   // 6. CATEGORY RESOLUTION FOR SERVICE PROVIDERS
   // =========================================================================
 
-  Future<String> detectActiveProviderCategory() async {
-    final cached = LocalStorage.getProviderCategory();
-    if (cached != null && cached.isNotEmpty) return cached;
+  Future<String> detectActiveProviderCategory({bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      final cached = LocalStorage.getProviderCategory();
+      if (cached != null && cached.isNotEmpty) return cached;
+    }
 
     try {
       final res = await getPropertyProfile();

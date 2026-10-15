@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/car_rental_model.dart';
 import '../../../core/services/car_rental_service.dart';
+import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class VehicleListingsScreen extends StatefulWidget {
@@ -164,6 +165,24 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
     );
   }
 
+  String _getVehicleImageUrl(RentalVehicleModel v) {
+    if (v.images.isNotEmpty) return v.images.first;
+    final nameLower = '${v.make ?? ''} ${v.model ?? ''} ${v.name}'.toLowerCase();
+    if (nameLower.contains('escalade') || nameLower.contains('cadillac')) {
+      return 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80';
+    }
+    if (nameLower.contains('mercedes') || nameLower.contains('g63') || nameLower.contains('amg')) {
+      return 'https://images.unsplash.com/photo-1520031441872-265e4ff70366?auto=format&fit=crop&w=800&q=80';
+    }
+    if (nameLower.contains('porsche') || nameLower.contains('911') || nameLower.contains('ferrari')) {
+      return 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=800&q=80';
+    }
+    if (nameLower.contains('bmw') || nameLower.contains('m8') || nameLower.contains('x7')) {
+      return 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80';
+    }
+    return 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80';
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -197,49 +216,59 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
             ),
             child: const Icon(Icons.directions_car, color: AppColors.cyan, size: 20),
           ),
-          title: Text('My Fleet', style: AppTextStyles.titleLarge),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_month_outlined, color: AppColors.cyan),
-            tooltip: 'Bookings',
-            onPressed: () => Navigator.pushNamed(context, '/provider/rental/bookings'),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Fleet Management', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+              Text('Bahamas Luxury Rentals', style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan)),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.attach_money, color: AppColors.gold),
-            tooltip: 'Earnings',
-            onPressed: () => Navigator.pushNamed(context, '/provider/rental/earnings'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline, color: AppColors.cyan),
-            tooltip: 'Profile',
-            onPressed: () => Navigator.pushNamed(context, '/provider/rental/profile'),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: _showAddVehicleDialog,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.cyan,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: AppColors.cardShadow,
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.add, color: Colors.white, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Add',
-                      style: AppTextStyles.labelMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+          actions: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: ElevatedButton.icon(
+                onPressed: _showAddVehicleDialog,
+                icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                label: const Text('Add Vehicle', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cyan,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+            IconButton(
+              icon: const Icon(Icons.logout, color: AppColors.error),
+              tooltip: 'Sign Out',
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    title: Text('Log Out', style: AppTextStyles.headlineSmall),
+                    content: const Text('Are you sure you want to sign out from your rental partner session?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Log Out', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  await LocalStorage.clearAuth();
+                  if (context.mounted) {
+                    Navigator.pushNamedAndRemoveUntil(context, '/choose-account', (_) => false);
+                  }
+                }
+              },
+            ),
+          ],
+        ),
       body: Column(
         children: [
           Padding(
@@ -286,18 +315,37 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
                                 child: Column(
                                   children: [
                                     Container(
-                                      height: 110,
+                                      height: 140,
+                                      clipBehavior: Clip.antiAlias,
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(14),
                                         color: AppColors.cardTouchpoint,
                                       ),
                                       child: Stack(
+                                        fit: StackFit.expand,
                                         children: [
-                                          Center(
-                                            child: Icon(
-                                              Icons.directions_car,
-                                              size: 54,
-                                              color: AppColors.cyan.withValues(alpha: 0.4),
+                                          Image.network(
+                                            _getVehicleImageUrl(v),
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) => Center(
+                                              child: Icon(
+                                                Icons.directions_car,
+                                                size: 54,
+                                                color: AppColors.cyan.withValues(alpha: 0.4),
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Colors.black.withValues(alpha: 0.35),
+                                                  Colors.transparent,
+                                                  Colors.black.withValues(alpha: 0.4),
+                                                ],
+                                              ),
                                             ),
                                           ),
                                           Positioned(
@@ -319,20 +367,40 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
                                             child: Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                               decoration: BoxDecoration(
-                                                color: statusColor.withValues(alpha: 0.15),
+                                                color: statusColor.withValues(alpha: 0.9),
                                                 borderRadius: BorderRadius.circular(6),
                                               ),
-                                              child: Text(status, style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontWeight: FontWeight.bold)),
+                                              child: Text(status, style: AppTextStyles.labelSmall.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(height: 12),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(name, style: AppTextStyles.titleMedium),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(name, style: AppTextStyles.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  Icon(Icons.airline_seat_recline_normal, size: 14, color: AppColors.textSecondary),
+                                                  const SizedBox(width: 4),
+                                                  Text('${v.seatingCapacity} Seats', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                                                  const SizedBox(width: 12),
+                                                  Icon(Icons.speed, size: 14, color: AppColors.textSecondary),
+                                                  const SizedBox(width: 4),
+                                                  Text(v.transmission.toUpperCase(), style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
                                         Text(rate, style: AppTextStyles.headlineSmall.copyWith(color: AppColors.gold)),
                                       ],
                                     ),
@@ -368,9 +436,62 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          border: Border(top: BorderSide(color: AppColors.border, width: 0.8)),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x060B2238),
+              blurRadius: 10,
+              offset: Offset(0, -3),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem(Icons.directions_car_outlined, Icons.directions_car, 'Fleet', true, () {}),
+                _navItem(Icons.calendar_month_outlined, Icons.calendar_month, 'Bookings', false, () => Navigator.pushNamed(context, '/provider/rental/bookings')),
+                _navItem(Icons.attach_money, Icons.attach_money, 'Earnings', false, () => Navigator.pushNamed(context, '/provider/rental/earnings')),
+                _navItem(Icons.business_outlined, Icons.business, 'Profile', false, () => Navigator.pushNamed(context, '/provider/rental/profile')),
+              ],
+            ),
+          ),
+        ),
+      ),
     ),
   );
 }
+
+  Widget _navItem(IconData icon, IconData activeIcon, String label, bool isActive, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isActive ? activeIcon : icon,
+            color: isActive ? AppColors.cyan : AppColors.textMuted,
+            size: 24,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: AppTextStyles.labelSmall.copyWith(
+              color: isActive ? AppColors.cyan : AppColors.textMuted,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildEmptyState() {
     return Center(

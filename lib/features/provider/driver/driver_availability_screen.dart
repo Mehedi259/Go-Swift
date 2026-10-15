@@ -264,7 +264,7 @@ class _DriverAvailabilityScreenState extends State<DriverAvailabilityScreen> {
       );
 
   Widget _statBox(String label, String val, Color color, IconData icon) => Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.cardTouchpoint,
           borderRadius: BorderRadius.circular(14),
@@ -273,12 +273,21 @@ class _DriverAvailabilityScreenState extends State<DriverAvailabilityScreen> {
           children: [
             Icon(icon, color: color, size: 20),
             const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
-                Text(val, style: AppTextStyles.headlineSmall.copyWith(color: color, fontWeight: FontWeight.bold)),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label,
+                      style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                  Text(val,
+                      style: AppTextStyles.headlineSmall.copyWith(color: color, fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                ],
+              ),
             ),
           ],
         ),
@@ -287,7 +296,7 @@ class _DriverAvailabilityScreenState extends State<DriverAvailabilityScreen> {
   Widget _quickAction(IconData icon, String label, VoidCallback onTap) => GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
@@ -296,11 +305,17 @@ class _DriverAvailabilityScreenState extends State<DriverAvailabilityScreen> {
           ),
           child: Row(
             children: [
-              Icon(icon, color: AppColors.primaryTeal, size: 20),
-              const SizedBox(width: 10),
-              Text(label, style: AppTextStyles.titleMedium),
-              const Spacer(),
-              const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 16),
+              Icon(icon, color: AppColors.primaryTeal, size: 18),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTextStyles.titleMedium.copyWith(fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 14),
             ],
           ),
         ),

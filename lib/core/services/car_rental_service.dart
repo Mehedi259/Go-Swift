@@ -64,8 +64,8 @@ class CarRentalService {
         'pickup_handover_station': pickupHandoverStation,
         'handover_time': handoverTime,
         'deliver_to_villa_or_hotel': deliverToVillaOrHotel,
-        if (deliveryAddress != null) 'delivery_address': deliveryAddress,
-        if (customerNote != null) 'customer_note': customerNote,
+        'delivery_address': ?deliveryAddress,
+        'customer_note': ?customerNote,
       },
     );
     return CarRentalBookingModel.fromJson(response as Map<String, dynamic>);
@@ -165,22 +165,29 @@ class CarRentalService {
     String category = 'luxury_suv',
     required double dailyRate,
     required String licensePlate,
-    String vin = 'BS-VIN-PENDING',
     int seatingCapacity = 5,
+    int luggageCapacity = 3,
+    double securityEscrowDeposit = 500.0,
     String transmission = 'automatic',
+    String fuelType = 'gasoline',
+    String location = 'Downtown Nassau & Lynden Pindling FBO',
   }) async {
     final response = await _api.post(
       ApiEndpoints.rentalProviderVehicles,
       body: {
+        'name': '$make $model',
         'make': make,
         'model': model,
         'year': year,
         'category': category,
         'daily_rate': dailyRate,
         'license_plate': licensePlate,
-        'vin': vin,
         'seating_capacity': seatingCapacity,
+        'luggage_capacity': luggageCapacity.toString(),
+        'security_escrow_deposit': securityEscrowDeposit.toStringAsFixed(2),
         'transmission': transmission,
+        'fuel_type': fuelType,
+        'location': location,
       },
     );
     return RentalVehicleModel.fromJson(response as Map<String, dynamic>);

@@ -45,9 +45,11 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
               destination = '/provider/restaurant/orders';
               break;
             case 'rental':
+            case 'rentals':
               destination = '/provider/rental/vehicles';
               break;
             case 'property':
+            case 'properties':
             default:
               destination = '/provider/property/listings';
               break;
@@ -92,10 +94,8 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
 
       if (role == 'service_provider' || role.contains('provider')) {
         await LocalStorage.saveActivePortal('provider');
-        String? category = LocalStorage.getProviderCategory();
-        if (category == null || category.isEmpty) {
-          category = await ProviderApplicationService().detectActiveProviderCategory();
-        }
+        await LocalStorage.saveProviderCategory('');
+        String? category = await ProviderApplicationService().detectActiveProviderCategory(forceRefresh: true);
         switch (category.toLowerCase()) {
           case 'driver':
           case 'chauffeur':
@@ -108,9 +108,11 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
             destination = '/provider/restaurant/orders';
             break;
           case 'rental':
+          case 'rentals':
             destination = '/provider/rental/vehicles';
             break;
           case 'property':
+          case 'properties':
           default:
             destination = '/provider/property/listings';
             break;
@@ -298,6 +300,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
+                              _demoChip('⚡ Rental Partner', Icons.car_rental, () => _handleLogin('mehedihasanmridulclaude@gmail.com', 'Test12342@')),
                               _demoChip('⚡ Login Customer', Icons.login, () => _handleLogin('mmridul207@gmail.com', 'Test12342@')),
                               _demoChip('⚡ Login Provider', Icons.business, () => _handleLogin('coderred27@gmail.com', 'Test12342@')),
                               _demoChip('Customer Hub', Icons.person, () => Navigator.pushNamed(context, '/customer/hub')),

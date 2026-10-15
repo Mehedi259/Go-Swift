@@ -63,9 +63,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             destination = '/provider/restaurant/orders';
             break;
           case 'rental':
+          case 'rentals':
             destination = '/provider/rental/vehicles';
             break;
           case 'property':
+          case 'properties':
           default:
             destination = '/provider/property/listings';
             break;
