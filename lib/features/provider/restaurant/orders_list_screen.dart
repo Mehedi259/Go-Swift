@@ -142,7 +142,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       final items = await _foodService.getProviderMenuItems();
       if (mounted) {
         setState(() {
-          _categories = cats.cast<Map<String, dynamic>>();
+          _categories = cats.map((e) => Map<String, dynamic>.from(e as Map)).toList();
           _menuItems = items;
           _isMenuLoading = false;
         });
@@ -675,14 +675,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         appBar: _buildAppBar(),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
-            : IndexedStack(
-                index: _currentTab,
-                children: [
-                  _buildOrdersTab(),
-                  _buildMenuTab(),
-                  _buildKitchenProfileTab(),
-                ],
-              ),
+            : _buildBody(),
         bottomNavigationBar: GSProviderBottomNav(
           currentIndex: _currentTab,
           onTap: (idx) {
@@ -765,6 +758,17 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         const SizedBox(width: 8),
       ],
     );
+  }
+
+  Widget _buildBody() {
+    switch (_currentTab) {
+      case 1:
+        return _buildMenuTab();
+      case 2:
+        return _buildKitchenProfileTab();
+      default:
+        return _buildOrdersTab();
+    }
   }
 
   // =========================================================================
@@ -1046,14 +1050,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   Widget _buildMenuTab() {
     final filteredItems = _selectedCategoryId == null
         ? _menuItems
-        : _menuItems.where((it) {
-            // Check if matches category
-            final matchCat = _categories.firstWhere(
-              (c) => (c['id'] is int ? c['id'] : int.tryParse(c['id'].toString())) == _selectedCategoryId,
-              orElse: () => {},
-            );
-            return matchCat.isNotEmpty && (it.categoryName == matchCat['name']);
-          }).toList();
+        : _menuItems.where((it) => it.categoryId == _selectedCategoryId).toList();
 
     return RefreshIndicator(
       color: AppColors.primaryTeal,
@@ -1062,56 +1059,6 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
         children: [
-          // Menu Header Card
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.border),
-              boxShadow: AppColors.cardShadow,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Curated Menu Catalog', style: AppTextStyles.headlineSmall),
-                        const SizedBox(height: 2),
-                        Text('$_islandHub • ${_menuItems.length} Signature Dishes', style: AppTextStyles.bodySmall),
-                      ],
-                    ),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: _showAddDishDialog,
-                      icon: const Icon(Icons.add, size: 16, color: Colors.white),
-                      label: const Text('Add Dish', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    _metricChip('Total Dishes', '${_menuItems.length}', AppColors.cyan),
-                    const SizedBox(width: 8),
-                    _metricChip('Categories', '${_categories.length}', AppColors.gold),
-                    const SizedBox(width: 8),
-                    _metricChip('Available', '${_menuItems.where((it) => it.isAvailable).length}', AppColors.green),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
           // Categories Bar with Add Category Button
           Row(
             children: [
@@ -1227,14 +1174,16 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             Text(item.description!, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
           ],
           const SizedBox(height: 10),
-          Row(
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
             children: [
               if (item.prepWindow != null && item.prepWindow!.isNotEmpty)
                 Container(
-                  margin: const EdgeInsets.only(right: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(color: AppColors.cardTouchpoint, borderRadius: BorderRadius.circular(8)),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.timer_outlined, size: 12, color: AppColors.textSecondary),
                       const SizedBox(width: 4),
@@ -1243,7 +1192,6 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                   ),
                 ),
               ...item.dietaryTags.map((tag) => Container(
-                    margin: const EdgeInsets.only(right: 6),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(color: AppColors.badgeTeal, borderRadius: BorderRadius.circular(8)),
                     child: Text(tag, style: AppTextStyles.caption.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),

@@ -45,6 +45,7 @@ class RestaurantModel {
 class FoodItemModel {
   final int id;
   final String name;
+  final int? categoryId;
   final String? categoryName;
   final String? photo;
   final String? description;
@@ -59,6 +60,7 @@ class FoodItemModel {
   FoodItemModel({
     required this.id,
     required this.name,
+    this.categoryId,
     this.categoryName,
     this.photo,
     this.description,
@@ -78,6 +80,7 @@ class FoodItemModel {
     return FoodItemModel(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       name: json['name']?.toString() ?? '',
+      categoryId: json['category'] is int ? json['category'] as int : int.tryParse(json['category']?.toString() ?? ''),
       categoryName: json['category_name']?.toString(),
       photo: json['photo']?.toString(),
       description: json['culinary_description']?.toString(),
