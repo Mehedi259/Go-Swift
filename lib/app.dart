@@ -163,10 +163,10 @@ class GoSwiftApp extends StatelessWidget {
         '/provider/courier/history': (c) => const CourierHistoryScreen(),
         '/provider/courier/profile': (c) => const CourierProfileScreen(),
         // Provider - Restaurant
-        '/provider/restaurant/menu': (c) => const MenuManagementScreen(),
-        '/provider/restaurant/orders': (c) => const OrdersListScreen(),
+        '/provider/restaurant/orders': (c) => const OrdersListScreen(initialTab: 0),
+        '/provider/restaurant/menu': (c) => const OrdersListScreen(initialTab: 1),
+        '/provider/restaurant/profile': (c) => const OrdersListScreen(initialTab: 2),
         '/provider/restaurant/order-detail': (c) => const OrderManagementScreen(),
-        '/provider/restaurant/profile': (c) => const RestaurantProfileScreen(),
         // Provider - Car Rental
         '/provider/rental/vehicles': (c) => const VehicleListingsScreen(),
         '/provider/rental/bookings': (c) => const RentalBookingManagementScreen(),

@@ -224,7 +224,7 @@ class ProviderApplicationService {
     File? logo,
     File? restaurantPhoto,
   }) async {
-    final fields = <String, String>{};
+    final fields = <String, dynamic>{};
     if (restaurantName != null) fields['restaurant_name'] = restaurantName;
     if (managerOrHeadChefName != null) fields['manager_or_head_chef_name'] = managerOrHeadChefName;
     if (cuisineConcept != null) fields['cuisine_concept'] = cuisineConcept;
@@ -237,14 +237,14 @@ class ProviderApplicationService {
     if (islandServiceHub != null) fields['island_service_hub'] = islandServiceHub;
     if (averagePrepWindow != null) fields['average_prep_window'] = averagePrepWindow;
     if (operatingHours != null) fields['operating_hours'] = operatingHours;
-    if (acceptingOrders != null) fields['accepting_orders'] = acceptingOrders.toString();
+    if (acceptingOrders != null) fields['accepting_orders'] = acceptingOrders;
 
     final files = <String, File>{};
     if (logo != null) files['logo'] = logo;
     if (restaurantPhoto != null) files['restaurant_photo'] = restaurantPhoto;
 
     final response = files.isNotEmpty
-        ? await _api.multipartRequest('PATCH', ApiEndpoints.providerRestaurantProfile, fields: fields, files: files)
+        ? await _api.multipartRequest('PATCH', ApiEndpoints.providerRestaurantProfile, fields: fields.map((k, v) => MapEntry(k, v.toString())), files: files)
         : await _api.patch(ApiEndpoints.providerRestaurantProfile, body: fields);
     return response as Map<String, dynamic>;
   }

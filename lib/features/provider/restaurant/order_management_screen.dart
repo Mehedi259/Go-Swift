@@ -51,23 +51,46 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     }
   }
 
-  Future<void> _updateStatus(String newStatus, int orderId) async {
+  Future<void> _updateStatus(String statusCode, int orderId) async {
     setState(() => _isUpdating = true);
     try {
-      await _foodService.updateOrderStatus(orderId, newStatus.toLowerCase());
+      await _foodService.updateOrderStatus(orderId, statusCode.toLowerCase());
       if (mounted) {
-        setState(() => _status = newStatus.toUpperCase());
+        setState(() => _status = statusCode.toUpperCase());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Order status updated to $newStatus'),
+            content: Text('Order status updated to ${_statusLabel(statusCode)}'),
             backgroundColor: AppColors.green,
           ),
         );
       }
     } catch (_) {
-      if (mounted) setState(() => _status = newStatus.toUpperCase());
+      if (mounted) setState(() => _status = statusCode.toUpperCase());
     } finally {
       if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  String _statusLabel(String code) {
+    switch (code.toLowerCase()) {
+      case 'placed':
+        return 'Order Placed';
+      case 'confirmed':
+        return 'Confirmed';
+      case 'in_prep':
+        return 'In Kitchen Prep';
+      case 'kitchen_sealed':
+        return 'Kitchen Sealed';
+      case 'courier_assigned':
+        return 'Courier Assigned';
+      case 'in_transit':
+        return 'In Transit';
+      case 'handed_over':
+        return 'Delivered';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return code.replaceAll('_', ' ').toUpperCase();
     }
   }
 
@@ -201,10 +224,18 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
-                    children: ['PREPARING', 'READY FOR COURIER', 'IN TRANSIT', 'DELIVERED'].map((s) {
-                      final isCurrent = _status == s;
+                    children: [
+                      {'code': 'confirmed', 'label': 'Confirmed'},
+                      {'code': 'in_prep', 'label': 'In Prep'},
+                      {'code': 'kitchen_sealed', 'label': 'Kitchen Sealed'},
+                      {'code': 'in_transit', 'label': 'In Transit'},
+                      {'code': 'handed_over', 'label': 'Delivered'},
+                    ].map((entry) {
+                      final code = entry['code']!;
+                      final label = entry['label']!;
+                      final isCurrent = _status.toLowerCase() == code;
                       return GestureDetector(
-                        onTap: () => _updateStatus(s, orderId),
+                        onTap: () => _updateStatus(code, orderId),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
@@ -214,7 +245,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                             boxShadow: AppColors.cardShadow,
                           ),
                           child: Text(
-                            s,
+                            label,
                             style: AppTextStyles.labelMedium.copyWith(
                               color: isCurrent ? Colors.white : AppColors.textPrimary,
                               fontWeight: FontWeight.bold,
@@ -229,11 +260,16 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     label: _isUpdating ? 'Updating Kitchen Status...' : 'Advance Status →',
                     isLoading: _isUpdating,
                     onTap: () {
-                      final next = _status == 'PREPARING'
-                          ? 'READY FOR COURIER'
-                          : _status == 'READY FOR COURIER'
-                              ? 'IN TRANSIT'
-                              : 'DELIVERED';
+                      final cur = _status.toLowerCase();
+                      final next = cur == 'placed' || cur == 'new'
+                          ? 'confirmed'
+                          : cur == 'confirmed'
+                              ? 'in_prep'
+                              : cur == 'in_prep'
+                                  ? 'kitchen_sealed'
+                                  : cur == 'kitchen_sealed'
+                                      ? 'in_transit'
+                                      : 'handed_over';
                       _updateStatus(next, orderId);
                     },
                   ),

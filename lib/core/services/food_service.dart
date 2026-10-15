@@ -152,6 +152,7 @@ class FoodService {
     String? description,
     int? categoryId,
     List<String>? dietaryTags,
+    String? prepWindow,
     bool isAvailable = true,
   }) async {
     final response = await _api.post(
@@ -162,9 +163,43 @@ class FoodService {
         if (description != null) 'culinary_description': description,
         if (categoryId != null) 'category': categoryId,
         if (dietaryTags != null) 'dietary_tags': dietaryTags,
+        if (prepWindow != null) 'estimated_prep_window': prepWindow,
         'available_today': isAvailable,
       },
     );
     return FoodItemModel.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<FoodItemModel> updateFoodItem(int id, {
+    String? name,
+    double? price,
+    String? description,
+    int? categoryId,
+    List<String>? dietaryTags,
+    String? prepWindow,
+    bool? isAvailable,
+  }) async {
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (price != null) body['price'] = price;
+    if (description != null) body['culinary_description'] = description;
+    if (categoryId != null) body['category'] = categoryId;
+    if (dietaryTags != null) body['dietary_tags'] = dietaryTags;
+    if (prepWindow != null) body['estimated_prep_window'] = prepWindow;
+    if (isAvailable != null) body['available_today'] = isAvailable;
+
+    final response = await _api.patch(
+      '${ApiEndpoints.restaurantProviderItems}$id/',
+      body: body,
+    );
+    return FoodItemModel.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<void> deleteFoodItem(int id) async {
+    await _api.delete('${ApiEndpoints.restaurantProviderItems}$id/');
+  }
+
+  Future<void> deleteCategory(int id) async {
+    await _api.delete('${ApiEndpoints.restaurantProviderCategories}$id/');
   }
 }
