@@ -3,7 +3,6 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/property_model.dart';
 import '../../../core/services/room_service.dart';
-import '../../../core/widgets/gs_card.dart';
 import '../../../core/widgets/gs_bottom_nav.dart';
 
 class PropertiesSearchScreen extends StatefulWidget {
@@ -16,6 +15,9 @@ class PropertiesSearchScreen extends StatefulWidget {
 class _PropertiesSearchScreenState extends State<PropertiesSearchScreen> {
   List<PropertyListingModel> _liveProperties = [];
   bool _isLoading = false;
+  String _selectedCategory = 'All Properties';
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   final _properties = [
     {
@@ -230,24 +232,74 @@ class _PropertiesSearchScreenState extends State<PropertiesSearchScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   List<Map<String, dynamic>> get _displayList {
+    final List<Map<String, dynamic>> sourceList;
     if (_liveProperties.isNotEmpty) {
-      return _liveProperties.map((l) => {
+      sourceList = _liveProperties.map((l) => {
         'id': l.id,
         'name': l.title,
         'type': l.propertyType.replaceAll('_', ' ').toUpperCase(),
         'location': '${l.city} • ${l.address}',
         'price': '\$${l.pricePerNight.toStringAsFixed(0)}/night',
-        'rating': (l.rating ?? 4.95).toDouble(),
-        'reviews': 45,
         'badge': l.city.toUpperCase(),
         'beds': l.bedrooms,
         'baths': l.bathrooms,
         'model': l,
         'photo': l.photos.isNotEmpty ? l.photos.first : null,
       }).toList();
+    } else {
+      sourceList = _properties;
     }
-    return _properties;
+
+    return sourceList.where((p) {
+      final name = (p['name'] ?? '').toString().toLowerCase();
+      final type = (p['type'] ?? '').toString().toLowerCase();
+      final location = (p['location'] ?? '').toString().toLowerCase();
+      final badge = (p['badge'] ?? '').toString().toLowerCase();
+      final price = (p['price'] ?? '').toString().toLowerCase();
+
+      // Category filter
+      if (_selectedCategory == 'Oceanfront Villas') {
+        final isMatch = type.contains('villa') ||
+            type.contains('estate') ||
+            type.contains('oceanfront') ||
+            type.contains('retreat') ||
+            name.contains('villa') ||
+            name.contains('estate') ||
+            location.contains('ocean');
+        final isExcluded = type.contains('penthouse') || name.contains('penthouse') || location.contains('rose island');
+        if (!isMatch || isExcluded) return false;
+      } else if (_selectedCategory == 'Penthouse Suites') {
+        final isMatch = type.contains('penthouse') || type.contains('suite') || name.contains('penthouse') || name.contains('suite');
+        if (!isMatch) return false;
+      } else if (_selectedCategory == 'Private Islands') {
+        final isMatch = location.contains('rose island') ||
+            location.contains('island') ||
+            type.contains('island') ||
+            type.contains('cottage') ||
+            name.contains('cottage') ||
+            name.contains('island');
+        if (!isMatch) return false;
+      }
+
+      // Search query filter
+      if (_searchQuery.isNotEmpty) {
+        final queryMatch = name.contains(_searchQuery) ||
+            type.contains(_searchQuery) ||
+            location.contains(_searchQuery) ||
+            badge.contains(_searchQuery) ||
+            price.contains(_searchQuery);
+        if (!queryMatch) return false;
+      }
+
+      return true;
+    }).toList();
   }
 
   @override
@@ -293,41 +345,36 @@ class _PropertiesSearchScreenState extends State<PropertiesSearchScreen> {
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Search villas, penthouses, islands...',
-                            prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 20),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _fetchListings,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(color: AppColors.primaryTeal, borderRadius: BorderRadius.circular(12)),
-                          child: const Icon(Icons.tune, color: Colors.white, size: 20),
-                        ),
-                      ),
-                    ],
+                  TextField(
+                    controller: _searchController,
+                    onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
+                    decoration: InputDecoration(
+                      hintText: 'Search villas, penthouses, islands...',
+                      prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 18, color: AppColors.textSecondary),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                            )
+                          : null,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
                   ),
                   const SizedBox(height: 10),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _filterChip('All Properties', true),
+                        _filterChip('All Properties'),
                         const SizedBox(width: 8),
-                        _filterChip('Oceanfront Villas', false),
+                        _filterChip('Oceanfront Villas'),
                         const SizedBox(width: 8),
-                        _filterChip('Penthouse Suites', false),
+                        _filterChip('Penthouse Suites'),
                         const SizedBox(width: 8),
-                        _filterChip('Private Islands', false),
+                        _filterChip('Private Islands'),
                       ],
                     ),
                   ),
@@ -338,15 +385,28 @@ class _PropertiesSearchScreenState extends State<PropertiesSearchScreen> {
             Expanded(
               child: _isLoading && _liveProperties.isEmpty
                   ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
-                  : RefreshIndicator(
-                      onRefresh: _fetchListings,
-                      color: AppColors.primaryTeal,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: _displayList.length,
-                        itemBuilder: (c, i) => _PropertyCard(p: _displayList[i]),
-                      ),
-                    ),
+                  : _displayList.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search_off, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+                              const SizedBox(height: 12),
+                              Text('No properties found', style: AppTextStyles.titleMedium),
+                              const SizedBox(height: 4),
+                              Text('Try adjusting your search or category filter', style: AppTextStyles.bodySmall),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _fetchListings,
+                          color: AppColors.primaryTeal,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: _displayList.length,
+                            itemBuilder: (c, i) => _PropertyCard(p: _displayList[i]),
+                          ),
+                        ),
             ),
           ],
         ),
@@ -354,38 +414,38 @@ class _PropertiesSearchScreenState extends State<PropertiesSearchScreen> {
       bottomNavigationBar: GSBottomNav(
         currentIndex: 0,
         onTap: (idx) {
-          if (idx == 0) {
-            Navigator.pop(context);
-          } else if (idx == 1) {
-            Navigator.pushNamed(context, '/customer/history');
-          } else if (idx == 2) {
-            Navigator.pushNamed(context, '/customer/favorites');
-          } else if (idx == 3) {
-            Navigator.pushNamed(context, '/customer/support');
-          } else if (idx == 4) {
-            Navigator.pushNamed(context, '/customer/profile');
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context, idx);
+          } else {
+            Navigator.pushReplacementNamed(context, '/customer/hub', arguments: idx);
           }
         },
       ),
     );
   }
 
-  Widget _filterChip(String l, bool active) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-    decoration: BoxDecoration(
-      color: active ? AppColors.primaryTeal : Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: active ? AppColors.primaryTeal : AppColors.border),
-      boxShadow: AppColors.cardShadow,
-    ),
-    child: Text(
-      l,
-      style: AppTextStyles.bodySmall.copyWith(
-        color: active ? Colors.white : AppColors.textPrimary,
-        fontWeight: FontWeight.w600,
+  Widget _filterChip(String l) {
+    final active = _selectedCategory == l;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedCategory = l),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primaryTeal : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: active ? AppColors.primaryTeal : AppColors.border),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Text(
+          l,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: active ? Colors.white : AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _PropertyCard extends StatelessWidget {
@@ -482,18 +542,6 @@ class _PropertyCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(p['type'] as String, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary)),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 10,
-                    right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: GSRatingRow(rating: (p['rating'] as num).toDouble(), reviews: p['reviews'] as int),
                     ),
                   ),
                 ],

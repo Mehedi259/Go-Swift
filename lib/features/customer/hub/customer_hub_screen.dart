@@ -12,14 +12,25 @@ import '../support/support_screen.dart';
 import '../profile/customer_profile_screen.dart';
 
 class CustomerHubScreen extends StatefulWidget {
-  const CustomerHubScreen({super.key});
+  final int initialIndex;
+  const CustomerHubScreen({super.key, this.initialIndex = 0});
 
   @override
   State<CustomerHubScreen> createState() => _CustomerHubScreenState();
 }
 
 class _CustomerHubScreenState extends State<CustomerHubScreen> {
-  int _navIndex = 0;
+  late int _navIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _navIndex = widget.initialIndex;
+  }
+
+  void _onSelectTab(int index) {
+    if (mounted) setState(() => _navIndex = index);
+  }
 
   Widget _body() {
     switch (_navIndex) {
@@ -32,7 +43,7 @@ class _CustomerHubScreenState extends State<CustomerHubScreen> {
       case 4:
         return const CustomerProfileScreen(embedded: true);
       default:
-        return const _HomeTab();
+        return _HomeTab(onSelectTab: _onSelectTab);
     }
   }
 
@@ -41,13 +52,14 @@ class _CustomerHubScreenState extends State<CustomerHubScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: _body(),
-      bottomNavigationBar: GSBottomNav(currentIndex: _navIndex, onTap: (i) => setState(() => _navIndex = i)),
+      bottomNavigationBar: GSBottomNav(currentIndex: _navIndex, onTap: _onSelectTab),
     );
   }
 }
 
 class _HomeTab extends StatefulWidget {
-  const _HomeTab();
+  final Function(int)? onSelectTab;
+  const _HomeTab({this.onSelectTab});
 
   @override
   State<_HomeTab> createState() => _HomeTabState();
@@ -655,7 +667,12 @@ class _HomeTabState extends State<_HomeTab> {
                 ),
               ),
               GestureDetector(
-                onTap: () => Navigator.pushNamed(context, route),
+                onTap: () async {
+                  final result = await Navigator.pushNamed(context, route);
+                  if (result is int && result >= 0 && result <= 4 && context.mounted) {
+                    widget.onSelectTab?.call(result);
+                  }
+                },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
@@ -689,7 +706,15 @@ class _HomeTabState extends State<_HomeTab> {
     String route,
   ) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, route),
+      onTap: () {
+        if (route == '/customer/history') {
+          widget.onSelectTab?.call(1);
+        } else if (route == '/customer/favorites') {
+          widget.onSelectTab?.call(2);
+        } else {
+          Navigator.pushNamed(context, route);
+        }
+      },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
