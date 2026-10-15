@@ -98,22 +98,38 @@ class FoodOrderModel {
   final String? orderNumber;
   final String status;
   final double totalAmount;
+  final double? subtotal;
+  final double? serviceFee;
   final double? deliveryFee;
   final String? restaurantName;
   final String? deliveryAddress;
+  final String? customerFullName;
+  final String? customerEmail;
   final String? createdAt;
   final List<FoodOrderItemModel> items;
 
-  String get customerName => 'VIP Dining Guest';
+  String get customerName {
+    if (customerFullName != null && customerFullName!.trim().isNotEmpty) {
+      return customerFullName!;
+    }
+    if (customerEmail != null && customerEmail!.trim().isNotEmpty) {
+      return customerEmail!;
+    }
+    return 'VIP Dining Guest';
+  }
 
   FoodOrderModel({
     required this.id,
     this.orderNumber,
     required this.status,
     required this.totalAmount,
+    this.subtotal,
+    this.serviceFee,
     this.deliveryFee,
     this.restaurantName,
     this.deliveryAddress,
+    this.customerFullName,
+    this.customerEmail,
     this.createdAt,
     this.items = const [],
   });
@@ -132,11 +148,49 @@ class FoodOrderModel {
       orderNumber: json['order_number']?.toString() ?? '#GS-${json['id']}',
       status: json['status']?.toString() ?? 'placed',
       totalAmount: double.tryParse(json['total_amount']?.toString() ?? '0') ?? 0.0,
+      subtotal: double.tryParse(json['subtotal']?.toString() ?? '0'),
+      serviceFee: double.tryParse(json['service_fee']?.toString() ?? '0'),
       deliveryFee: double.tryParse(json['delivery_fee']?.toString() ?? '0'),
-      restaurantName: json['restaurant_name']?.toString() ?? 'Bahamian Kitchen',
+      restaurantName: json['restaurant_name']?.toString() ?? 'cheta',
       deliveryAddress: json['delivery_address']?.toString(),
+      customerFullName: json['customer_full_name']?.toString() ?? json['customer_name']?.toString(),
+      customerEmail: json['customer_email']?.toString(),
       createdAt: json['created_at']?.toString(),
       items: parsedItems,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'order_number': orderNumber,
+    'status': status,
+    'total_amount': totalAmount,
+    'subtotal': subtotal,
+    'service_fee': serviceFee,
+    'delivery_fee': deliveryFee,
+    'restaurant_name': restaurantName,
+    'delivery_address': deliveryAddress,
+    'customer_full_name': customerFullName,
+    'customer_email': customerEmail,
+    'created_at': createdAt,
+    'items': items.map((e) => e.toJson()).toList(),
+  };
+
+  FoodOrderModel copyWith({String? status}) {
+    return FoodOrderModel(
+      id: id,
+      orderNumber: orderNumber,
+      status: status ?? this.status,
+      totalAmount: totalAmount,
+      subtotal: subtotal,
+      serviceFee: serviceFee,
+      deliveryFee: deliveryFee,
+      restaurantName: restaurantName,
+      deliveryAddress: deliveryAddress,
+      customerFullName: customerFullName,
+      customerEmail: customerEmail,
+      createdAt: createdAt,
+      items: items,
     );
   }
 }
@@ -162,4 +216,11 @@ class FoodOrderItemModel {
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'item_name': name,
+    'quantity': quantity,
+    'price': price,
+  };
 }

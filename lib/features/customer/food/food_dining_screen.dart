@@ -46,13 +46,16 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
         'type': (r.cuisineConcept ?? 'FINE DINING').toUpperCase(),
         'location': '${r.islandHub ?? "Nassau"} • ${r.address ?? "Paradise Island"}',
         'rating': r.rating,
-        'reviews': 120,
-        'time': r.averagePrepWindow ?? '25-35 min',
-        'badge': 'VERIFIED',
+        'reviews': r.id == 1 ? 85 : 120,
+        'time': r.averagePrepWindow ?? '20-30 min',
+        'badge': r.id == 1 ? 'CHEF CURATED' : 'VERIFIED',
         'price': '\$\$\$\$',
         'special': 'Dockside Ready',
         'feature': 'Free Yacht Delivery',
         'model': r,
+        'photo': r.id == 1
+            ? 'https://goswift-media-prod.s3.us-east-1.amazonaws.com/food/items/lobster.jpg'
+            : 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
       }).toList();
     }
     return _restaurants;
@@ -60,6 +63,21 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
 
   final _restaurants = [
     {
+      'id': 1,
+      'name': 'cheta',
+      'type': 'FINE BAHAMIAN & HAUTE SEAFOOD',
+      'location': 'Ocean Club Drive, Paradise Island • 1.2 miles',
+      'rating': 5.0,
+      'reviews': 85,
+      'time': '20-30 min',
+      'badge': 'CHEF CURATED',
+      'price': '\$\$\$\$',
+      'special': 'Dockside Ready',
+      'feature': 'Free Yacht Delivery',
+      'photo': 'https://goswift-media-prod.s3.us-east-1.amazonaws.com/food/items/lobster.jpg',
+    },
+    {
+      'id': 2,
       'name': 'Dune by Jean-Georges',
       'type': 'FRENCH-ASIAN FUSION • FINE DINING',
       'location': 'Ocean Club, Paradise Island • 3.2 miles',
@@ -70,8 +88,10 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
       'price': '\$\$\$\$',
       'special': 'Dockside Ready',
       'feature': 'Free Yacht Delivery',
+      'photo': 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
     },
     {
+      'id': 3,
       'name': 'Nobu Bahamas',
       'type': 'JAPANESE • SUSHI & OMAKASE',
       'location': 'Atlantis, Paradise Island • 2.8 miles',
@@ -82,8 +102,10 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
       'price': '\$\$\$\$',
       'special': 'Thermal Vaulted',
       'feature': 'Omakase Available',
+      'photo': 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=800&q=80',
     },
     {
+      'id': 4,
       'name': 'Graycliff Restaurant',
       'type': 'HERITAGE CARIBBEAN • WINE CELLAR',
       'location': 'Downtown Nassau • 1.9 miles',
@@ -94,8 +116,10 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
       'price': '\$\$\$\$',
       'special': 'Sommelier Paired',
       'feature': 'Grand Award Cellar',
+      'photo': 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=800&q=80',
     },
     {
+      'id': 5,
       'name': 'Sapodilla Estate',
       'type': 'BAHAMIAN CONTINENTAL • FINE DINING',
       'location': 'West Bay Street • 5.4 miles',
@@ -106,8 +130,10 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
       'price': '\$\$\$\$',
       'special': 'Villa Catering Spec',
       'feature': 'Private Chef Kit',
+      'photo': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
     },
     {
+      'id': 6,
       'name': 'Katsuya Baha Mar',
       'type': 'MODERN JAPANESE & ROBATA',
       'location': 'Cable Beach • 4.1 miles',
@@ -118,6 +144,7 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
       'price': '\$\$\$',
       'special': 'Swift Priority',
       'feature': 'Cocktail Pairing',
+      'photo': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
     },
   ];
 
@@ -151,13 +178,21 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Food & Dining', style: AppTextStyles.headlineLarge),
+                        Text('Food & Dining', style: AppTextStyles.headlineLarge.copyWith(fontSize: 20)),
+                        const SizedBox(height: 2),
                         Row(
                           children: [
                             const Icon(Icons.location_on, size: 12, color: AppColors.primaryTeal),
                             const SizedBox(width: 4),
-                            Text('Delivering to: Albany Marina ▾', style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w600)),
+                            Flexible(
+                              child: Text(
+                                'Delivering to: Albany Marina ▾',
+                                style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w600),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -277,14 +312,18 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
             // Filters
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-              child: Row(
-                children: [
-                  _filter('Top Rated', Icons.star),
-                  const SizedBox(width: 8),
-                  _filter('Under 35m', Icons.access_time),
-                  const SizedBox(width: 8),
-                  _filter('Marina Delivery', Icons.sailing),
-                ],
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _filter('Top Rated', Icons.star),
+                    const SizedBox(width: 8),
+                    _filter('Under 35m', Icons.access_time),
+                    const SizedBox(width: 8),
+                    _filter('Marina Delivery', Icons.sailing),
+                  ],
+                ),
               ),
             ),
             // Restaurant list
@@ -348,6 +387,8 @@ class _RestaurantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final photoUrl = data['photo'] as String?;
+
     return GestureDetector(
       onTap: () => Navigator.pushNamed(
         context,
@@ -367,75 +408,106 @@ class _RestaurantCard extends StatelessWidget {
           children: [
             // Image card header
             Container(
-              height: 130,
+              height: 140,
               decoration: const BoxDecoration(
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-                gradient: LinearGradient(
-                  colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)],
-                ),
               ),
-              child: Stack(
-                children: [
-                  Center(child: Icon(Icons.restaurant, color: AppColors.primaryTeal.withValues(alpha: 0.5), size: 48)),
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: AppColors.cardShadow,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (photoUrl != null && photoUrl.isNotEmpty)
+                      Image.network(
+                        photoUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)]),
+                          ),
+                          child: const Icon(Icons.restaurant, color: AppColors.primaryTeal, size: 48),
+                        ),
+                      )
+                    else
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)]),
+                        ),
+                        child: const Icon(Icons.restaurant, color: AppColors.primaryTeal, size: 48),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(data['badge'] as String, style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-                          const SizedBox(width: 6),
-                          Text(data['price'] as String, style: AppTextStyles.labelSmall.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
-                        ],
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.3),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.55),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        shape: BoxShape.circle,
-                        boxShadow: AppColors.cardShadow,
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: AppColors.cardShadow,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(data['badge'] as String, style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                            const SizedBox(width: 6),
+                            Text(data['price'] as String, style: AppTextStyles.labelSmall.copyWith(color: const Color(0xFF8A5300), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
-                      child: const Icon(Icons.favorite_border, color: AppColors.primaryTeal, size: 16),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(6),
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          shape: BoxShape.circle,
+                          boxShadow: AppColors.cardShadow,
+                        ),
+                        child: const Icon(Icons.favorite_border, color: AppColors.primaryTeal, size: 16),
                       ),
-                      child: Text(data['type'] as String, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary)),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 10,
-                    right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(6),
+                    Positioned(
+                      bottom: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(data['type'] as String, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                       ),
-                      child: GSRatingRow(rating: data['rating'] as double, reviews: data['reviews'] as int),
                     ),
-                  ),
-                ],
+                    Positioned(
+                      bottom: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: GSRatingRow(rating: data['rating'] as double, reviews: data['reviews'] as int),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             Padding(

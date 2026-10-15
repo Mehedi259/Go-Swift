@@ -70,22 +70,45 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     final location = '${rest?.islandHub ?? "Ocean Club, Paradise Island"} • 3.2 miles';
     final prepWindow = rest?.averagePrepWindow ?? '30-40 min';
 
+    final String heroPhoto = rest?.name.toLowerCase() == 'cheta' || rest?.id == 1
+        ? 'https://goswift-media-prod.s3.us-east-1.amazonaws.com/food/items/lobster.jpg'
+        : 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            // Hero
+            // Hero Banner
             Container(
               height: 200,
+              width: double.infinity,
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)],
-                ),
+                color: Color(0xFFD6EDF4),
               ),
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Center(child: Icon(Icons.restaurant, color: AppColors.primaryTeal.withValues(alpha: 0.4), size: 64)),
+                  Image.network(
+                    heroPhoto,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Icon(Icons.restaurant, color: AppColors.primaryTeal, size: 64),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.35),
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.65),
+                        ],
+                      ),
+                    ),
+                  ),
                   Positioned(
                     top: 12,
                     left: 12,
@@ -95,7 +118,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: AppColors.border),
                           boxShadow: AppColors.cardShadow,
@@ -111,7 +134,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Colors.white.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.border),
                         boxShadow: AppColors.cardShadow,
@@ -173,25 +196,13 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     const SizedBox(height: 12),
                     if (_isLoading)
                       const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppColors.primaryTeal)))
-                    else if (_menuItems.isNotEmpty)
-                      ..._menuItems.map((item) => _buildItemCard(
+                    else
+                      ...(_menuItems.isNotEmpty ? _menuItems : FoodService.chetaDefaultMenu).map((item) => _buildItemCard(
                         id: item.id,
                         name: item.name,
                         desc: item.description ?? 'Curated fresh island ingredients',
                         price: '\$${item.price.toStringAsFixed(0)}',
                         item: item,
-                      ))
-                    else
-                      ...[
-                        {'id': 1, 'name': 'Yellowfin Tuna Tartare', 'desc': 'With avocado, crispy wonton, yuzu ponzu', 'price': '\$38'},
-                        {'id': 2, 'name': 'Crispy Black Cod Miso', 'desc': 'Bahamian miso glaze, pickled daikon', 'price': '\$68'},
-                        {'id': 3, 'name': 'Wagyu Beef Tenderloin', 'desc': 'A5 grade, truffle jus, roasted bone marrow', 'price': '\$145'},
-                        {'id': 4, 'name': 'Bahamian Lobster Bisque', 'desc': 'Fresh island lobster, cream, cognac', 'price': '\$42'},
-                      ].map((item) => _buildItemCard(
-                        id: item['id'] as int,
-                        name: item['name'] as String,
-                        desc: item['desc'] as String,
-                        price: item['price'] as String,
                       )),
                     const SizedBox(height: 20),
                     GSButton(
@@ -199,7 +210,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       onTap: () => Navigator.pushNamed(context, '/customer/food/cart', arguments: {
                         'restaurant': rest,
                         'cart': _cart,
-                        'menu': _menuItems,
+                        'menu': _menuItems.isNotEmpty ? _menuItems : FoodService.chetaDefaultMenu,
                       }),
                     ),
                     const SizedBox(height: 16),
@@ -228,7 +239,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
           'item': foodItem,
           'restaurant': _restaurant ?? widget.restaurant,
           'cart': _cart,
-          'menu': _menuItems,
+          'menu': _menuItems.isNotEmpty ? _menuItems : FoodService.chetaDefaultMenu,
         },
       ),
       child: Container(
@@ -242,11 +253,27 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
         ),
         child: Row(
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(color: AppColors.cardTouchpoint, borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.set_meal, color: AppColors.primaryTeal, size: 26),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: foodItem.photo != null && foodItem.photo!.isNotEmpty
+                  ? Image.network(
+                      foodItem.photo!,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 60,
+                        height: 60,
+                        color: AppColors.cardTouchpoint,
+                        child: const Icon(Icons.set_meal, color: AppColors.primaryTeal, size: 26),
+                      ),
+                    )
+                  : Container(
+                      width: 60,
+                      height: 60,
+                      color: AppColors.cardTouchpoint,
+                      child: const Icon(Icons.set_meal, color: AppColors.primaryTeal, size: 26),
+                    ),
             ),
             const SizedBox(width: 14),
             Expanded(
