@@ -21,19 +21,38 @@ class RoomService {
     if (bedrooms != null) params['bedrooms'] = bedrooms.toString();
     if (maxGuests != null) params['max_guests'] = maxGuests.toString();
 
-    final response = await _api.get(ApiEndpoints.propertyListings, queryParams: params);
-    List<dynamic> list = [];
-    if (response is List) {
-      list = response;
-    } else if (response is Map && response['results'] is List) {
-      list = response['results'] as List;
+    try {
+      final response = await _api.get(ApiEndpoints.propertyListings, queryParams: params);
+      List<dynamic> list = [];
+      if (response is List) {
+        list = response;
+      } else if (response is Map && response['results'] is List) {
+        list = response['results'] as List;
+      }
+      final result = list.map((e) => PropertyListingModel.fromJson(e as Map<String, dynamic>)).toList();
+      if (result.isNotEmpty) return result;
+    } catch (_) {
+      // If customer listings endpoint fails (e.g. 403 for provider role), fallback to provider listings
     }
-    return list.map((e) => PropertyListingModel.fromJson(e as Map<String, dynamic>)).toList();
+
+    try {
+      final providerListings = await getMyListings();
+      if (providerListings.isNotEmpty) {
+        return providerListings;
+      }
+    } catch (_) {}
+
+    return [];
   }
 
   Future<PropertyListingModel> getListingDetail(int id) async {
-    final response = await _api.get(ApiEndpoints.propertyListingDetail(id));
-    return PropertyListingModel.fromJson(response as Map<String, dynamic>);
+    try {
+      final response = await _api.get(ApiEndpoints.propertyListingDetail(id));
+      return PropertyListingModel.fromJson(response as Map<String, dynamic>);
+    } catch (_) {
+      final response = await _api.get(ApiEndpoints.propertyProviderListingDetail(id));
+      return PropertyListingModel.fromJson(response as Map<String, dynamic>);
+    }
   }
 
   Future<Map<String, dynamic>> getQuote({

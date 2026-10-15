@@ -53,12 +53,13 @@ class _PropertiesSearchScreenState extends State<PropertiesSearchScreen> {
         'type': l.propertyType.replaceAll('_', ' ').toUpperCase(),
         'location': '${l.city} • ${l.address}',
         'price': '\$${l.pricePerNight.toStringAsFixed(0)}/night',
-        'rating': 4.95,
+        'rating': (l.rating ?? 4.95).toDouble(),
         'reviews': 45,
         'badge': l.city.toUpperCase(),
         'beds': l.bedrooms,
         'baths': l.bathrooms,
         'model': l,
+        'photo': l.photos.isNotEmpty ? l.photos.first : null,
       }).toList();
     }
     return _properties;
@@ -226,16 +227,39 @@ class _PropertyCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 160,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-                gradient: LinearGradient(
-                  colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)],
-                ),
+              height: 170,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+                color: AppColors.cardTouchpoint,
+                image: (p['photo'] != null && p['photo'].toString().isNotEmpty)
+                    ? DecorationImage(
+                        image: NetworkImage(p['photo'].toString()),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+                gradient: (p['photo'] != null && p['photo'].toString().isNotEmpty)
+                    ? null
+                    : const LinearGradient(
+                        colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)],
+                      ),
               ),
               child: Stack(
                 children: [
-                  Center(child: Icon(Icons.villa, color: AppColors.primaryTeal.withValues(alpha: 0.5), size: 54)),
+                  if (p['photo'] == null || p['photo'].toString().isEmpty)
+                    Center(child: Icon(Icons.villa, color: AppColors.primaryTeal.withValues(alpha: 0.5), size: 54))
+                  else
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+                          gradient: LinearGradient(
+                            colors: [Colors.black.withValues(alpha: 0.35), Colors.transparent, Colors.black.withValues(alpha: 0.55)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                    ),
                   Positioned(
                     top: 10,
                     left: 10,
@@ -284,7 +308,7 @@ class _PropertyCard extends StatelessWidget {
                         color: Colors.white.withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: GSRatingRow(rating: p['rating'] as double, reviews: p['reviews'] as int),
+                      child: GSRatingRow(rating: (p['rating'] as num).toDouble(), reviews: p['reviews'] as int),
                     ),
                   ),
                 ],

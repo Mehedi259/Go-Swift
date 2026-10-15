@@ -85,7 +85,7 @@ class PropertyListingModel {
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString(),
       bedrooms: json['bedrooms'] is int ? json['bedrooms'] : int.tryParse(json['bedrooms']?.toString() ?? '3') ?? 3,
-      bathrooms: json['bathrooms'] is int ? json['bathrooms'] : int.tryParse(json['bathrooms']?.toString() ?? '2') ?? 2,
+      bathrooms: json['bathrooms'] is int ? json['bathrooms'] : (double.tryParse(json['bathrooms']?.toString() ?? '2')?.round() ?? 2),
       maxGuests: json['max_guests'] is int ? json['max_guests'] : int.tryParse(json['max_guests']?.toString() ?? '6') ?? 6,
       islandRegion: json['island_region']?.toString() ?? 'Paradise Island',
       streetAddress: json['street_address']?.toString(),
