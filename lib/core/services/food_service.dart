@@ -1,3 +1,4 @@
+import 'dart:io';
 import '../models/food_model.dart';
 import '../network/api_client.dart';
 import '../network/api_endpoints.dart';
@@ -146,6 +147,15 @@ class FoodService {
     return response as Map<String, dynamic>;
   }
 
+  Future<FoodItemModel> uploadFoodPhoto(int id, File photoFile) async {
+    final response = await _api.multipartRequest(
+      'PATCH',
+      '${ApiEndpoints.restaurantProviderItems}$id/',
+      files: {'photo': photoFile},
+    );
+    return FoodItemModel.fromJson(response as Map<String, dynamic>);
+  }
+
   Future<FoodItemModel> createFoodItem({
     required String name,
     required double price,
@@ -154,6 +164,7 @@ class FoodService {
     List<String>? dietaryTags,
     String? prepWindow,
     bool isAvailable = true,
+    File? photoFile,
   }) async {
     final response = await _api.post(
       ApiEndpoints.restaurantProviderItems,
@@ -167,7 +178,13 @@ class FoodService {
         'available_today': isAvailable,
       },
     );
-    return FoodItemModel.fromJson(response as Map<String, dynamic>);
+    var item = FoodItemModel.fromJson(response as Map<String, dynamic>);
+    if (photoFile != null) {
+      try {
+        item = await uploadFoodPhoto(item.id, photoFile);
+      } catch (_) {}
+    }
+    return item;
   }
 
   Future<FoodItemModel> updateFoodItem(int id, {
@@ -178,6 +195,7 @@ class FoodService {
     List<String>? dietaryTags,
     String? prepWindow,
     bool? isAvailable,
+    File? photoFile,
   }) async {
     final body = <String, dynamic>{};
     if (name != null) body['name'] = name;
@@ -188,11 +206,20 @@ class FoodService {
     if (prepWindow != null) body['estimated_prep_window'] = prepWindow;
     if (isAvailable != null) body['available_today'] = isAvailable;
 
-    final response = await _api.patch(
-      '${ApiEndpoints.restaurantProviderItems}$id/',
-      body: body,
-    );
-    return FoodItemModel.fromJson(response as Map<String, dynamic>);
+    dynamic response;
+    if (body.isNotEmpty) {
+      response = await _api.patch(
+        '${ApiEndpoints.restaurantProviderItems}$id/',
+        body: body,
+      );
+    }
+    var item = response != null ? FoodItemModel.fromJson(response as Map<String, dynamic>) : null;
+    if (photoFile != null) {
+      item = await uploadFoodPhoto(id, photoFile);
+    }
+    if (item != null) return item;
+    final items = await getProviderItems();
+    return items.firstWhere((e) => e.id == id);
   }
 
   Future<void> deleteFoodItem(int id) async {

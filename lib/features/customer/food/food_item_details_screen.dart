@@ -57,6 +57,7 @@ class _FoodItemDetailsScreenState extends State<FoodItemDetailsScreen> {
           children: [
             Container(
               height: 220,
+              width: double.infinity,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)],
@@ -64,11 +65,37 @@ class _FoodItemDetailsScreenState extends State<FoodItemDetailsScreen> {
               ),
               child: Stack(
                 children: [
-                  Center(
-                    child: Icon(
-                      Icons.set_meal,
-                      color: AppColors.primaryTeal.withValues(alpha: 0.4),
-                      size: 64,
+                  if (item?.photo != null && item!.photo!.isNotEmpty)
+                    Positioned.fill(
+                      child: Image.network(
+                        item.photo!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Center(
+                          child: Icon(Icons.set_meal, color: AppColors.primaryTeal.withValues(alpha: 0.4), size: 64),
+                        ),
+                      ),
+                    )
+                  else
+                    Center(
+                      child: Icon(
+                        Icons.set_meal,
+                        color: AppColors.primaryTeal.withValues(alpha: 0.4),
+                        size: 64,
+                      ),
+                    ),
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withValues(alpha: 0.4),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.5),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
                     ),
                   ),
                   Positioned(
