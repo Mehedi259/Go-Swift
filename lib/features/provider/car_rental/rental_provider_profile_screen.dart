@@ -5,7 +5,8 @@ import '../../../core/services/provider_application_service.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class RentalProviderProfileScreen extends StatefulWidget {
-  const RentalProviderProfileScreen({super.key});
+  final bool embedded;
+  const RentalProviderProfileScreen({super.key, this.embedded = false});
 
   @override
   State<RentalProviderProfileScreen> createState() => _RentalProviderProfileScreenState();
@@ -182,19 +183,22 @@ class _RentalProviderProfileScreenState extends State<RentalProviderProfileScree
         elevation: 0,
         title: Text('Fleet Owner Profile', style: AppTextStyles.titleLarge),
         centerTitle: false,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-              boxShadow: AppColors.cardShadow,
-            ),
-            child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
-          ),
-        ),
+        automaticallyImplyLeading: !widget.embedded,
+        leading: widget.embedded
+            ? null
+            : GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+                ),
+              ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

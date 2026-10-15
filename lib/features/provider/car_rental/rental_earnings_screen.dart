@@ -5,7 +5,8 @@ import '../../../core/models/car_rental_model.dart';
 import '../../../core/services/car_rental_service.dart';
 
 class RentalEarningsScreen extends StatefulWidget {
-  const RentalEarningsScreen({super.key});
+  final bool embedded;
+  const RentalEarningsScreen({super.key, this.embedded = false});
 
   @override
   State<RentalEarningsScreen> createState() => _RentalEarningsScreenState();
@@ -86,19 +87,22 @@ class _RentalEarningsScreenState extends State<RentalEarningsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-              boxShadow: AppColors.cardShadow,
-            ),
-            child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
-          ),
-        ),
+        automaticallyImplyLeading: !widget.embedded,
+        leading: widget.embedded
+            ? null
+            : GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+                ),
+              ),
         title: Text('Fleet Revenue', style: AppTextStyles.titleLarge),
         centerTitle: false,
         actions: [

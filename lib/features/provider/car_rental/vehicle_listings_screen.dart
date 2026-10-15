@@ -8,7 +8,8 @@ import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
 
 class VehicleListingsScreen extends StatefulWidget {
-  const VehicleListingsScreen({super.key});
+  final bool embedded;
+  const VehicleListingsScreen({super.key, this.embedded = false});
 
   @override
   State<VehicleListingsScreen> createState() => _VehicleListingsScreenState();
@@ -135,6 +136,7 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.cyan,
+              minimumSize: const Size(100, 42),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () async {
@@ -185,94 +187,11 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        final now = DateTime.now();
-        if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
-          _lastBackPressTime = now;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Press back again to exit Go-Swift'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        } else {
-          SystemNavigator.pop();
-        }
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          leading: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.cyanLight,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.cyan.withValues(alpha: 0.2)),
-            ),
-            child: const Icon(Icons.directions_car, color: AppColors.cyan, size: 20),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Fleet Management', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
-              Text('Bahamas Luxury Rentals', style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan)),
-            ],
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: ElevatedButton.icon(
-                onPressed: _showAddVehicleDialog,
-                icon: const Icon(Icons.add, size: 16, color: Colors.white),
-                label: const Text('Add Vehicle', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                ),
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.logout, color: AppColors.error),
-              tooltip: 'Sign Out',
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    title: Text('Log Out', style: AppTextStyles.headlineSmall),
-                    content: const Text('Are you sure you want to sign out from your rental partner session?'),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Log Out', style: TextStyle(color: Colors.white)),
-                      ),
-                    ],
-                  ),
-                );
-                if (confirm == true) {
-                  await LocalStorage.clearAuth();
-                  if (context.mounted) {
-                    Navigator.pushNamedAndRemoveUntil(context, '/choose-account', (_) => false);
-                  }
-                }
-              },
-            ),
-          ],
-        ),
-      body: Column(
-        children: [
+    final bodyContent = Column(
+      children: [
+        _buildTopHeader(),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
               children: [
                 Expanded(child: _stat(_totalFleet, 'Total Fleet', AppColors.cyan)),
@@ -283,6 +202,7 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
               ],
             ),
           ),
+          _buildAddVehicleBanner(),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
@@ -433,9 +353,27 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
                             },
                           ),
                   ),
-          ),
-        ],
+        ),
+      ],
+    );
+
+    if (widget.embedded) {
+      return Container(
+        color: AppColors.background,
+        child: bodyContent,
+      );
+    }
+
+    final scaffoldContent = Scaffold(
+      backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.cyan,
+        elevation: 3,
+        icon: const Icon(Icons.add, color: Colors.white, size: 20),
+        label: const Text('Add Vehicle', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+        onPressed: _showAddVehicleDialog,
       ),
+      body: bodyContent,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
@@ -464,9 +402,200 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        final now = DateTime.now();
+        if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+          _lastBackPressTime = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Press back again to exit Go-Swift'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          SystemNavigator.pop();
+        }
+      },
+      child: scaffoldContent,
+    );
+  }
+
+  Widget _buildTopHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.border, width: 0.8)),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.cyanLight,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.2)),
+              ),
+              child: const Icon(Icons.directions_car, color: AppColors.cyan, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('My Fleet', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold), maxLines: 1),
+                  Text('Bahamas Luxury', style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan), maxLines: 1),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: _showAddVehicleDialog,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.cyan.withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add, size: 16, color: Colors.white),
+                    SizedBox(width: 4),
+                    Text(
+                      'Add Car',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.logout, color: AppColors.error, size: 20),
+              tooltip: 'Sign Out',
+              onPressed: _confirmLogout,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddVehicleBanner() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.cyan, AppColors.cyanDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cyan.withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.add_circle_outline, color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Add New Vehicle', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 2),
+                Text('List luxury SUVs, sedans & sports cars', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: _showAddVehicleDialog,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Text(
+                '+ Add',
+                style: TextStyle(
+                  color: AppColors.cyan,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Log Out', style: AppTextStyles.headlineSmall),
+        content: const Text('Are you sure you want to sign out from your rental partner session?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              minimumSize: const Size(90, 40),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Log Out', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await LocalStorage.clearAuth();
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/choose-account', (_) => false);
+      }
+    }
+  }
 
   Widget _navItem(IconData icon, IconData activeIcon, String label, bool isActive, VoidCallback onTap) {
     return GestureDetector(

@@ -8,7 +8,8 @@ import '../../../core/widgets/gs_button.dart';
 import '../../../core/widgets/gs_card.dart';
 
 class RentalBookingManagementScreen extends StatefulWidget {
-  const RentalBookingManagementScreen({super.key});
+  final bool embedded;
+  const RentalBookingManagementScreen({super.key, this.embedded = false});
 
   @override
   State<RentalBookingManagementScreen> createState() => _RentalBookingManagementScreenState();
@@ -69,19 +70,22 @@ class _RentalBookingManagementScreenState extends State<RentalBookingManagementS
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-              boxShadow: AppColors.cardShadow,
-            ),
-            child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
-          ),
-        ),
+        automaticallyImplyLeading: !widget.embedded,
+        leading: widget.embedded
+            ? null
+            : GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+                ),
+              ),
         title: Text('Booking Management', style: AppTextStyles.titleLarge),
         centerTitle: false,
         actions: [

@@ -62,15 +62,10 @@ import 'package:go_swift/features/provider/courier/courier_requests_screen.dart'
 import 'package:go_swift/features/provider/courier/courier_active_delivery_screen.dart' show CourierActiveDeliveryScreen;
 import 'package:go_swift/features/provider/courier/courier_history_screen.dart' show CourierHistoryScreen;
 import 'package:go_swift/features/provider/courier/courier_profile_screen.dart' show CourierProfileScreen;
-import 'package:go_swift/features/provider/restaurant/menu_management_screen.dart';
 import 'package:go_swift/features/provider/restaurant/orders_list_screen.dart';
 import 'package:go_swift/features/provider/restaurant/order_management_screen.dart' show OrderManagementScreen;
-import 'package:go_swift/features/provider/restaurant/restaurant_profile_screen.dart' show RestaurantProfileScreen;
-import 'package:go_swift/features/provider/car_rental/vehicle_listings_screen.dart';
-import 'package:go_swift/features/provider/car_rental/rental_booking_management_screen.dart' show RentalBookingManagementScreen;
+import 'package:go_swift/features/provider/car_rental/car_rental_hub_screen.dart';
 import 'package:go_swift/features/provider/car_rental/active_rental_management_screen.dart';
-import 'package:go_swift/features/provider/car_rental/rental_earnings_screen.dart' show RentalEarningsScreen;
-import 'package:go_swift/features/provider/car_rental/rental_provider_profile_screen.dart';
 import 'package:go_swift/features/provider/property_owner/property_listings_screen.dart';
 import 'package:go_swift/features/provider/property_owner/create_listing_screen.dart';
 import 'package:go_swift/features/provider/property_owner/booking_requests_screen.dart';
@@ -168,11 +163,11 @@ class GoSwiftApp extends StatelessWidget {
         '/provider/restaurant/profile': (c) => const OrdersListScreen(initialTab: 2),
         '/provider/restaurant/order-detail': (c) => const OrderManagementScreen(),
         // Provider - Car Rental
-        '/provider/rental/vehicles': (c) => const VehicleListingsScreen(),
-        '/provider/rental/bookings': (c) => const RentalBookingManagementScreen(),
+        '/provider/rental/vehicles': (c) => const CarRentalHubScreen(initialTab: 0),
+        '/provider/rental/bookings': (c) => const CarRentalHubScreen(initialTab: 1),
         '/provider/rental/active': (c) => const ActiveRentalManagementScreen(),
-        '/provider/rental/earnings': (c) => const RentalEarningsScreen(),
-        '/provider/rental/profile': (c) => const RentalProviderProfileScreen(),
+        '/provider/rental/earnings': (c) => const CarRentalHubScreen(initialTab: 2),
+        '/provider/rental/profile': (c) => const CarRentalHubScreen(initialTab: 3),
         // Provider - Property Owner
         '/provider/property/listings': (c) => const PropertyListingsScreen(),
         '/provider/property/create': (c) => const CreateListingScreen(),
