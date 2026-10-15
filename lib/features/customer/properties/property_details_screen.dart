@@ -88,22 +88,33 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
-    final PropertyListingModel? listing = widget.listing ?? (args is PropertyListingModel ? args : null);
+    final mapArgs = args is Map<String, dynamic> ? args : (args is Map ? Map<String, dynamic>.from(args) : null);
+    final PropertyListingModel? listing = widget.listing ??
+        (args is PropertyListingModel
+            ? args
+            : (mapArgs?['model'] is PropertyListingModel
+                ? mapArgs!['model'] as PropertyListingModel
+                : null));
 
-    final title = listing?.title ?? 'The Ocean Club Villa';
-    final pType = (listing?.propertyType ?? 'OCEANFRONT VILLA').replaceAll('_', ' ').toUpperCase();
-    final ratePerNight = listing?.pricePerNight ?? 1850.0;
-    final pLocation = listing != null ? '${listing.city} • ${listing.address}' : 'Paradise Island • 0.2 miles from beach';
-    final pBedrooms = listing?.bedrooms.toString() ?? '5';
-    final pBathrooms = listing?.bathrooms.toString() ?? '6';
-    final pGuests = listing?.maxGuests.toString() ?? '12';
+    final title = listing?.title ?? mapArgs?['name']?.toString() ?? 'The Ocean Club Villa';
+    final pType = (listing?.propertyType ?? mapArgs?['type']?.toString() ?? 'OCEANFRONT VILLA').replaceAll('_', ' ').toUpperCase();
+    final ratePerNight = listing?.pricePerNight ??
+        (mapArgs?['price'] != null ? double.tryParse(mapArgs!['price'].toString().replaceAll(RegExp(r'[^\d.]'), '')) ?? 1850.0 : 1850.0);
+    final pLocation = listing != null ? '${listing.city} • ${listing.address}' : (mapArgs?['location']?.toString() ?? 'Paradise Island • 0.2 miles from beach');
+    final pBedrooms = listing?.bedrooms.toString() ?? mapArgs?['beds']?.toString() ?? '4';
+    final pBathrooms = listing?.bathrooms.toString() ?? mapArgs?['baths']?.toString() ?? '4';
+    final pGuests = listing?.maxGuests.toString() ?? '8';
     final pDesc = listing?.description ??
-        'Exquisite oceanfront villa at The Ocean Club, Paradise Island. Features private infinity pool, direct beach access, dedicated butler service, and panoramic views of the Atlantic Ocean. Fully equipped gourmet kitchen, home cinema, and 24/7 concierge.';
-    final double? rating = listing?.rating;
+        'Exquisite oceanfront villa at Paradise Island. Features private infinity pool, direct beach access, dedicated butler service, and panoramic views of the Atlantic Ocean. Fully equipped gourmet kitchen, home cinema, and 24/7 concierge.';
+    final double? rating = listing?.rating ?? (mapArgs?['rating'] is num ? (mapArgs!['rating'] as num).toDouble() : null);
 
     final subtotal = ratePerNight * _nights;
     final taxesAndFees = subtotal * 0.10;
     final totalStay = subtotal + taxesAndFees;
+
+    final String? photoUrl = (listing?.photos.isNotEmpty == true)
+        ? listing!.photos.first
+        : (mapArgs?['photo'] != null && mapArgs!['photo'].toString().isNotEmpty ? mapArgs['photo'].toString() : null);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -120,10 +131,10 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               ),
               child: Stack(
                 children: [
-                  if (listing?.photos.isNotEmpty == true)
+                  if (photoUrl != null && photoUrl.isNotEmpty)
                     Positioned.fill(
                       child: Image.network(
-                        listing!.photos.first,
+                        photoUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Center(
                           child: Icon(Icons.villa, color: AppColors.primaryTeal.withValues(alpha: 0.4), size: 72),

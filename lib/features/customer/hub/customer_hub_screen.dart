@@ -272,7 +272,7 @@ class _HomeTabState extends State<_HomeTab> {
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.cyan.withOpacity(0.22),
+                                        color: AppColors.cyan.withValues(alpha: 0.22),
                                         blurRadius: 8,
                                         offset: const Offset(0, 3),
                                       ),
@@ -365,7 +365,7 @@ class _HomeTabState extends State<_HomeTab> {
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.cyan.withOpacity(0.22),
+                                        color: AppColors.cyan.withValues(alpha: 0.22),
                                         blurRadius: 8,
                                         offset: const Offset(0, 3),
                                       ),
@@ -427,6 +427,21 @@ class _HomeTabState extends State<_HomeTab> {
                 children: [
                   _buildServiceCard(
                     context: context,
+                    icon: Icons.home_work_outlined,
+                    iconBgColor: AppColors.staysTealLight,
+                    iconColor: AppColors.staysTeal,
+                    title: 'Rooms / Properties',
+                    badge: 'Luxury Stays',
+                    badgeBgColor: AppColors.staysTealLight,
+                    badgeTextColor: AppColors.staysTeal,
+                    description: 'Exclusive oceanfront villas, private island retreats & penthouse rentals.',
+                    footerIcon: Icons.groups_outlined,
+                    footerText: 'Staffed & Fully Provisioned',
+                    buttonLabel: 'Explore Villas',
+                    route: '/customer/properties/search',
+                  ),
+                  _buildServiceCard(
+                    context: context,
                     icon: Icons.directions_car_outlined,
                     iconBgColor: AppColors.cyanLight,
                     iconColor: AppColors.cyan,
@@ -484,21 +499,6 @@ class _HomeTabState extends State<_HomeTab> {
                     footerText: 'Tarmac FBO Handover',
                     buttonLabel: 'Select Vehicle',
                     route: '/customer/car-rental/search',
-                  ),
-                  _buildServiceCard(
-                    context: context,
-                    icon: Icons.home_work_outlined,
-                    iconBgColor: AppColors.staysTealLight,
-                    iconColor: AppColors.staysTeal,
-                    title: 'Rooms / Properties',
-                    badge: 'Luxury Stays',
-                    badgeBgColor: AppColors.staysTealLight,
-                    badgeTextColor: AppColors.staysTeal,
-                    description: 'Exclusive oceanfront villas, private island retreats & penthouse rentals.',
-                    footerIcon: Icons.groups_outlined,
-                    footerText: 'Staffed & Fully Provisioned',
-                    buttonLabel: 'Explore Villas',
-                    route: '/customer/properties/search',
                   ),
                 ],
               ),

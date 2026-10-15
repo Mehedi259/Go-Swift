@@ -231,16 +231,20 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: AppColors.badgeTeal, borderRadius: BorderRadius.circular(10)),
-          child: Icon(icon, color: AppColors.primaryTeal, size: 22),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: AppColors.badgeTeal, borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: AppColors.primaryTeal, size: 22),
+          ),
+          title: Text(title, style: AppTextStyles.titleMedium),
+          subtitle: Text(sub, style: AppTextStyles.bodySmall),
+          trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+          onTap: () => Navigator.pushNamed(context, route),
         ),
-        title: Text(title, style: AppTextStyles.titleMedium),
-        subtitle: Text(sub, style: AppTextStyles.bodySmall),
-        trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-        onTap: () => Navigator.pushNamed(context, route),
       ),
     );
   }
