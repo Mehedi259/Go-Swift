@@ -144,7 +144,9 @@ class _RentalProviderProfileScreenState extends State<RentalProviderProfileScree
                           _base = baseCtrl.text.trim();
                           _license = '${licenseCtrl.text.trim()} (Verified)';
                         });
-                        Navigator.pop(ctx);
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                        }
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Fleet profile updated successfully!'),
