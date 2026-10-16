@@ -121,7 +121,7 @@ class _ActiveRentalManagementScreenState extends State<ActiveRentalManagementScr
               decoration: BoxDecoration(
                 color: AppColors.greenLight,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.green.withOpacity(0.3)),
+                border: Border.all(color: AppColors.green.withValues(alpha: 0.3)),
               ),
               child: Text(
                 '$status  •  HANDOVER COMPLETE',

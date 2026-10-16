@@ -46,7 +46,11 @@ class RentalVehicleModel {
     if (json['media'] is List) {
       for (final m in json['media'] as List) {
         if (m is Map && m['image'] != null) {
-          imageUrls.add(m['image'].toString());
+          String img = m['image'].toString();
+          if (img.startsWith('/')) {
+            img = 'http://184.192.34.206$img';
+          }
+          imageUrls.add(img);
         }
       }
     }

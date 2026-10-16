@@ -1,3 +1,4 @@
+import 'dart:io';
 import '../models/car_rental_model.dart';
 import '../network/api_client.dart';
 import '../network/api_endpoints.dart';
@@ -195,5 +196,23 @@ class CarRentalService {
 
   Future<void> deleteVehicle(int id) async {
     await _api.delete(ApiEndpoints.rentalProviderVehicleDetail(id));
+  }
+
+  Future<Map<String, dynamic>> uploadVehicleMedia({
+    required int vehicleId,
+    required File imageFile,
+    String? caption,
+  }) async {
+    final response = await _api.multipartRequest(
+      'POST',
+      ApiEndpoints.rentalProviderVehicleMedia(vehicleId),
+      fields: {
+        if (caption != null && caption.isNotEmpty) 'caption': caption,
+      },
+      files: {
+        'image': imageFile,
+      },
+    );
+    return response is Map<String, dynamic> ? response : <String, dynamic>{};
   }
 }
