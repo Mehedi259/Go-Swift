@@ -47,6 +47,12 @@ class _RideWaitingScreenState extends State<RideWaitingScreen> {
             '/customer/ride/driver-accepted',
             arguments: updated,
           );
+        } else if (s == 'cancelled') {
+          _pollTimer?.cancel();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ride request was cancelled.'), backgroundColor: AppColors.red),
+          );
+          Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
         }
       } catch (_) {}
     });
@@ -78,6 +84,7 @@ class _RideWaitingScreenState extends State<RideWaitingScreen> {
     final pickup = ride?.pickupAddress ?? "Lynden Pindling Int'l Airport (NAS)";
     final destination = ride?.destinationAddress ?? 'The Ocean Club, Four Seasons Resort';
     final fare = ride != null ? '\$${ride.estimatedFare.toStringAsFixed(2)}' : '\$118.50';
+    final timeEst = ride?.estimatedDurationMinutes != null ? '${ride!.estimatedDurationMinutes} min' : '15-20 min';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -200,7 +207,7 @@ class _RideWaitingScreenState extends State<RideWaitingScreen> {
                       children: [
                         Expanded(child: _infoBox('Est. Fare', fare, AppColors.primaryTeal)),
                         const SizedBox(width: 12),
-                        Expanded(child: _infoBox('Est. Time', '12-18 min', AppColors.textPrimary)),
+                        Expanded(child: _infoBox('Est. Time', timeEst, AppColors.textPrimary)),
                       ],
                     ),
                     const Spacer(),
@@ -213,7 +220,10 @@ class _RideWaitingScreenState extends State<RideWaitingScreen> {
                     const SizedBox(height: 16),
                     Center(
                       child: GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/customer/ride/driver-accepted', arguments: ride),
+                        onTap: () {
+                          _pollTimer?.cancel();
+                          Navigator.pushNamed(context, '/customer/ride/driver-accepted', arguments: ride);
+                        },
                         child: Text('View Chauffeur Dispatch Status →', style: AppTextStyles.cyanLabel.copyWith(color: AppColors.primaryTeal)),
                       ),
                     ),

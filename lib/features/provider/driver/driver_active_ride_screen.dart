@@ -46,7 +46,7 @@ class _DriverActiveRideScreenState extends State<DriverActiveRideScreen> {
 
   Future<void> _fetchActiveRide() async {
     try {
-      final rides = await _rideService.getMyRides();
+      final rides = await _rideService.getDriverRideHistory();
       RideModel? active;
       for (final r in rides) {
         final s = r.status.toLowerCase();
@@ -164,7 +164,7 @@ class _DriverActiveRideScreenState extends State<DriverActiveRideScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.greenLight,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.green.withOpacity(0.3)),
+                      border: Border.all(color: AppColors.green.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -427,7 +427,7 @@ class _DriverMapPainter extends CustomPainter {
 
     // Vehicle position indicator
     final vehiclePos = Offset(size.width * 0.52, size.height * 0.45);
-    canvas.drawCircle(vehiclePos, 14, Paint()..color = AppColors.cyan.withOpacity(0.2));
+    canvas.drawCircle(vehiclePos, 14, Paint()..color = AppColors.cyan.withValues(alpha: 0.2));
     canvas.drawCircle(vehiclePos, 9, Paint()..color = AppColors.cyan);
     canvas.drawCircle(vehiclePos, 5, Paint()..color = Colors.white);
     canvas.drawCircle(vehiclePos, 2.5, Paint()..color = AppColors.cyan);

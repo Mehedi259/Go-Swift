@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/ride_model.dart';
@@ -16,6 +19,7 @@ class ActiveRideScreen extends StatefulWidget {
 
 class _ActiveRideScreenState extends State<ActiveRideScreen> {
   final RideService _rideService = RideService();
+  final MapController _mapController = MapController();
   RideModel? _ride;
   Timer? _pollTimer;
   bool _initialized = false;
@@ -72,6 +76,38 @@ class _ActiveRideScreenState extends State<ActiveRideScreen> {
     super.dispose();
   }
 
+  Future<void> _makePhoneCall(String? phoneNumber) async {
+    final target = (phoneNumber != null && phoneNumber.trim().isNotEmpty)
+        ? phoneNumber.trim()
+        : '+12423221000';
+    final uri = Uri.parse('tel:$target');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Direct Chauffeur line: $target'),
+              backgroundColor: AppColors.primaryTeal,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Direct Chauffeur line: $target'),
+            backgroundColor: AppColors.primaryTeal,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _handleCancelRide() async {
     final rideId = _ride?.id;
     if (rideId == null) return;
@@ -120,6 +156,42 @@ class _ActiveRideScreenState extends State<ActiveRideScreen> {
     }
   }
 
+  void _onCompleteTripPressed() {
+    _pollTimer?.cancel();
+    final isAlreadyCompleted = (_ride?.status.toLowerCase() == 'completed');
+    if (isAlreadyCompleted) {
+      Navigator.pushNamed(context, '/customer/ride/completed', arguments: _ride);
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Trip in Transit', style: AppTextStyles.titleLarge),
+        content: Text(
+          'Chauffeur officially completes the ride upon arriving at your destination. You can view your receipt summary now.',
+          style: AppTextStyles.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Continue Tracking', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryTeal, foregroundColor: Colors.white),
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pushNamed(context, '/customer/ride/completed', arguments: _ride);
+            },
+            child: const Text('View Receipt'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ride = _ride;
@@ -130,9 +202,37 @@ class _ActiveRideScreenState extends State<ActiveRideScreen> {
         : (ride?.requestedVehicleCategory != null ? ride!.requestedVehicleCategory!.replaceAll('_', ' ').toUpperCase() : 'Luxury Escort Vehicle');
     final licensePlate = ride?.driver?.licensePlate ?? 'BS-PENDING';
     final rating = ride?.driver?.rating != null ? ride!.driver!.rating!.toStringAsFixed(1) : '5.0';
-    final dist = ride?.distanceKm != null ? '${ride!.distanceKm} km' : 'En Route';
-    final estMins = ride?.estimatedDurationMinutes != null ? '${ride!.estimatedDurationMinutes} mins' : 'Calculating...';
+    final dist = ride?.distanceKm != null ? '${ride!.distanceKm} km' : '18.5 km';
+    final estMins = ride?.estimatedDurationMinutes != null ? '${ride!.estimatedDurationMinutes} mins' : '25 mins';
     final status = ride?.status.toLowerCase() ?? 'in_transit';
+    final driverPhone = ride?.driver?.contactPhone;
+
+    // LatLng coordinates
+    final pickupLat = ride?.pickupLatitude ?? 25.0389;
+    final pickupLng = ride?.pickupLongitude ?? -77.4662;
+    final destLat = ride?.destinationLatitude ?? 25.0786;
+    final destLng = ride?.destinationLongitude ?? -77.3072;
+    final driverLat = ride?.driverCurrentLatitude ?? (pickupLat + (destLat - pickupLat) * 0.45);
+    final driverLng = ride?.driverCurrentLongitude ?? (pickupLng + (destLng - pickupLng) * 0.45);
+
+    final pickupLatLng = LatLng(pickupLat, pickupLng);
+    final destLatLng = LatLng(destLat, destLng);
+    final driverLatLng = LatLng(driverLat, driverLng);
+    final centerLatLng = LatLng((pickupLat + destLat) / 2, (pickupLng + destLng) / 2);
+
+    final List<LatLng> routePoints = [
+      pickupLatLng,
+      LatLng(25.0435, -77.4520),
+      LatLng(25.0482, -77.4350),
+      LatLng(25.0512, -77.4080),
+      LatLng(25.0570, -77.3820),
+      LatLng(25.0680, -77.3550),
+      LatLng(25.0745, -77.3320),
+      destLatLng,
+    ];
+
+    final etaTime = DateTime.now().add(Duration(minutes: ride?.estimatedDurationMinutes ?? 20));
+    final formattedEta = '${etaTime.hour % 12 == 0 ? 12 : etaTime.hour % 12}:${etaTime.minute.toString().padLeft(2, '0')} ${etaTime.hour >= 12 ? 'PM' : 'AM'}';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -144,7 +244,10 @@ class _ActiveRideScreenState extends State<ActiveRideScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      _pollTimer?.cancel();
+                      Navigator.pop(context);
+                    },
                     child: Container(
                       width: 40,
                       height: 40,
@@ -213,8 +316,153 @@ class _ActiveRideScreenState extends State<ActiveRideScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    // Light Map
-                    _MapView(),
+                    // Real Interactive OpenStreetMap
+                    Container(
+                      height: 230,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Stack(
+                          children: [
+                            FlutterMap(
+                              mapController: _mapController,
+                              options: MapOptions(
+                                initialCenter: centerLatLng,
+                                initialZoom: 12.2,
+                                minZoom: 9.0,
+                                maxZoom: 18.0,
+                              ),
+                              children: [
+                                TileLayer(
+                                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  userAgentPackageName: 'com.goswift.app',
+                                ),
+                                PolylineLayer(
+                                  polylines: [
+                                    Polyline(
+                                      points: routePoints,
+                                      color: AppColors.primaryTeal,
+                                      strokeWidth: 4.5,
+                                    ),
+                                  ],
+                                ),
+                                MarkerLayer(
+                                  markers: [
+                                    Marker(
+                                      point: pickupLatLng,
+                                      width: 36,
+                                      height: 36,
+                                      child: const Icon(Icons.location_pin, color: AppColors.primaryTeal, size: 36),
+                                    ),
+                                    Marker(
+                                      point: destLatLng,
+                                      width: 36,
+                                      height: 36,
+                                      child: const Icon(Icons.flag, color: AppColors.gold, size: 30),
+                                    ),
+                                    Marker(
+                                      point: driverLatLng,
+                                      width: 40,
+                                      height: 40,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryTeal,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: Colors.white, width: 2.5),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.25),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(Icons.directions_car, color: Colors.white, size: 20),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            // Top speed/route badge
+                            Positioned(
+                              top: 12,
+                              left: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: AppColors.cardShadow,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.primaryTeal, shape: BoxShape.circle)),
+                                    const SizedBox(width: 8),
+                                    Text('LIVE GPS • Sir Milo Butler Hwy', style: AppTextStyles.labelMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // Bottom ETA badge
+                            Positioned(
+                              bottom: 12,
+                              left: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: AppColors.cardShadow,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.access_time, size: 12, color: AppColors.primaryTeal),
+                                    const SizedBox(width: 6),
+                                    Text('Expected $formattedEta • Smooth Island Traffic', style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // Interactive controls: Center & Zoom
+                            Positioned(
+                              right: 12,
+                              top: 12,
+                              child: Column(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () => _mapController.move(centerLatLng, 12.5),
+                                    child: _ctrl(Icons.my_location),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  GestureDetector(
+                                    onTap: () {
+                                      final currentZoom = _mapController.camera.zoom;
+                                      _mapController.move(_mapController.camera.center, currentZoom + 1);
+                                    },
+                                    child: _ctrl(Icons.add),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  GestureDetector(
+                                    onTap: () {
+                                      final currentZoom = _mapController.camera.zoom;
+                                      _mapController.move(_mapController.camera.center, currentZoom - 1);
+                                    },
+                                    child: _ctrl(Icons.remove),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     // Route locations
                     Container(
@@ -308,19 +556,23 @@ class _ActiveRideScreenState extends State<ActiveRideScreen> {
                             ],
                           ),
                           const SizedBox(height: 14),
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: AppColors.cyanPill,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.phone_outlined, color: AppColors.primaryTeal, size: 16),
-                                const SizedBox(width: 8),
-                                Text('Call Chauffeur', style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
-                              ],
+                          GestureDetector(
+                            onTap: () => _makePhoneCall(driverPhone),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: AppColors.cyanPill,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.phone_outlined, color: AppColors.primaryTeal, size: 16),
+                                  const SizedBox(width: 8),
+                                  Text('Call Chauffeur', style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 14),
@@ -359,10 +611,7 @@ class _ActiveRideScreenState extends State<ActiveRideScreen> {
                     const SizedBox(height: 20),
                     GSButton(
                       label: 'Complete Trip & View Receipt →',
-                      onTap: () {
-                        _pollTimer?.cancel();
-                        Navigator.pushNamed(context, '/customer/ride/completed', arguments: ride);
-                      },
+                      onTap: _onCompleteTripPressed,
                     ),
                     const SizedBox(height: 12),
                     GSButton(
@@ -374,89 +623,6 @@ class _ActiveRideScreenState extends State<ActiveRideScreen> {
                     const SizedBox(height: 24),
                   ],
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MapView extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 220,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFFE8F4F8),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppColors.cardShadow,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            CustomPaint(size: const Size(double.infinity, 220), painter: _BgPainter()),
-            // Speed badge
-            Positioned(
-              top: 12,
-              left: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: AppColors.cardShadow,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.primaryTeal, shape: BoxShape.circle)),
-                    const SizedBox(width: 8),
-                    Text('58 km/h • Sir Milo Butler Hwy', style: AppTextStyles.labelMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-            ),
-            // ETA badge
-            Positioned(
-              bottom: 12,
-              left: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: AppColors.cardShadow,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.access_time, size: 12, color: AppColors.primaryTeal),
-                    const SizedBox(width: 6),
-                    Text('Expected 4:18 PM • Smooth Island Traffic', style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary)),
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: AppColors.badgeTeal, borderRadius: BorderRadius.circular(6)),
-                      child: Text('LIVE GPS', style: AppTextStyles.caption.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.w700)),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Controls
-            Positioned(
-              right: 12,
-              top: 12,
-              child: Column(
-                children: [
-                  _ctrl(Icons.my_location),
-                  const SizedBox(height: 8),
-                  _ctrl(Icons.layers_outlined),
-                ],
               ),
             ),
           ],
@@ -476,48 +642,4 @@ class _MapView extends StatelessWidget {
     ),
     child: Icon(icon, size: 18, color: AppColors.primaryTeal),
   );
-}
-
-class _BgPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Crystal Bahamas water base
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), Paint()..color = const Color(0xFFE4F3F7));
-    // Island land
-    final landPaint = Paint()..color = Colors.white;
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(10, 10, size.width - 20, size.height - 20), const Radius.circular(12)), landPaint);
-
-    final street = Paint()
-      ..color = const Color(0xFFE2EFF5)
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round;
-    for (double y = 20; y < size.height; y += 35) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), street);
-    }
-    for (double x = 20; x < size.width; x += 40) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), street);
-    }
-
-    final hwy = Paint()..color = const Color(0xFFCCE4EC)..strokeWidth = 10;
-    canvas.drawLine(Offset(0, size.height * 0.6), Offset(size.width, size.height * 0.3), hwy);
-
-    // Route in Sovereign Ocean Teal
-    final route = Paint()
-      ..color = const Color(0xFF007A8C)
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    final p = Path()
-      ..moveTo(size.width * 0.15, size.height * 0.7)
-      ..cubicTo(size.width * 0.35, size.height * 0.55, size.width * 0.55, size.height * 0.4, size.width * 0.82, size.height * 0.2);
-    canvas.drawPath(p, route);
-
-    // Car pin in Ocean Teal & White
-    canvas.drawCircle(Offset(size.width * 0.42, size.height * 0.48), 12, Paint()..color = const Color(0xFF007A8C));
-    canvas.drawCircle(Offset(size.width * 0.42, size.height * 0.48), 8, Paint()..color = Colors.white);
-    canvas.drawCircle(Offset(size.width * 0.42, size.height * 0.48), 5, Paint()..color = const Color(0xFF007A8C));
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
 }

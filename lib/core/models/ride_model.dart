@@ -19,6 +19,9 @@ class RideModel {
   final String paymentStatus;
   final String? customerFullName;
   final String? customerPhoneNumber;
+  final double? driverCurrentLatitude;
+  final double? driverCurrentLongitude;
+  final int? estimatedPickupMinutes;
   final DriverProfileModel? driver;
   final String? createdAt;
   final Map<String, dynamic>? review;
@@ -46,6 +49,9 @@ class RideModel {
     this.paymentStatus = 'pending',
     this.customerFullName,
     this.customerPhoneNumber,
+    this.driverCurrentLatitude,
+    this.driverCurrentLongitude,
+    this.estimatedPickupMinutes,
     this.driver,
     this.createdAt,
     this.review,
@@ -75,6 +81,9 @@ class RideModel {
       paymentStatus: json['payment_status']?.toString() ?? 'pending',
       customerFullName: json['customer_full_name']?.toString(),
       customerPhoneNumber: json['customer_phone_number']?.toString(),
+      driverCurrentLatitude: json['driver_current_latitude'] != null ? double.tryParse(json['driver_current_latitude'].toString()) : null,
+      driverCurrentLongitude: json['driver_current_longitude'] != null ? double.tryParse(json['driver_current_longitude'].toString()) : null,
+      estimatedPickupMinutes: json['estimated_pickup_minutes'] != null ? int.tryParse(json['estimated_pickup_minutes'].toString()) : null,
       driver: json['driver'] is Map<String, dynamic> ? DriverProfileModel.fromJson(json['driver'] as Map<String, dynamic>) : null,
       createdAt: json['created_at']?.toString(),
       review: json['review'] is Map<String, dynamic> ? json['review'] as Map<String, dynamic> : null,
@@ -90,6 +99,7 @@ class DriverProfileModel {
   final String? licensePlate;
   final String? profilePhoto;
   final double? rating;
+  final String? contactPhone;
 
   DriverProfileModel({
     required this.id,
@@ -99,17 +109,19 @@ class DriverProfileModel {
     this.licensePlate,
     this.profilePhoto,
     this.rating,
+    this.contactPhone,
   });
 
   factory DriverProfileModel.fromJson(Map<String, dynamic> json) {
     return DriverProfileModel(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      legalName: json['legal_name']?.toString() ?? json['display_name']?.toString(),
+      legalName: json['legal_name']?.toString() ?? json['display_name']?.toString() ?? json['user_full_name']?.toString(),
       vehicleMake: json['vehicle_make']?.toString(),
       vehicleModel: json['vehicle_model']?.toString(),
       licensePlate: json['license_plate']?.toString(),
       profilePhoto: json['profile_photo']?.toString(),
       rating: json['rating'] != null ? double.tryParse(json['rating'].toString()) : 4.95,
+      contactPhone: json['contact_phone']?.toString() ?? json['contact_phone_number']?.toString() ?? json['phone_number']?.toString(),
     );
   }
 }

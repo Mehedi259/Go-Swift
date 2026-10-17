@@ -28,6 +28,21 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
     {'name': 'VIP Sprinter', 'type': 'Mercedes-Benz Sprinter', 'category': 'vip_sprinter', 'price': '\$110–\$160', 'eta': '8 min', 'icon': Icons.airport_shuttle_outlined, 'badge': 'GROUP PREFERRED'},
   ];
 
+  double _selectedDist = 18.5;
+  int _selectedDuration = 25;
+  double _destLat = 25.0786;
+  double _destLng = -77.3072;
+  double _pickupLat = 25.0389;
+  double _pickupLng = -77.4662;
+
+  final Map<String, ({double lat, double lng, double dist, int dur})> _destCoords = {
+    'The Ocean Club, Four Seasons': (lat: 25.0786, lng: -77.3072, dist: 18.5, dur: 25),
+    'Paradise Island': (lat: 25.0845, lng: -77.3200, dist: 19.2, dur: 26),
+    'Atlantis Resort': (lat: 25.0837, lng: -77.3217, dist: 19.0, dur: 25),
+    'Baha Mar': (lat: 25.0689, lng: -77.3934, dist: 11.4, dur: 15),
+    'Downtown Nassau': (lat: 25.0772, lng: -77.3431, dist: 15.1, dur: 20),
+  };
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -36,6 +51,10 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
       final user = Provider.of<AuthProvider>(context, listen: false).user;
       if (user != null && user.streetAddress != null && user.streetAddress!.isNotEmpty) {
         _pickupController.text = '${user.streetAddress}${user.city != null ? ", ${user.city}" : ""}';
+        if (user.latitude != null && user.longitude != null) {
+          _pickupLat = user.latitude!;
+          _pickupLng = user.longitude!;
+        }
       }
     }
   }
@@ -56,12 +75,26 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
   Future<void> _fetchEstimate() async {
     try {
       final est = await RideService().estimateFare(
-        distanceKm: 18.5,
-        estimatedDurationMinutes: 25,
+        distanceKm: _selectedDist,
+        estimatedDurationMinutes: _selectedDuration,
         passengerCount: 2,
       );
       if (mounted) setState(() => _estimate = est);
     } catch (_) {}
+  }
+
+  void _onSelectDestination(String label) {
+    setState(() {
+      _destController.text = label;
+      if (_destCoords.containsKey(label)) {
+        final info = _destCoords[label]!;
+        _destLat = info.lat;
+        _destLng = info.lng;
+        _selectedDist = info.dist;
+        _selectedDuration = info.dur;
+      }
+    });
+    _fetchEstimate();
   }
 
   Future<void> _handleBookRide() async {
@@ -79,15 +112,15 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
       final selectedCategory = _vehicles[_vehicle]['category'] as String;
       final ride = await RideService().createRide(
         pickupAddress: pickup,
-        pickupLatitude: 25.0389,
-        pickupLongitude: -77.4662,
+        pickupLatitude: _pickupLat,
+        pickupLongitude: _pickupLng,
         destinationAddress: dest,
-        destinationLatitude: 25.0786,
-        destinationLongitude: -77.3072,
+        destinationLatitude: _destLat,
+        destinationLongitude: _destLng,
         requestedVehicleCategory: selectedCategory,
         requestedPassengerCount: 2,
-        distanceKm: 18.5,
-        estimatedDurationMinutes: 25,
+        distanceKm: _selectedDist,
+        estimatedDurationMinutes: _selectedDuration,
       );
 
       if (!mounted) return;
@@ -288,7 +321,7 @@ class _RideBookingScreenState extends State<RideBookingScreen> {
   }
 
   Widget _quickDestBtn(String label) => GestureDetector(
-    onTap: () => setState(() => _destController.text = label),
+    onTap: () => _onSelectDestination(label),
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
