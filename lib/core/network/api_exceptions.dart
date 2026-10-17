@@ -24,6 +24,12 @@ class ValidationException extends ApiException {
     if (errors.isEmpty) return message;
     final firstEntry = errors.entries.first;
     final value = firstEntry.value;
+    // 'detail' is a top-level Django error — return without field prefix
+    if (firstEntry.key == 'detail') {
+      if (value is List && value.isNotEmpty) return value.first.toString();
+      if (value is String) return value;
+      return message;
+    }
     if (value is List && value.isNotEmpty) {
       return '${firstEntry.key}: ${value.first}';
     } else if (value is String) {

@@ -142,14 +142,102 @@ class _PropertyBookingScreenState extends State<PropertyBookingScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Property reservation failed: $e'),
-            backgroundColor: AppColors.red,
-          ),
-        );
+        final errMsg = e.toString().toLowerCase();
+        if (errMsg.contains('onboarding') || errMsg.contains('provider')) {
+          _showProviderUnavailableDialog();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: AppColors.red,
+            ),
+          );
+        }
       }
     }
+  }
+
+  void _showProviderUnavailableDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            ),
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3CD),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.info_outline_rounded, color: Color(0xFFB45309), size: 36),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Property Not Yet Available',
+              style: AppTextStyles.headlineSmall.copyWith(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'This property\'s host has not yet completed their onboarding verification. '
+              'We are working with them to make it available soon.',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary, height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Please try another listing or check back later.',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: AppColors.primaryTeal,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: () {
+                  Navigator.pop(context); // close dialog
+                  Navigator.pop(context); // go back to property list
+                },
+                child: Text('Browse Other Properties', style: AppTextStyles.titleMedium.copyWith(color: Colors.white)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: Text('Stay on This Page', style: AppTextStyles.bodyMedium),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override

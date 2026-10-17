@@ -471,9 +471,16 @@ class ApiClient {
   String? _extractErrorMessage(dynamic body) {
     if (body == null) return null;
     if (body is Map) {
-      if (body['detail'] != null) return body['detail'].toString();
-      if (body['message'] != null) return body['message'].toString();
-      if (body['error'] != null) return body['error'].toString();
+      // Helper to unwrap a value that may be a String or a List<String>
+      String? unwrap(dynamic v) {
+        if (v == null) return null;
+        if (v is List && v.isNotEmpty) return v.first.toString();
+        return v.toString();
+      }
+
+      if (body['detail'] != null) return unwrap(body['detail']);
+      if (body['message'] != null) return unwrap(body['message']);
+      if (body['error'] != null) return unwrap(body['error']);
       // Look at first entry
       for (final value in body.values) {
         if (value is List && value.isNotEmpty) return value.first.toString();
