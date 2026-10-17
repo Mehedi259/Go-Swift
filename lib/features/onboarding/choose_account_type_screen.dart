@@ -93,6 +93,14 @@ class _ChooseAccountTypeScreenState extends State<ChooseAccountTypeScreen> {
                       onSelect: () => setState(() => _selected = 0),
                       onContinue: () async {
                         if (LocalStorage.isLoggedIn) {
+                          final role = (LocalStorage.getUserRole() ?? '').toLowerCase();
+                          if (role == 'service_provider' || role.contains('provider')) {
+                            await LocalStorage.clearAuth();
+                            if (context.mounted) {
+                              Navigator.pushNamed(context, '/customer/login');
+                            }
+                            return;
+                          }
                           await LocalStorage.saveActivePortal('customer');
                           if (context.mounted) {
                             Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);

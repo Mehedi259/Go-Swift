@@ -533,7 +533,7 @@ class CustomerProfileScreen extends StatelessWidget {
                       onTap: () async {
                         await context.read<AuthProvider>().logout();
                         if (context.mounted) {
-                          Navigator.pushNamedAndRemoveUntil(context, '/choose-account', (_) => false);
+                          Navigator.pushNamedAndRemoveUntil(context, '/customer/login', (_) => false);
                         }
                       },
                       child: Row(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../core/services/provider_application_service.dart';
 import '../../../core/widgets/gs_button.dart';
@@ -280,7 +282,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 GSButton(
                   label: 'Sign Out',
                   isSecondary: true,
-                  onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/choose-account', (_) => false),
+                  onTap: () async {
+                    await context.read<AuthProvider>().logout();
+                    if (context.mounted) {
+                      Navigator.pushNamedAndRemoveUntil(context, '/customer/login', (_) => false);
+                    }
+                  },
                 ),
                 const SizedBox(height: 20),
               ],

@@ -127,6 +127,8 @@ class LocalStorage {
     await _prefs!.remove(_keyRole);
     await _prefs!.remove(_keyProviderCategory);
     await _prefs!.remove(_keyActivePortal);
+    await _prefs!.remove(_keySavedCards);
+    await _prefs!.reload();
   }
 
   static Future<void> clear() => clearAuth();

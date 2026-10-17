@@ -4,9 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/car_rental_model.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/car_rental_service.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../core/widgets/gs_button.dart';
@@ -1086,9 +1088,13 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
       ),
     );
     if (confirm == true) {
-      await LocalStorage.clearAuth();
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/choose-account', (_) => false);
+        await context.read<AuthProvider>().logout();
+      } else {
+        await LocalStorage.clearAuth();
+      }
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/customer/login', (_) => false);
       }
     }
   }

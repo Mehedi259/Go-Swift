@@ -560,7 +560,7 @@ class _PropertyOwnerProfileScreenState extends State<PropertyOwnerProfileScreen>
                       onTap: () async {
                         await context.read<AuthProvider>().logout();
                         if (context.mounted) {
-                          Navigator.pushNamedAndRemoveUntil(context, '/choose-account', (_) => false);
+                          Navigator.pushNamedAndRemoveUntil(context, '/customer/login', (_) => false);
                         }
                       },
                     ),

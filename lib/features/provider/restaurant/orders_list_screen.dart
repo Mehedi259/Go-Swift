@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/food_model.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/food_service.dart';
 import '../../../core/services/provider_application_service.dart';
 import '../../../core/storage/local_storage.dart';
@@ -954,9 +956,44 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           tooltip: 'Refresh',
           onPressed: _fetchAllData,
         ),
+        IconButton(
+          icon: const Icon(Icons.logout, color: AppColors.error),
+          tooltip: 'Log Out',
+          onPressed: _confirmLogout,
+        ),
         const SizedBox(width: 8),
       ],
     );
+  }
+
+  Future<void> _confirmLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Log Out', style: AppTextStyles.headlineSmall),
+        content: const Text('Are you sure you want to sign out from your restaurant partner session?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Log Out', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      if (mounted) {
+        await context.read<AuthProvider>().logout();
+      } else {
+        await LocalStorage.clearAuth();
+      }
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/customer/login', (_) => false);
+      }
+    }
   }
 
   Widget _buildBody() {
@@ -1717,42 +1754,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           const SizedBox(height: 12),
 
           GSButton(
-            label: 'Switch to Customer Account',
+            label: 'Sign Out of Restaurant Partner',
             isSecondary: true,
-            onTap: () {
-              Navigator.pushNamedAndRemoveUntil(context, '/customer/hub', (_) => false);
-            },
-          ),
-          const SizedBox(height: 12),
-
-          GSButton(
-            label: 'Log Out of Restaurant Partner',
-            isSecondary: true,
-            onTap: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  title: Text('Log Out', style: AppTextStyles.headlineSmall),
-                  content: const Text('Are you sure you want to sign out from your restaurant partner session?'),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-                      onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Log Out', style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
-              );
-              if (confirm == true) {
-                await LocalStorage.clearAuth();
-                if (context.mounted) {
-                  Navigator.pushNamedAndRemoveUntil(context, '/choose-account', (_) => false);
-                }
-              }
-            },
+            onTap: _confirmLogout,
           ),
           const SizedBox(height: 20),
         ],
