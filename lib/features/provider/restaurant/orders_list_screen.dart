@@ -34,14 +34,14 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   DateTime? _lastBackPressTime;
 
   // Restaurant Profile State
-  String _restaurantName = 'cheta';
-  String _chefName = 'dablu';
+  String _restaurantName = 'The Ocean Club Restaurant';
+  String _chefName = 'Executive Chef';
   String _cuisineConcept = 'Fine Bahamian & Haute Seafood';
   String _islandHub = 'Nassau & Paradise Island';
   String _kitchenAddress = 'Ocean Club Drive, Paradise Island, Bahamas';
   String _commercialLine = '+1 (242) 01627021553';
   String _contactEmail = 'mehedihasanmridulcse@gmail.com';
-  String _businessLicense = 'gfdg34';
+  String _businessLicense = 'BS-FD-2026';
   String _operatingHours = 'Open Daily: 11:30 AM – 11:00 PM';
   String _prepWindow = '20-30 min';
   bool _acceptingOrders = true;
@@ -1263,7 +1263,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             Text('No Orders Found', style: AppTextStyles.headlineSmall),
             const SizedBox(height: 6),
             Text(
-              'Incoming culinary orders for "cheta" will stream here live.',
+              'Incoming culinary orders for "$_restaurantName" will stream here live.',
               style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),

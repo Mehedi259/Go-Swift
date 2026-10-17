@@ -64,7 +64,7 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
   final _restaurants = [
     {
       'id': 1,
-      'name': 'cheta',
+      'name': 'The Ocean Club Restaurant',
       'type': 'FINE BAHAMIAN & HAUTE SEAFOOD',
       'location': 'Ocean Club Drive, Paradise Island • 1.2 miles',
       'rating': 5.0,

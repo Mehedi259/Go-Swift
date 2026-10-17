@@ -55,7 +55,12 @@ class _DriverRideRequestsScreenState extends State<DriverRideRequestsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pushNamed(context, '/provider/driver/active-ride', arguments: liveRide);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to accept ride: $e'),
+            backgroundColor: AppColors.red,
+          ),
+        );
       }
     }
   }

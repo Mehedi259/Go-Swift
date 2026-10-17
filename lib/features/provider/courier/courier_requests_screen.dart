@@ -38,12 +38,17 @@ class _CourierRequestsScreenState extends State<CourierRequestsScreen> {
   }
 
   Future<void> _accept(int id, CourierDeliveryModel? item) async {
-    CourierDeliveryModel? accepted = item;
     try {
-      accepted = await _courierService.acceptDelivery(id);
-    } catch (_) {}
-    if (mounted) {
-      Navigator.pushNamed(context, '/provider/courier/active', arguments: accepted);
+      final accepted = await _courierService.acceptDelivery(id);
+      if (mounted) {
+        Navigator.pushNamed(context, '/provider/courier/active', arguments: accepted);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to accept courier parcel: $e'), backgroundColor: AppColors.red),
+        );
+      }
     }
   }
 

@@ -8,7 +8,7 @@ import '../storage/local_storage.dart';
 class FoodService {
   final ApiClient _api = ApiClient.instance;
 
-  static final List<FoodItemModel> chetaDefaultMenu = [
+  static final List<FoodItemModel> defaultBahamianMenu = [
     FoodItemModel(
       id: 1,
       name: 'Fresh Conch Salad Martini',
@@ -94,13 +94,13 @@ class FoodService {
       result = list.map((e) => RestaurantModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (_) {}
 
-    // Ensure cheta is always included for customer browsing
-    if (!result.any((r) => r.id == 1 || r.name.toLowerCase() == 'cheta')) {
+    // Ensure verified Bahamian restaurant is always included for customer browsing
+    if (!result.any((r) => r.id == 1 || r.name.toLowerCase().contains('ocean club'))) {
       result.insert(
         0,
         RestaurantModel(
           id: 1,
-          name: 'cheta',
+          name: 'The Ocean Club Restaurant',
           cuisineConcept: 'Fine Bahamian & Haute Seafood',
           islandHub: 'Nassau & Paradise Island',
           address: 'Ocean Club Drive, Paradise Island',
@@ -120,7 +120,7 @@ class FoodService {
     } catch (_) {
       return RestaurantModel(
         id: id,
-        name: id == 1 ? 'cheta' : 'Dune by Jean-Georges',
+        name: id == 1 ? 'The Ocean Club Restaurant' : 'Dune by Jean-Georges',
         cuisineConcept: 'Fine Bahamian & Haute Seafood',
         islandHub: 'Nassau & Paradise Island',
         address: 'Ocean Club Drive, Paradise Island',
@@ -145,9 +145,9 @@ class FoodService {
     } catch (_) {}
 
     if (restaurantId == 1) {
-      return chetaDefaultMenu;
+      return defaultBahamianMenu;
     }
-    return chetaDefaultMenu;
+    return defaultBahamianMenu;
   }
 
   // --- ORDERS ---
@@ -169,7 +169,7 @@ class FoodService {
     for (final it in items) {
       final int fid = it['food_item_id'] is int ? it['food_item_id'] : int.tryParse(it['food_item_id'].toString()) ?? 1;
       final int qty = it['quantity'] is int ? it['quantity'] : int.tryParse(it['quantity'].toString()) ?? 1;
-      final match = chetaDefaultMenu.firstWhere(
+      final match = defaultBahamianMenu.firstWhere(
         (m) => m.id == fid,
         orElse: () => FoodItemModel(id: fid, name: 'Signature Dish #$fid', price: 38.0),
       );
@@ -196,7 +196,7 @@ class FoodService {
       subtotal: subtotal,
       serviceFee: serviceFee,
       deliveryFee: deliveryFee,
-      restaurantName: restaurantId == 1 ? 'cheta' : 'cheta',
+      restaurantName: restaurantId == 1 ? 'The Ocean Club Restaurant' : 'Dune by Jean-Georges',
       deliveryAddress: deliveryAddress,
       customerFullName: customerFullName,
       customerEmail: customerEmail,
@@ -262,7 +262,7 @@ class FoodService {
         orderNumber: '#GS-$id',
         status: 'placed',
         totalAmount: 108.50,
-        restaurantName: 'cheta',
+        restaurantName: 'The Ocean Club Restaurant',
       );
     }
   }
@@ -336,7 +336,7 @@ class FoodService {
         orderNumber: '#GS-$id',
         status: 'placed',
         totalAmount: 108.50,
-        restaurantName: 'cheta',
+        restaurantName: 'The Ocean Club Restaurant',
       );
     }
   }

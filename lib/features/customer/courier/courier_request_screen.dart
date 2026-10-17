@@ -97,11 +97,10 @@ class _CourierRequestScreenState extends State<CourierRequestScreen> {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Delivery dispatched: $e'),
-            backgroundColor: AppColors.primaryNavy,
+            content: Text('Courier delivery request failed: $e'),
+            backgroundColor: AppColors.red,
           ),
         );
-        Navigator.pushNamed(context, '/customer/courier/status');
       }
     }
   }

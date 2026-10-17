@@ -151,7 +151,7 @@ class FoodOrderModel {
       subtotal: double.tryParse(json['subtotal']?.toString() ?? '0'),
       serviceFee: double.tryParse(json['service_fee']?.toString() ?? '0'),
       deliveryFee: double.tryParse(json['delivery_fee']?.toString() ?? '0'),
-      restaurantName: json['restaurant_name']?.toString() ?? 'cheta',
+      restaurantName: json['restaurant_name']?.toString() ?? 'The Ocean Club Restaurant',
       deliveryAddress: json['delivery_address']?.toString(),
       customerFullName: json['customer_full_name']?.toString() ?? json['customer_name']?.toString(),
       customerEmail: json['customer_email']?.toString(),

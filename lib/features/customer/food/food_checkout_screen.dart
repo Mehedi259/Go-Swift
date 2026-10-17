@@ -113,11 +113,10 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Order dispatched or demo fallback: $e'),
-            backgroundColor: AppColors.primaryNavy,
+            content: Text('Failed to place order: $e'),
+            backgroundColor: AppColors.red,
           ),
         );
-        Navigator.pushNamed(context, '/customer/food/order-status');
       }
     }
   }

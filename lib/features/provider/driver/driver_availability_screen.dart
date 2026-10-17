@@ -548,11 +548,17 @@ class _RideRequestCard extends StatelessWidget {
                   onTap: () async {
                     if (ride != null) {
                       try {
-                        await RideService().acceptRide(ride!.id);
-                      } catch (_) {}
-                    }
-                    if (context.mounted) {
-                      Navigator.pushNamed(context, '/provider/driver/active-ride');
+                        final accepted = await RideService().acceptRide(ride!.id);
+                        if (context.mounted) {
+                          Navigator.pushNamed(context, '/provider/driver/active-ride', arguments: accepted);
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to accept ride: $e'), backgroundColor: AppColors.red),
+                          );
+                        }
+                      }
                     }
                   },
                   child: Container(

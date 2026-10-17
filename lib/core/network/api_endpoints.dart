@@ -129,6 +129,10 @@ class ApiEndpoints {
 
   // ---------------- NOTIFICATIONS ----------------
   static const String notifications = '$baseUrl/notifications/';
+  static String notificationMarkRead(int id) => '$baseUrl/notifications/$id/mark-read/';
+  static const String notificationMarkAllRead = '$baseUrl/notifications/mark-all-read/';
+  static const String notificationUnreadCount = '$baseUrl/notifications/unread-count/';
+  static const String notificationClearRead = '$baseUrl/notifications/clear-read/';
 
   // ---------------- SUPPORTS ----------------
   static const String supportTicketsSubmit = '$baseUrl/supports/support-tickets/submit/';

@@ -70,7 +70,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     final location = '${rest?.islandHub ?? "Ocean Club, Paradise Island"} • 3.2 miles';
     final prepWindow = rest?.averagePrepWindow ?? '30-40 min';
 
-    final String heroPhoto = rest?.name.toLowerCase() == 'cheta' || rest?.id == 1
+    final String heroPhoto = rest?.name.toLowerCase().contains('ocean club') == true || rest?.id == 1
         ? 'https://goswift-media-prod.s3.us-east-1.amazonaws.com/food/items/lobster.jpg'
         : 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80';
 
@@ -197,7 +197,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     if (_isLoading)
                       const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppColors.primaryTeal)))
                     else
-                      ...(_menuItems.isNotEmpty ? _menuItems : FoodService.chetaDefaultMenu).map((item) => _buildItemCard(
+                      ...(_menuItems.isNotEmpty ? _menuItems : FoodService.defaultBahamianMenu).map((item) => _buildItemCard(
                         id: item.id,
                         name: item.name,
                         desc: item.description ?? 'Curated fresh island ingredients',
@@ -210,7 +210,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       onTap: () => Navigator.pushNamed(context, '/customer/food/cart', arguments: {
                         'restaurant': rest,
                         'cart': _cart,
-                        'menu': _menuItems.isNotEmpty ? _menuItems : FoodService.chetaDefaultMenu,
+                        'menu': _menuItems.isNotEmpty ? _menuItems : FoodService.defaultBahamianMenu,
                       }),
                     ),
                     const SizedBox(height: 16),
@@ -239,7 +239,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
           'item': foodItem,
           'restaurant': _restaurant ?? widget.restaurant,
           'cart': _cart,
-          'menu': _menuItems.isNotEmpty ? _menuItems : FoodService.chetaDefaultMenu,
+          'menu': _menuItems.isNotEmpty ? _menuItems : FoodService.defaultBahamianMenu,
         },
       ),
       child: Container(

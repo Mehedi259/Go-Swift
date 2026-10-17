@@ -145,11 +145,10 @@ class _CarRentalBookingScreenState extends State<CarRentalBookingScreen> {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Rental confirmed: $e'),
-            backgroundColor: AppColors.primaryNavy,
+            content: Text('Car rental reservation failed: $e'),
+            backgroundColor: AppColors.red,
           ),
         );
-        Navigator.pushNamed(context, '/customer/car-rental/active');
       }
     }
   }

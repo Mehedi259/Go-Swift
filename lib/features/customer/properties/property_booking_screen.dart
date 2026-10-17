@@ -144,11 +144,10 @@ class _PropertyBookingScreenState extends State<PropertyBookingScreen> {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Booking dispatched: $e'),
-            backgroundColor: AppColors.primaryNavy,
+            content: Text('Property reservation failed: $e'),
+            backgroundColor: AppColors.red,
           ),
         );
-        Navigator.pushNamed(context, '/customer/properties/rating');
       }
     }
   }

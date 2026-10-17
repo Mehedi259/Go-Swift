@@ -380,10 +380,16 @@ class _CourierAvailabilityScreenState extends State<CourierAvailabilityScreen> {
                                   label: 'Accept →',
                                   onTap: () async {
                                     try {
-                                      await _courierService.acceptDelivery(topRequest.id);
-                                    } catch (_) {}
-                                    if (mounted) {
-                                      Navigator.pushNamed(context, '/provider/courier/active', arguments: topRequest);
+                                      final accepted = await _courierService.acceptDelivery(topRequest.id);
+                                      if (mounted) {
+                                        Navigator.pushNamed(context, '/provider/courier/active', arguments: accepted);
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Failed to accept delivery: $e'), backgroundColor: AppColors.red),
+                                        );
+                                      }
                                     }
                                   },
                                 ),

@@ -22,4 +22,20 @@ class NotificationModel {
       createdAt: json['created_at']?.toString(),
     );
   }
+
+  NotificationModel copyWith({
+    int? id,
+    String? title,
+    String? body,
+    bool? isRead,
+    String? createdAt,
+  }) {
+    return NotificationModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }

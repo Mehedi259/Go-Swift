@@ -49,8 +49,41 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }).toList();
   }
 
+  Future<void> _handleMarkAllRead() async {
+    try {
+      await NotificationService().markAllRead();
+      if (mounted) {
+        setState(() {
+          for (var i = 0; i < _apiNotifications.length; i++) {
+            _apiNotifications[i] = _apiNotifications[i].copyWith(isRead: true);
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('All notifications marked as read.'), backgroundColor: AppColors.green),
+        );
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _handleMarkRead(NotificationModel n) async {
+    if (n.isRead) return;
+    try {
+      await NotificationService().markRead(n.id);
+      if (mounted) {
+        setState(() {
+          final idx = _apiNotifications.indexWhere((element) => element.id == n.id);
+          if (idx != -1) {
+            _apiNotifications[idx] = _apiNotifications[idx].copyWith(isRead: true);
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasUnread = _apiNotifications.any((n) => !n.isRead);
+
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -58,7 +91,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (!widget.embedded)
                 GestureDetector(
@@ -78,7 +111,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: widget.embedded ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Notifications', style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 2),
@@ -89,6 +122,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ],
                 ),
               ),
+              if (hasUnread)
+                GestureDetector(
+                  onTap: _handleMarkAllRead,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.cyanLight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+                    ),
+                    child: Text('Mark all read', style: AppTextStyles.labelSmall.copyWith(color: AppColors.cyan, fontWeight: FontWeight.bold)),
+                  ),
+                ),
             ],
           ),
         ),
@@ -149,18 +195,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                           children: [
                             _buildSectionHeader('LIVE NOTIFICATIONS', '${_filteredNotifications.length} Updates'),
-                            ..._filteredNotifications.map((n) => _buildNotificationCard(
-                                  category: 'CONCIERGE ALERT',
-                                  title: n.title,
-                                  body: n.body,
-                                  time: (n.createdAt != null && n.createdAt!.length >= 16) ? n.createdAt!.substring(11, 16) : 'Just now',
-                                  icon: Icons.notifications_active_outlined,
-                                  iconColor: AppColors.cyan,
-                                  iconBgColor: AppColors.cyanLight,
-                                  badgeText: n.isRead ? 'Read' : 'New',
-                                  badgeColor: n.isRead ? AppColors.textSecondary : AppColors.cyan,
-                                  badgeBgColor: n.isRead ? AppColors.borderLight : AppColors.cyanLight,
-                                  actionText: 'View Details →',
+                            ..._filteredNotifications.map((n) => GestureDetector(
+                                  onTap: () => _handleMarkRead(n),
+                                  child: _buildNotificationCard(
+                                    category: 'CONCIERGE ALERT',
+                                    title: n.title,
+                                    body: n.body,
+                                    time: (n.createdAt != null && n.createdAt!.length >= 16) ? n.createdAt!.substring(11, 16) : 'Just now',
+                                    icon: Icons.notifications_active_outlined,
+                                    iconColor: AppColors.cyan,
+                                    iconBgColor: AppColors.cyanLight,
+                                    badgeText: n.isRead ? 'Read' : 'New',
+                                    badgeColor: n.isRead ? AppColors.textSecondary : AppColors.cyan,
+                                    badgeBgColor: n.isRead ? AppColors.borderLight : AppColors.cyanLight,
+                                    actionText: n.isRead ? 'Dismiss' : 'Mark as Read',
+                                  ),
                                 )),
                             const SizedBox(height: 20),
                           ],
@@ -181,7 +230,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.cyanPill : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? AppColors.cyan.withOpacity(0.3) : AppColors.border, width: 0.8),
+          border: Border.all(color: isSelected ? AppColors.cyan.withValues(alpha: 0.3) : AppColors.border, width: 0.8),
           boxShadow: isSelected ? null : AppColors.softShadow,
         ),
         child: Row(
