@@ -9,25 +9,18 @@ class FoodOrderStore {
     await LocalStorage.init();
     final jsonStr = LocalStorage.prefs.getString(_keyOrders);
     if (jsonStr == null || jsonStr.trim().isEmpty) {
-      // Seed initial sample order from mmridul207@gmail.com to test restaurant reception
-      final initial = _createSeedOrder();
-      await saveOrders([initial]);
-      return [initial];
+      return [];
     }
     try {
       final list = jsonDecode(jsonStr) as List;
       final parsed = list
           .whereType<Map<String, dynamic>>()
           .map((e) => FoodOrderModel.fromJson(e))
+          .where((o) => o.id != 8421)
           .toList();
-      if (parsed.isEmpty) {
-        final initial = _createSeedOrder();
-        await saveOrders([initial]);
-        return [initial];
-      }
       return parsed;
     } catch (_) {
-      return [_createSeedOrder()];
+      return [];
     }
   }
 
@@ -64,34 +57,8 @@ class FoodOrderStore {
     return null;
   }
 
-  static FoodOrderModel _createSeedOrder() {
-    return FoodOrderModel(
-      id: 8421,
-      orderNumber: '#GS-8421',
-      status: 'placed',
-      restaurantName: 'cheta',
-      customerFullName: 'dfg',
-      customerEmail: 'mmridul207@gmail.com',
-      deliveryAddress: 'Albany Marina, Slip B-12, Paradise Island',
-      subtotal: 96.00,
-      serviceFee: 12.50,
-      deliveryFee: 0.00,
-      totalAmount: 108.50,
-      createdAt: DateTime.now().toIso8601String(),
-      items: [
-        FoodOrderItemModel(
-          id: 1,
-          name: 'Fresh Conch Salad Martini',
-          quantity: 1,
-          price: 28.00,
-        ),
-        FoodOrderItemModel(
-          id: 2,
-          name: 'Grilled Spiny Lobster Tail',
-          quantity: 1,
-          price: 68.00,
-        ),
-      ],
-    );
+  static Future<void> clear() async {
+    await LocalStorage.init();
+    await LocalStorage.prefs.remove(_keyOrders);
   }
 }

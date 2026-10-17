@@ -278,8 +278,7 @@ class FoodService {
   }
 
   // --- RESTAURANT PROVIDER ---
-  Future<List<FoodOrderModel>> getProviderOrders() async {
-    List<FoodOrderModel> list = [];
+  Future<List<FoodOrderModel>> getProviderOrders({String? restaurantName}) async {
     try {
       final response = await _api.get(ApiEndpoints.restaurantProviderOrders);
       List<dynamic> raw = [];
@@ -288,17 +287,14 @@ class FoodService {
       } else if (response is Map && response['results'] is List) {
         raw = response['results'] as List;
       }
-      list = raw.map((e) => FoodOrderModel.fromJson(e as Map<String, dynamic>)).toList();
-    } catch (_) {}
-
-    final localOrders = await FoodOrderStore.getOrders();
-    final ids = list.map((e) => e.id).toSet();
-    for (final lo in localOrders) {
-      if (!ids.contains(lo.id)) {
-        list.add(lo);
+      return raw.map((e) => FoodOrderModel.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      final localOrders = await FoodOrderStore.getOrders();
+      if (restaurantName != null && restaurantName.isNotEmpty) {
+        return localOrders.where((lo) => lo.restaurantName?.toLowerCase() == restaurantName.toLowerCase()).toList();
       }
+      return localOrders;
     }
-    return list;
   }
 
   Future<void> updateOrderStatus(int id, [String status = 'preparing']) async {
@@ -320,10 +316,10 @@ class FoodService {
       } else if (response is Map && response['results'] is List) {
         list = response['results'] as List;
       }
-      final items = list.map((e) => FoodItemModel.fromJson(e as Map<String, dynamic>)).toList();
-      if (items.isNotEmpty) return items;
-    } catch (_) {}
-    return chetaDefaultMenu;
+      return list.map((e) => FoodItemModel.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   Future<List<FoodItemModel>> getProviderMenuItems() => getProviderItems();

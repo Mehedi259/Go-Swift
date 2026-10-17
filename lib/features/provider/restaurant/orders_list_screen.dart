@@ -130,7 +130,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
   Future<void> _fetchOrders({bool silent = false}) async {
     try {
-      final list = await _foodService.getProviderOrders();
+      final list = await _foodService.getProviderOrders(restaurantName: _restaurantName);
       if (mounted) {
         setState(() {
           _liveOrders = list;
