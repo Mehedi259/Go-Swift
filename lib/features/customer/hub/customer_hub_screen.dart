@@ -196,215 +196,122 @@ class _HomeTabState extends State<_HomeTab> {
               ),
             ),
 
-            // Active Dispatch Card (Live or Quick Dispatch)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border, width: 0.8),
-                  boxShadow: AppColors.cardShadow,
-                ),
-                child: _activeRide != null
-                    ? Column(
+            // Active Dispatch Card (Only shown when there is an active ride in progress)
+            if (_activeRide != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border, width: 0.8),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [
-                                  Container(width: 7, height: 7, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'ACTIVE DISPATCH • SW-${_activeRide!.id}',
-                                    style: AppTextStyles.labelSmall.copyWith(
-                                      color: AppColors.cyan,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppColors.borderLight),
-                                ),
-                                child: Text(
-                                  _activeRide!.status.toUpperCase(),
-                                  style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: AppColors.cyanPill,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(Icons.directions_car_outlined, color: AppColors.cyan, size: 24),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _activeRide!.requestedVehicleCategory != null && _activeRide!.requestedVehicleCategory!.isNotEmpty
-                                          ? _activeRide!.requestedVehicleCategory!.replaceAll('_', ' ').toUpperCase()
-                                          : 'Executive Chauffeur',
-                                      style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'To: ${_activeRide!.destinationAddress.split(',').first}',
-                                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              Container(width: 7, height: 7, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
                               const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: () => Navigator.pushNamed(context, '/customer/ride/active', arguments: _activeRide),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.cyan,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.cyan.withValues(alpha: 0.22),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        'Live Track',
-                                        style: AppTextStyles.titleMedium.copyWith(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Icon(Icons.arrow_forward, color: Colors.white, size: 15),
-                                    ],
-                                  ),
+                              Text(
+                                'ACTIVE DISPATCH • SW-${_activeRide!.id}',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: AppColors.cyan,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(width: 7, height: 7, decoration: const BoxDecoration(color: AppColors.primaryTeal, shape: BoxShape.circle)),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'ISLAND MOBILITY CONCIERGE',
-                                    style: AppTextStyles.labelSmall.copyWith(
-                                      color: AppColors.cyan,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.badgeTeal,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  'ON-DEMAND',
-                                  style: AppTextStyles.labelSmall.copyWith(color: AppColors.primaryTeal, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: AppColors.badgeTeal,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(Icons.directions_car_outlined, color: AppColors.primaryTeal, size: 24),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Executive Chauffeur Service',
-                                      style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'NAS Airport transfers & island transit',
-                                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: () => Navigator.pushNamed(context, '/customer/ride/booking'),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.cyan,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.cyan.withValues(alpha: 0.22),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        'Book Ride',
-                                        style: AppTextStyles.titleMedium.copyWith(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Icon(Icons.arrow_forward, color: Colors.white, size: 15),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.borderLight),
+                            ),
+                            child: Text(
+                              _activeRide!.status.toUpperCase(),
+                              style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.cyanPill,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.directions_car_outlined, color: AppColors.cyan, size: 24),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _activeRide!.requestedVehicleCategory != null && _activeRide!.requestedVehicleCategory!.isNotEmpty
+                                      ? _activeRide!.requestedVehicleCategory!.replaceAll('_', ' ').toUpperCase()
+                                      : 'Executive Chauffeur',
+                                  style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'To: ${_activeRide!.destinationAddress.split(',').first}',
+                                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () => Navigator.pushNamed(context, '/customer/ride/active', arguments: _activeRide),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.cyan,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.cyan.withValues(alpha: 0.22),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Live Track',
+                                    style: AppTextStyles.titleMedium.copyWith(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.arrow_forward, color: Colors.white, size: 15),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
 
             // Verticals Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 28, 20, 14),
+              padding: EdgeInsets.fromLTRB(20, _activeRide != null ? 28 : 22, 20, 14),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -454,21 +361,6 @@ class _HomeTabState extends State<_HomeTab> {
                   ),
                   _buildServiceCard(
                     context: context,
-                    icon: Icons.directions_car_outlined,
-                    iconBgColor: AppColors.cyanLight,
-                    iconColor: AppColors.cyan,
-                    title: 'Ride',
-                    badge: 'Island Chauffeur',
-                    badgeBgColor: AppColors.cyanLight,
-                    badgeTextColor: AppColors.cyan,
-                    description: 'On-demand VIP rides, private airport transfers & luxury island transit.',
-                    footerIcon: Icons.verified_user_outlined,
-                    footerText: 'Vetted Drivers & Escorts',
-                    buttonLabel: 'Book Ride',
-                    route: '/customer/ride/booking',
-                  ),
-                  _buildServiceCard(
-                    context: context,
                     icon: Icons.restaurant_outlined,
                     iconBgColor: AppColors.goldLight,
                     iconColor: AppColors.gold,
@@ -511,6 +403,21 @@ class _HomeTabState extends State<_HomeTab> {
                     footerText: 'Tarmac FBO Handover',
                     buttonLabel: 'Select Vehicle',
                     route: '/customer/car-rental/search',
+                  ),
+                  _buildServiceCard(
+                    context: context,
+                    icon: Icons.directions_car_outlined,
+                    iconBgColor: AppColors.cyanLight,
+                    iconColor: AppColors.cyan,
+                    title: 'Ride',
+                    badge: 'Island Chauffeur',
+                    badgeBgColor: AppColors.cyanLight,
+                    badgeTextColor: AppColors.cyan,
+                    description: 'On-demand VIP rides, private airport transfers & luxury island transit.',
+                    footerIcon: Icons.verified_user_outlined,
+                    footerText: 'Vetted Drivers & Escorts',
+                    buttonLabel: 'Book Ride',
+                    route: '/customer/ride/booking',
                   ),
                 ],
               ),
