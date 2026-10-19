@@ -8,95 +8,11 @@ class ActiveHistoryCard extends StatelessWidget {
 
   const ActiveHistoryCard({super.key, required this.data, this.onTap});
 
-  double _getProgress(String type, String status) {
-    final s = status.toLowerCase();
-    if (type == 'ride') {
-      if (s == 'requested' || s == 'matching') return 0.25;
-      if (s == 'accepted') return 0.50;
-      if (s == 'arrived') return 0.70;
-      if (s == 'in_progress') return 0.85;
-      if (s == 'completed') return 1.0;
-      return 0.25;
-    } else if (type == 'food') {
-      if (s == 'placed') return 0.20;
-      if (s == 'confirmed') return 0.35;
-      if (s == 'in_prep') return 0.50;
-      if (s == 'kitchen_sealed') return 0.65;
-      if (s == 'courier_assigned') return 0.75;
-      if (s == 'in_transit') return 0.85;
-      if (s == 'handed_over' || s == 'delivered' || s == 'completed') return 1.0;
-      return 0.25;
-    } else if (type == 'courier') {
-      if (s == 'requested' || s == 'matching') return 0.25;
-      if (s == 'accepted') return 0.50;
-      if (s == 'picked_up' || s == 'in_transit') return 0.80;
-      if (s == 'delivered' || s == 'completed') return 1.0;
-      return 0.25;
-    } else if (type == 'rental') {
-      if (s == 'pending') return 0.30;
-      if (s == 'confirmed') return 0.60;
-      if (s == 'active' || s == 'in_progress') return 0.85;
-      if (s == 'completed' || s == 'returned') return 1.0;
-      return 0.30;
-    } else if (type == 'property') {
-      if (s == 'pending') return 0.30;
-      if (s == 'confirmed') return 0.60;
-      if (s == 'checked_in' || s == 'active') return 0.85;
-      if (s == 'checked_out' || s == 'completed') return 1.0;
-      return 0.30;
-    }
-    return 0.25;
-  }
-
-  String _getPhaseLabel(String type, String status) {
-    final s = status.toLowerCase();
-    if (type == 'ride') {
-      if (s == 'requested' || s == 'matching') return 'FINDING CHAUFFEUR';
-      if (s == 'accepted') return 'CHAUFFEUR EN ROUTE';
-      if (s == 'arrived') return 'CHAUFFEUR ARRIVED';
-      if (s == 'in_progress') return 'EN ROUTE TRANSIT';
-      if (s == 'completed') return 'TRIP COMPLETED';
-      return s.toUpperCase();
-    } else if (type == 'food') {
-      if (s == 'placed') return 'ORDER PLACED';
-      if (s == 'confirmed') return 'KITCHEN CONFIRMED';
-      if (s == 'in_prep') return 'PREPARING DISHES';
-      if (s == 'kitchen_sealed') return 'KITCHEN SEALED';
-      if (s == 'courier_assigned') return 'COURIER DISPATCHED';
-      if (s == 'in_transit') return 'EN ROUTE DELIVERY';
-      if (s == 'handed_over' || s == 'delivered' || s == 'completed') return 'DELIVERED';
-      return s.toUpperCase();
-    } else if (type == 'courier') {
-      if (s == 'requested' || s == 'matching') return 'MATCHING COURIER';
-      if (s == 'accepted') return 'COURIER ASSIGNED';
-      if (s == 'picked_up' || s == 'in_transit') return 'SECURE ESCORT IN TRANSIT';
-      if (s == 'delivered' || s == 'completed') return 'PARCEL DELIVERED';
-      return s.toUpperCase();
-    } else if (type == 'rental') {
-      if (s == 'pending') return 'RESERVATION PENDING';
-      if (s == 'confirmed') return 'FLEET RESERVED';
-      if (s == 'active' || s == 'in_progress') return 'ACTIVE VEHICLE HIRE';
-      if (s == 'completed' || s == 'returned') return 'VEHICLE RETURNED';
-      return s.toUpperCase();
-    } else if (type == 'property') {
-      if (s == 'pending') return 'BOOKING PENDING';
-      if (s == 'confirmed') return 'VILLA RESERVED';
-      if (s == 'checked_in' || s == 'active') return 'IN-RESIDENCE STAY';
-      if (s == 'checked_out' || s == 'completed') return 'CHECKED OUT';
-      return s.toUpperCase();
-    }
-    return s.toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     final type = data['type'] as String;
     final color = data['color'] as Color;
-    final rawStatus = data['rawStatus'] as String? ?? (data['status'] as String? ?? 'ACTIVE');
     final statusDisplay = data['status'] as String? ?? 'ACTIVE';
-
-    final double progress = _getProgress(type, rawStatus);
-    final String phaseLabel = _getPhaseLabel(type, rawStatus);
 
     return GestureDetector(
       onTap: onTap,
@@ -173,57 +89,16 @@ class ActiveHistoryCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            // Dynamic Progress Bar & Phase Box
+            // Details Box
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.cardTouchpoint,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.access_time_rounded, color: color, size: 14),
-                          const SizedBox(width: 6),
-                          Text(phaseLabel, style: AppTextStyles.labelSmall.copyWith(color: color, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      Text(
-                        statusDisplay,
-                        style: AppTextStyles.labelSmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  // Real Dynamic Progress Bar
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
-                    child: Container(
-                      height: 6,
-                      width: double.infinity,
-                      color: Colors.white,
-                      child: FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: progress.clamp(0.05, 1.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: color,
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDetailsBox(type),
-                ],
-              ),
+              child: _buildDetailsBox(type),
             ),
             const SizedBox(height: 12),
 
@@ -265,7 +140,7 @@ class ActiveHistoryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _locationRow(AppColors.primaryTeal, pickup, 'Pickup'),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           _locationRow(AppColors.gold, dest, 'Dropoff', isCyanText: true),
         ],
       );
@@ -277,7 +152,7 @@ class ActiveHistoryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.restaurant_menu, size: 13, color: Color(0xFFC78400)),
+              const Icon(Icons.restaurant_menu, size: 14, color: Color(0xFFC78400)),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -289,7 +164,7 @@ class ActiveHistoryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           _locationRow(AppColors.gold, dest, 'Delivery Address'),
         ],
       );
@@ -300,7 +175,7 @@ class ActiveHistoryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _locationRow(AppColors.primaryTeal, from, 'Pickup'),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           _locationRow(AppColors.gold, to, 'Dropoff', isCyanText: true),
         ],
       );
