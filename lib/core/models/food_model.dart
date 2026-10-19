@@ -10,6 +10,7 @@ class RestaurantModel {
   final bool acceptingOrders;
   final bool isActive;
   final double rating;
+  final int reviewsCount;
 
   RestaurantModel({
     required this.id,
@@ -22,10 +23,16 @@ class RestaurantModel {
     this.averagePrepWindow,
     this.acceptingOrders = true,
     this.isActive = true,
-    this.rating = 4.9,
+    this.rating = 0.0,
+    this.reviewsCount = 0,
   });
 
   factory RestaurantModel.fromJson(Map<String, dynamic> json) {
+    final rawRating = json['rating'] ?? json['average_rating'];
+    final parsedRating = rawRating != null ? double.tryParse(rawRating.toString()) : null;
+    final rawReviews = json['reviews_count'] ?? json['reviews'] ?? json['total_reviews'];
+    final parsedReviews = rawReviews != null ? int.tryParse(rawReviews.toString()) ?? 0 : 0;
+
     return RestaurantModel(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       name: json['restaurant_name']?.toString() ?? '',
@@ -37,7 +44,8 @@ class RestaurantModel {
       averagePrepWindow: json['average_prep_window']?.toString() ?? '20-30 min',
       acceptingOrders: json['accepting_orders'] == true,
       isActive: json['is_active'] != false,
-      rating: 4.9,
+      rating: parsedRating ?? 0.0,
+      reviewsCount: parsedReviews,
     );
   }
 }

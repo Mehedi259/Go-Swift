@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/food_model.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/food_service.dart';
 import '../../../core/widgets/gs_card.dart';
 import '../../../core/widgets/gs_bottom_nav.dart';
 
 class FoodDiningScreen extends StatefulWidget {
   const FoodDiningScreen({super.key});
-  @override State<FoodDiningScreen> createState() => _FoodDiningScreenState();
+  @override
+  State<FoodDiningScreen> createState() => _FoodDiningScreenState();
 }
 
 class _FoodDiningScreenState extends State<FoodDiningScreen> {
@@ -17,10 +19,33 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
   List<RestaurantModel> _liveRestaurants = [];
   bool _isLoading = false;
 
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  bool _filterTopRated = false;
+  bool _filterUnder35m = false;
+  bool _filterMarinaDelivery = false;
+
+  final Set<int> _favoriteIds = {};
+  final AuthService _authService = AuthService();
+
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(() {
+      final q = _searchController.text.trim().toLowerCase();
+      if (q != _searchQuery) {
+        setState(() => _searchQuery = q);
+      }
+    });
     _fetchRestaurants();
+    _loadFavorites();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchRestaurants() async {
@@ -38,27 +63,181 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
     }
   }
 
-  List<Map<String, dynamic>> get _displayList {
-    if (_liveRestaurants.isNotEmpty) {
-      return _liveRestaurants.map((r) => {
-        'id': r.id,
-        'name': r.name,
-        'type': (r.cuisineConcept ?? 'FINE DINING').toUpperCase(),
-        'location': '${r.islandHub ?? "Nassau"} • ${r.address ?? "Paradise Island"}',
-        'rating': r.rating,
-        'reviews': r.id == 1 ? 85 : 120,
-        'time': r.averagePrepWindow ?? '20-30 min',
-        'badge': r.id == 1 ? 'CHEF CURATED' : 'VERIFIED',
-        'price': '\$\$\$\$',
-        'special': 'Dockside Ready',
-        'feature': 'Free Yacht Delivery',
-        'model': r,
-        'photo': r.id == 1
-            ? 'https://goswift-media-prod.s3.us-east-1.amazonaws.com/food/items/lobster.jpg'
-            : 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
-      }).toList();
+  Future<void> _loadFavorites() async {
+    try {
+      final favs = await _authService.getFavorites();
+      final foodFavs = favs['food'] ?? [];
+      final Set<int> ids = {};
+      for (final f in foodFavs) {
+        final id = f['id'] is int ? f['id'] as int : int.tryParse(f['id']?.toString() ?? '') ?? 0;
+        if (id > 0) ids.add(id);
+        if (f['restaurant'] is Map && f['restaurant']['id'] != null) {
+          final restId = f['restaurant']['id'] is int
+              ? f['restaurant']['id'] as int
+              : int.tryParse(f['restaurant']['id'].toString()) ?? 0;
+          if (restId > 0) ids.add(restId);
+        }
+      }
+      if (mounted) {
+        setState(() => _favoriteIds.addAll(ids));
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFavorite(int id, String name) async {
+    final wasFavorited = _favoriteIds.contains(id);
+    setState(() {
+      if (wasFavorited) {
+        _favoriteIds.remove(id);
+      } else {
+        _favoriteIds.add(id);
+      }
+    });
+
+    try {
+      final res = await _authService.toggleFavorite(
+        serviceType: 'food',
+        objectId: id,
+      );
+      final isFav = res['is_favorited'] == true;
+      if (mounted) {
+        setState(() {
+          if (isFav) {
+            _favoriteIds.add(id);
+          } else {
+            _favoriteIds.remove(id);
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isFav ? 'Added "$name" to favorites' : 'Removed "$name" from favorites'),
+            backgroundColor: isFav ? AppColors.primaryTeal : AppColors.textSecondary,
+            duration: const Duration(milliseconds: 1400),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          if (wasFavorited) {
+            _favoriteIds.add(id);
+          } else {
+            _favoriteIds.remove(id);
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update favorite: $e'),
+            backgroundColor: AppColors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
-    return _restaurants;
+  }
+
+  List<Map<String, dynamic>> get _displayList {
+    final fallbackPhotos = [
+      'https://goswift-media-prod.s3.us-east-1.amazonaws.com/food/items/lobster.jpg',
+      'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+    ];
+
+    final source = _liveRestaurants.isNotEmpty
+        ? _liveRestaurants.map((r) {
+            final locParts = [
+              if (r.islandHub != null && r.islandHub!.trim().isNotEmpty) r.islandHub!.trim(),
+              if (r.address != null && r.address!.trim().isNotEmpty) r.address!.trim(),
+            ];
+            final location = locParts.isNotEmpty ? locParts.join(' • ') : 'Nassau & Paradise Island';
+
+            final isChefCurated = r.id == 1 || r.name.toLowerCase().contains('ocean club');
+            final badge = isChefCurated ? 'CHEF CURATED' : 'VERIFIED';
+            final concept = (r.cuisineConcept != null && r.cuisineConcept!.trim().isNotEmpty)
+                ? r.cuisineConcept!.trim().toUpperCase()
+                : 'FINE BAHAMIAN & HAUTE DINING';
+            final prepTime = (r.averagePrepWindow != null && r.averagePrepWindow!.trim().isNotEmpty)
+                ? r.averagePrepWindow!.trim()
+                : '20-30 min';
+
+            final double rating = r.rating > 0.0 ? r.rating : (isChefCurated ? 5.0 : 0.0);
+            final int reviews = r.reviewsCount > 0 ? r.reviewsCount : (isChefCurated ? 85 : 0);
+
+            final photoUrl = (r.photo != null && r.photo!.trim().isNotEmpty)
+                ? r.photo!
+                : fallbackPhotos[r.id % fallbackPhotos.length];
+
+            return {
+              'id': r.id,
+              'name': r.name.isNotEmpty ? r.name : 'Exclusive Dining',
+              'type': concept,
+              'location': location,
+              'rating': rating,
+              'reviews': reviews,
+              'time': prepTime,
+              'badge': badge,
+              'price': '\$\$\$\$',
+              'special': 'Dockside Ready',
+              'feature': 'Free Yacht Delivery',
+              'model': r,
+              'photo': photoUrl,
+            };
+          }).toList()
+        : _restaurants;
+
+    return source.where((item) {
+      final name = (item['name'] as String? ?? '').toLowerCase();
+      final type = (item['type'] as String? ?? '').toLowerCase();
+      final loc = (item['location'] as String? ?? '').toLowerCase();
+      final time = (item['time'] as String? ?? '').toLowerCase();
+      final special = (item['special'] as String? ?? '').toLowerCase();
+      final feature = (item['feature'] as String? ?? '').toLowerCase();
+      final double rating = (item['rating'] as num? ?? 0.0).toDouble();
+      final int reviews = (item['reviews'] as num? ?? 0).toInt();
+
+      // Search bar filter
+      if (_searchQuery.isNotEmpty) {
+        final matches = name.contains(_searchQuery) ||
+            type.contains(_searchQuery) ||
+            loc.contains(_searchQuery) ||
+            time.contains(_searchQuery) ||
+            special.contains(_searchQuery) ||
+            feature.contains(_searchQuery);
+        if (!matches) return false;
+      }
+
+      // Category filter
+      if (_cat > 0 && _cat < _cats.length) {
+        final catKey = _cats[_cat].toLowerCase();
+        if (catKey.contains('seafood')) {
+          if (!type.contains('seafood') && !name.contains('seafood') && !type.contains('bahamian')) return false;
+        } else if (catKey.contains('fine dining')) {
+          if (!type.contains('fine dining') && !type.contains('haute') && !type.contains('chef')) return false;
+        } else if (catKey.contains('japanese')) {
+          if (!type.contains('japanese') && !type.contains('sushi') && !type.contains('asian')) return false;
+        } else if (catKey.contains('caribbean')) {
+          if (!type.contains('caribbean') && !type.contains('island') && !loc.contains('nassau')) return false;
+        }
+      }
+
+      // Quick filter chips
+      if (_filterTopRated) {
+        if (rating < 4.8 && reviews == 0 && item['badge'] != 'CHEF CURATED') return false;
+      }
+      if (_filterUnder35m) {
+        final isFast = time.contains('10') || time.contains('15') || time.contains('20') || time.contains('25') || time.contains('30');
+        if (!isFast) return false;
+      }
+      if (_filterMarinaDelivery) {
+        final isMarina = special.contains('dockside') || feature.contains('yacht') || loc.contains('paradise') || loc.contains('marina');
+        if (!isMarina) return false;
+      }
+
+      return true;
+    }).toList();
   }
 
   final _restaurants = [
@@ -150,12 +329,14 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final list = _displayList;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Header (Back button, Title, Notification icon - profile avatar removed per user request)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Row(
@@ -212,42 +393,45 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
                       child: const Icon(Icons.notifications_none_outlined, color: AppColors.textPrimary, size: 22),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(color: AppColors.primaryTeal, shape: BoxShape.circle),
-                    child: const Icon(Icons.person, color: Colors.white, size: 22),
-                  ),
                 ],
               ),
             ),
-            // Search
+            // Search Bar (full-width functional search with clear button, settings/tune icon removed per user request)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      style: AppTextStyles.bodyLarge,
-                      decoration: const InputDecoration(
-                        hintText: 'Search restaurants, cuisines, dishes...',
-                        prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 20),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                    ),
+              child: TextFormField(
+                controller: _searchController,
+                style: AppTextStyles.bodyLarge,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  hintText: 'Search restaurants, cuisines, dishes...',
+                  hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                  prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? GestureDetector(
+                          onTap: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                          child: const Icon(Icons.close, color: AppColors.textSecondary, size: 18),
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: AppColors.border),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryTeal,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.tune, color: Colors.white, size: 20),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: AppColors.border),
                   ),
-                ],
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: AppColors.primaryTeal, width: 1.5),
+                  ),
+                ),
               ),
             ),
             // Yacht delivery banner
@@ -309,7 +493,7 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
                 ),
               ),
             ),
-            // Filters
+            // Filter chips row
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
               child: SingleChildScrollView(
@@ -317,27 +501,134 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
                 physics: const BouncingScrollPhysics(),
                 child: Row(
                   children: [
-                    _filter('Top Rated', Icons.star),
+                    _filterChip(
+                      label: 'Top Rated',
+                      icon: Icons.star,
+                      isActive: _filterTopRated,
+                      onTap: () => setState(() => _filterTopRated = !_filterTopRated),
+                    ),
                     const SizedBox(width: 8),
-                    _filter('Under 35m', Icons.access_time),
+                    _filterChip(
+                      label: 'Under 35m',
+                      icon: Icons.access_time,
+                      isActive: _filterUnder35m,
+                      onTap: () => setState(() => _filterUnder35m = !_filterUnder35m),
+                    ),
                     const SizedBox(width: 8),
-                    _filter('Marina Delivery', Icons.sailing),
+                    _filterChip(
+                      label: 'Marina Delivery',
+                      icon: Icons.sailing,
+                      isActive: _filterMarinaDelivery,
+                      onTap: () => setState(() => _filterMarinaDelivery = !_filterMarinaDelivery),
+                    ),
+                    if (_filterTopRated || _filterUnder35m || _filterMarinaDelivery || _cat > 0 || _searchQuery.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _filterTopRated = false;
+                            _filterUnder35m = false;
+                            _filterMarinaDelivery = false;
+                            _cat = 0;
+                            _searchController.clear();
+                            _searchQuery = '';
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.clear_all, size: 14, color: AppColors.textSecondary),
+                              const SizedBox(width: 4),
+                              Text('Reset', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
-            // Restaurant list
+            // Restaurant list or empty state
             Expanded(
               child: _isLoading && _liveRestaurants.isEmpty
                   ? const Center(child: CircularProgressIndicator(color: AppColors.primaryTeal))
                   : RefreshIndicator(
-                      onRefresh: _fetchRestaurants,
+                      onRefresh: () async {
+                        await _fetchRestaurants();
+                        await _loadFavorites();
+                      },
                       color: AppColors.primaryTeal,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                        itemCount: _displayList.length,
-                        itemBuilder: (c, i) => _RestaurantCard(data: _displayList[i]),
-                      ),
+                      child: list.isEmpty
+                          ? ListView(
+                              padding: const EdgeInsets.all(32),
+                              children: [
+                                const SizedBox(height: 48),
+                                Center(
+                                  child: Container(
+                                    width: 64,
+                                    height: 64,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryTeal.withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.restaurant_outlined, size: 32, color: AppColors.primaryTeal),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Center(
+                                  child: Text('No Restaurants Found', style: AppTextStyles.headlineSmall),
+                                ),
+                                const SizedBox(height: 8),
+                                Center(
+                                  child: Text(
+                                    _searchQuery.isNotEmpty
+                                        ? 'No dining options match "$_searchQuery".'
+                                        : 'No restaurants match the active filters.',
+                                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Center(
+                                  child: TextButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        _searchController.clear();
+                                        _searchQuery = '';
+                                        _cat = 0;
+                                        _filterTopRated = false;
+                                        _filterUnder35m = false;
+                                        _filterMarinaDelivery = false;
+                                      });
+                                    },
+                                    icon: const Icon(Icons.refresh, size: 16, color: AppColors.primaryTeal),
+                                    label: Text('Reset Filters', style: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryTeal)),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                              itemCount: list.length,
+                              itemBuilder: (c, i) {
+                                final data = list[i];
+                                final int rid = data['id'] as int;
+                                final bool isFav = _favoriteIds.contains(rid);
+                                return _RestaurantCard(
+                                  data: data,
+                                  isFavorited: isFav,
+                                  onToggleFavorite: () => _toggleFavorite(rid, data['name'] as String),
+                                );
+                              },
+                            ),
                     ),
             ),
           ],
@@ -362,32 +653,56 @@ class _FoodDiningScreenState extends State<FoodDiningScreen> {
     );
   }
 
-  Widget _filter(String label, IconData icon) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.border),
-      boxShadow: AppColors.cardShadow,
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: AppColors.primaryTeal),
-        const SizedBox(width: 6),
-        Text(label, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary)),
-      ],
+  Widget _filterChip({
+    required String label,
+    required IconData icon,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) => GestureDetector(
+    onTap: onTap,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isActive ? AppColors.primaryTeal : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isActive ? AppColors.primaryTeal : AppColors.border),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: isActive ? Colors.white : AppColors.primaryTeal),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: isActive ? Colors.white : AppColors.textPrimary,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
 
 class _RestaurantCard extends StatelessWidget {
   final Map<String, dynamic> data;
-  const _RestaurantCard({required this.data});
+  final bool isFavorited;
+  final VoidCallback onToggleFavorite;
+
+  const _RestaurantCard({
+    required this.data,
+    required this.isFavorited,
+    required this.onToggleFavorite,
+  });
 
   @override
   Widget build(BuildContext context) {
     final photoUrl = data['photo'] as String?;
+    final double rating = (data['rating'] as num? ?? 0.0).toDouble();
+    final int reviews = (data['reviews'] as num? ?? 0).toInt();
 
     return GestureDetector(
       onTap: () => Navigator.pushNamed(
@@ -421,7 +736,7 @@ class _RestaurantCard extends StatelessWidget {
                       Image.network(
                         photoUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorBuilder: (_, __, _) => Container(
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)]),
                           ),
@@ -471,15 +786,25 @@ class _RestaurantCard extends StatelessWidget {
                     Positioned(
                       top: 10,
                       right: 10,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.92),
-                          shape: BoxShape.circle,
-                          boxShadow: AppColors.cardShadow,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: onToggleFavorite,
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            shape: BoxShape.circle,
+                            boxShadow: AppColors.cardShadow,
+                          ),
+                          child: Center(
+                            child: Icon(
+                              isFavorited ? Icons.favorite : Icons.favorite_border,
+                              color: isFavorited ? const Color(0xFFE53935) : AppColors.primaryTeal,
+                              size: 18,
+                            ),
+                          ),
                         ),
-                        child: const Icon(Icons.favorite_border, color: AppColors.primaryTeal, size: 16),
                       ),
                     ),
                     Positioned(
@@ -503,7 +828,7 @@ class _RestaurantCard extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: GSRatingRow(rating: data['rating'] as double, reviews: data['reviews'] as int),
+                        child: GSRatingRow(rating: rating, reviews: reviews),
                       ),
                     ),
                   ],

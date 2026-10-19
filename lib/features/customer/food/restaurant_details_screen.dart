@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/models/food_model.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/food_service.dart';
 import '../../../core/widgets/gs_button.dart';
 import '../../../core/widgets/gs_card.dart';
@@ -18,6 +19,8 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
   RestaurantModel? _restaurant;
   List<FoodItemModel> _menuItems = [];
   bool _isLoading = false;
+  bool _isFavorite = false;
+  final AuthService _authService = AuthService();
   final Map<int, int> _cart = {}; // itemId -> quantity
 
   @override
@@ -29,6 +32,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
         _restaurant = args;
       }
       _fetchMenu();
+      _checkFavorite();
     }
   }
 
@@ -46,6 +50,65 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _checkFavorite() async {
+    final restId = _restaurant?.id ?? widget.restaurant?.id;
+    if (restId == null) return;
+    try {
+      final favs = await _authService.getFavorites();
+      final foodFavs = favs['food'] ?? [];
+      bool found = false;
+      for (final f in foodFavs) {
+        final id = f['id'] is int ? f['id'] as int : int.tryParse(f['id']?.toString() ?? '') ?? 0;
+        final restObj = f['restaurant'];
+        final restIdInFav = (restObj is Map && restObj['id'] != null)
+            ? (restObj['id'] is int ? restObj['id'] as int : int.tryParse(restObj['id'].toString()) ?? 0)
+            : 0;
+        if (id == restId || restIdInFav == restId) {
+          found = true;
+          break;
+        }
+      }
+      if (mounted) setState(() => _isFavorite = found);
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFavorite() async {
+    final rest = _restaurant ?? widget.restaurant;
+    if (rest == null) return;
+    final int restId = rest.id;
+    final String restName = rest.name;
+
+    setState(() => _isFavorite = !_isFavorite);
+
+    try {
+      final res = await _authService.toggleFavorite(
+        serviceType: 'food',
+        objectId: restId,
+      );
+      final bool isFav = res['is_favorited'] == true;
+      if (mounted) {
+        setState(() => _isFavorite = isFav);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isFav ? 'Added "$restName" to favorites' : 'Removed "$restName" from favorites'),
+            backgroundColor: isFav ? AppColors.primaryTeal : AppColors.textSecondary,
+            duration: const Duration(milliseconds: 1400),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isFavorite = !_isFavorite);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update favorite: $e'),
+            backgroundColor: AppColors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -92,7 +155,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                   Image.network(
                     heroPhoto,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Center(
+                    errorBuilder: (_, __, _) => const Center(
                       child: Icon(Icons.restaurant, color: AppColors.primaryTeal, size: 64),
                     ),
                   ),
@@ -130,16 +193,25 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                   Positioned(
                     top: 12,
                     right: 12,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                        boxShadow: AppColors.cardShadow,
+                    child: GestureDetector(
+                      onTap: _toggleFavorite,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.95),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.border),
+                          boxShadow: AppColors.cardShadow,
+                        ),
+                        child: Center(
+                          child: Icon(
+                            _isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: _isFavorite ? const Color(0xFFE53935) : AppColors.primaryTeal,
+                            size: 20,
+                          ),
+                        ),
                       ),
-                      child: const Icon(Icons.favorite_border, color: AppColors.primaryTeal, size: 20),
                     ),
                   ),
                 ],
@@ -164,7 +236,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(child: Text(restName, style: AppTextStyles.headlineLarge)),
-                        GSRatingRow(rating: rest?.rating ?? 4.9, reviews: 280),
+                        GSRatingRow(rating: rest?.rating ?? 0.0, reviews: rest?.reviewsCount ?? 0),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -261,7 +333,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       width: 60,
                       height: 60,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, __, _) => Container(
                         width: 60,
                         height: 60,
                         color: AppColors.cardTouchpoint,

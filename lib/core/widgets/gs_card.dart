@@ -194,12 +194,22 @@ class GSRatingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (rating <= 0.0 || reviews <= 0) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star, size: 13, color: AppColors.gold),
+          const SizedBox(width: 4),
+          Text('New', style: AppTextStyles.labelSmall.copyWith(color: AppColors.gold, fontWeight: FontWeight.bold)),
+        ],
+      );
+    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         const Icon(Icons.star, size: 14, color: AppColors.gold),
         const SizedBox(width: 4),
-        Text('$rating', style: AppTextStyles.titleMedium.copyWith(color: AppColors.gold, fontWeight: FontWeight.w700)),
+        Text(rating.toStringAsFixed(1), style: AppTextStyles.titleMedium.copyWith(color: AppColors.gold, fontWeight: FontWeight.w700)),
         const SizedBox(width: 4),
         Text('($reviews+)', style: AppTextStyles.bodySmall),
       ],
