@@ -67,6 +67,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         final map = {
           'type': 'ride',
           'status': r.status.toUpperCase(),
+          'rawStatus': r.status.toLowerCase(),
+          'model': r,
+          'rawId': r.id,
           'id': '#BS-RD-${r.id}',
           'icon': Icons.directions_car,
           'color': AppColors.primaryTeal,
@@ -101,6 +104,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         final map = {
           'type': 'food',
           'status': o.status.toUpperCase(),
+          'rawStatus': o.status.toLowerCase(),
+          'model': o,
+          'rawId': o.id,
           'id': '#BS-FD-${o.id}',
           'icon': Icons.restaurant,
           'color': const Color(0xFFC78400),
@@ -130,6 +136,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         final map = {
           'type': 'courier',
           'status': d.status.toUpperCase(),
+          'rawStatus': d.status.toLowerCase(),
+          'model': d,
+          'rawId': d.id,
           'id': '#BS-CR-${d.id}',
           'icon': Icons.shield_outlined,
           'color': AppColors.primaryTeal,
@@ -158,6 +167,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         final map = {
           'type': 'rental',
           'status': rn.status.toUpperCase(),
+          'rawStatus': rn.status.toLowerCase(),
+          'model': rn,
+          'rawId': rn.id,
           'id': '#BS-RN-${rn.id}',
           'icon': Icons.vpn_key_outlined,
           'color': const Color(0xFFB8860B),
@@ -187,6 +199,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         final map = {
           'type': 'property',
           'status': rm.status.toUpperCase(),
+          'rawStatus': rm.status.toLowerCase(),
+          'model': rm,
+          'rawId': rm.id,
           'id': '#BS-RM-${rm.id}',
           'icon': Icons.hotel_outlined,
           'color': AppColors.primaryTeal,
@@ -233,14 +248,48 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
     return _liveCancelled;
   }
 
+  final List<Map<String, dynamic>> _filterCategories = const [
+    {'type': 'all', 'label': 'All Bookings', 'icon': null},
+    {'type': 'ride', 'label': 'Rides & VIP Transit', 'icon': Icons.directions_car_outlined},
+    {'type': 'food', 'label': 'Dining & Food', 'icon': Icons.restaurant_outlined},
+    {'type': 'courier', 'label': 'Courier & Logistics', 'icon': Icons.shield_outlined},
+    {'type': 'rental', 'label': 'Fleet Rentals', 'icon': Icons.vpn_key_outlined},
+    {'type': 'property', 'label': 'Villas & Stays', 'icon': Icons.hotel_outlined},
+  ];
+
   List<Map<String, dynamic>> _getFilteredList() {
     final list = _getCurrentTabList();
-    if (_selectedFilter == 1) {
-      return list.where((item) => item['type'] == 'ride').toList();
-    } else if (_selectedFilter == 2) {
-      return list.where((item) => item['type'] == 'food').toList();
+    if (_selectedFilter <= 0 || _selectedFilter >= _filterCategories.length) return list;
+    final targetType = _filterCategories[_selectedFilter]['type'] as String;
+    return list.where((item) => item['type'] == targetType).toList();
+  }
+
+  void _onCardTapped(Map<String, dynamic> item) {
+    final type = item['type'] as String? ?? '';
+    final model = item['model'];
+    final status = (item['rawStatus'] as String? ?? item['status'] as String? ?? '').toLowerCase();
+
+    if (type == 'ride') {
+      if (status == 'matching' || status == 'requested') {
+        Navigator.pushNamed(context, '/customer/ride/waiting', arguments: model);
+      } else if (status == 'accepted') {
+        Navigator.pushNamed(context, '/customer/ride/driver-accepted', arguments: model);
+      } else if (status == 'in_progress' || status == 'arrived') {
+        Navigator.pushNamed(context, '/customer/ride/active', arguments: model);
+      } else if (status == 'completed') {
+        Navigator.pushNamed(context, '/customer/ride/completed', arguments: model);
+      } else {
+        Navigator.pushNamed(context, '/customer/ride/booking');
+      }
+    } else if (type == 'food') {
+      Navigator.pushNamed(context, '/customer/food/order-status', arguments: model);
+    } else if (type == 'courier') {
+      Navigator.pushNamed(context, '/customer/courier/status', arguments: model);
+    } else if (type == 'rental') {
+      Navigator.pushNamed(context, '/customer/car-rental/active', arguments: model);
+    } else if (type == 'property') {
+      Navigator.pushNamed(context, '/customer/properties/search');
     }
-    return list;
   }
 
   @override
@@ -354,18 +403,28 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         ),
         const SizedBox(height: 14),
 
-        // Sub-filters
+        // Sub-filters (all 5 services with live counts)
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
-            children: [
-              _buildFilterChip(0, 'All Bookings', count: currentTabList.length),
-              const SizedBox(width: 8),
-              _buildFilterChip(1, 'Rides & VIP Transit', icon: Icons.directions_car_outlined, count: currentTabList.where((x) => x['type'] == 'ride').length),
-              const SizedBox(width: 8),
-              _buildFilterChip(2, 'Dining', icon: Icons.restaurant_outlined, count: currentTabList.where((x) => x['type'] == 'food').length),
-            ],
+            children: List.generate(_filterCategories.length, (idx) {
+              final cat = _filterCategories[idx];
+              final type = cat['type'] as String;
+              final int count = type == 'all'
+                  ? currentTabList.length
+                  : currentTabList.where((x) => x['type'] == type).length;
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _buildFilterChip(
+                  idx,
+                  cat['label'] as String,
+                  icon: cat['icon'] as IconData?,
+                  count: count,
+                ),
+              );
+            }),
           ),
         ),
         const SizedBox(height: 14),
@@ -415,11 +474,11 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                           itemBuilder: (c, i) {
                             final item = filteredList[i];
                             if (_activeTab == 0) {
-                              return ActiveHistoryCard(data: item);
+                              return ActiveHistoryCard(data: item, onTap: () => _onCardTapped(item));
                             } else if (_activeTab == 1) {
-                              return PastHistoryCard(data: item);
+                              return GestureDetector(onTap: () => _onCardTapped(item), child: PastHistoryCard(data: item));
                             } else {
-                              return CancelledHistoryCard(data: item);
+                              return GestureDetector(onTap: () => _onCardTapped(item), child: CancelledHistoryCard(data: item));
                             }
                           },
                         ),
