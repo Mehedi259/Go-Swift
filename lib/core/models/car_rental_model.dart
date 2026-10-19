@@ -20,6 +20,17 @@ class RentalVehicleModel {
 
   bool get isAvailable => available;
 
+  String get displayImageUrl {
+    if (images.isNotEmpty && images.first.isNotEmpty) return images.first;
+    return getCarRentalFallbackImage(
+      name: name,
+      make: make,
+      model: model,
+      category: category,
+      seed: id,
+    );
+  }
+
   RentalVehicleModel({
     required this.id,
     required this.name,
@@ -51,8 +62,38 @@ class RentalVehicleModel {
             img = 'http://184.192.34.206$img';
           }
           imageUrls.add(img);
+        } else if (m is String && m.isNotEmpty) {
+          String img = m;
+          if (img.startsWith('/')) {
+            img = 'http://184.192.34.206$img';
+          }
+          imageUrls.add(img);
         }
       }
+    }
+    if (json['images'] is List) {
+      for (final item in json['images'] as List) {
+        if (item is String && item.isNotEmpty) {
+          String img = item;
+          if (img.startsWith('/')) {
+            img = 'http://184.192.34.206$img';
+          }
+          if (!imageUrls.contains(img)) imageUrls.add(img);
+        } else if (item is Map && item['image'] != null) {
+          String img = item['image'].toString();
+          if (img.startsWith('/')) {
+            img = 'http://184.192.34.206$img';
+          }
+          if (!imageUrls.contains(img)) imageUrls.add(img);
+        }
+      }
+    }
+    if (json['image'] is String && (json['image'] as String).isNotEmpty) {
+      String img = json['image'].toString();
+      if (img.startsWith('/')) {
+        img = 'http://184.192.34.206$img';
+      }
+      if (!imageUrls.contains(img)) imageUrls.add(img);
     }
 
     return RentalVehicleModel(
@@ -122,4 +163,56 @@ class CarRentalBookingModel {
 }
 
 typedef CarRentalVehicleModel = RentalVehicleModel;
+
+String getCarRentalFallbackImage({
+  String? name,
+  String? make,
+  String? model,
+  String? category,
+  int? seed,
+}) {
+  final text = '${make ?? ''} ${model ?? ''} ${name ?? ''}'.toLowerCase();
+  if (text.contains('escalade') || text.contains('cadillac')) {
+    return 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80';
+  }
+  if (text.contains('mercedes') || text.contains('g63') || text.contains('amg') || text.contains('s-class') || text.contains('benz')) {
+    return 'https://images.unsplash.com/photo-1520031441872-265e4ff70366?auto=format&fit=crop&w=800&q=80';
+  }
+  if (text.contains('porsche') || text.contains('911') || text.contains('carrera')) {
+    return 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=800&q=80';
+  }
+  if (text.contains('bmw') || text.contains('m8') || text.contains('x7') || text.contains('m60i')) {
+    return 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80';
+  }
+  if (text.contains('range rover') || text.contains('land rover') || text.contains('autobiography')) {
+    return 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80';
+  }
+  if (text.contains('lamborghini') || text.contains('urus')) {
+    return 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=800&q=80';
+  }
+  if (text.contains('ferrari') || text.contains('488') || text.contains('spider')) {
+    return 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&w=800&q=80';
+  }
+  if (text.contains('corvette') || text.contains('chevrolet')) {
+    return 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80';
+  }
+
+  final cat = (category ?? '').toLowerCase();
+  if (cat.contains('convertible') || cat.contains('sports')) {
+    return 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=800&q=80';
+  }
+  if (cat.contains('sedan') || cat.contains('executive')) {
+    return 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=800&q=80';
+  }
+
+  const curated = [
+    'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1520031441872-265e4ff70366?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80',
+  ];
+  final idx = (seed ?? 0).abs() % curated.length;
+  return curated[idx];
+}
 

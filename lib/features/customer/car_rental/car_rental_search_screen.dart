@@ -48,16 +48,25 @@ class _CarRentalSearchScreenState extends State<CarRentalSearchScreen> {
     if (_liveVehicles.isNotEmpty) {
       return _liveVehicles.map((v) => {
         'id': v.id,
-        'name': '${v.make} ${v.model}',
-        'type': v.category.toUpperCase(),
+        'name': '${v.make ?? ''} ${v.model ?? ''}'.trim().isNotEmpty
+            ? '${v.make ?? ''} ${v.model ?? ''}'.trim()
+            : v.name,
+        'type': v.category.replaceAll('_', ' ').toUpperCase(),
         'price': '\$${v.dailyRate.toStringAsFixed(0)}/day',
-        'badge': v.year.toString(),
+        'badge': v.year != null ? v.year.toString() : '',
         'seats': v.seatingCapacity,
-        'bags': 4,
+        'bags': v.luggageCapacity,
+        'image': v.displayImageUrl,
         'model': v,
       }).toList();
     }
-    return _cars;
+    return _cars.map((c) => {
+      ...c,
+      'image': getCarRentalFallbackImage(
+        name: c['name'] as String?,
+        category: c['type'] as String?,
+      ),
+    }).toList();
   }
 
   @override
@@ -188,6 +197,16 @@ class _CarCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = car['image'] as String? ??
+        (car['model'] is RentalVehicleModel
+            ? (car['model'] as RentalVehicleModel).displayImageUrl
+            : null) ??
+        getCarRentalFallbackImage(
+          name: car['name'] as String?,
+          category: car['type'] as String?,
+          seed: car['id'] as int?,
+        );
+
     return GestureDetector(
       onTap: () => Navigator.pushNamed(
         context,
@@ -205,7 +224,8 @@ class _CarCard extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              height: 120,
+              height: 140,
+              clipBehavior: Clip.antiAlias,
               decoration: const BoxDecoration(
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
                 gradient: LinearGradient(
@@ -213,9 +233,34 @@ class _CarCard extends StatelessWidget {
                 ),
               ),
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Center(child: Icon(Icons.directions_car, color: AppColors.primaryTeal.withValues(alpha: 0.5), size: 54)),
-                  if ((car['badge'] as String).isNotEmpty)
+                  if (imageUrl.isNotEmpty)
+                    Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Icon(Icons.directions_car, color: AppColors.primaryTeal.withValues(alpha: 0.5), size: 54),
+                      ),
+                    )
+                  else
+                    Center(child: Icon(Icons.directions_car, color: AppColors.primaryTeal.withValues(alpha: 0.5), size: 54)),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.25),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.1),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if ((car['badge'] as String? ?? '').isNotEmpty)
                     Positioned(
                       top: 10,
                       left: 10,

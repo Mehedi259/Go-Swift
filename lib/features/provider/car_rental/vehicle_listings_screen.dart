@@ -665,23 +665,7 @@ class _VehicleListingsScreenState extends State<VehicleListingsScreen> {
     );
   }
 
-  String _getVehicleImageUrl(RentalVehicleModel v) {
-    if (v.images.isNotEmpty) return v.images.first;
-    final nameLower = '${v.make ?? ''} ${v.model ?? ''} ${v.name}'.toLowerCase();
-    if (nameLower.contains('escalade') || nameLower.contains('cadillac')) {
-      return 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80';
-    }
-    if (nameLower.contains('mercedes') || nameLower.contains('g63') || nameLower.contains('amg')) {
-      return 'https://images.unsplash.com/photo-1520031441872-265e4ff70366?auto=format&fit=crop&w=800&q=80';
-    }
-    if (nameLower.contains('porsche') || nameLower.contains('911') || nameLower.contains('ferrari')) {
-      return 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=800&q=80';
-    }
-    if (nameLower.contains('bmw') || nameLower.contains('m8') || nameLower.contains('x7')) {
-      return 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80';
-    }
-    return 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80';
-  }
+  String _getVehicleImageUrl(RentalVehicleModel v) => v.displayImageUrl;
 
   @override
   Widget build(BuildContext context) {

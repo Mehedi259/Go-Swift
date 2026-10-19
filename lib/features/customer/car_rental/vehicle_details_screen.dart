@@ -89,18 +89,27 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
     final RentalVehicleModel? vehicle = widget.vehicle ?? (args is RentalVehicleModel ? args : null);
+    final Map<String, dynamic>? carMap = args is Map<String, dynamic> ? args : null;
 
-    final vehicleName = vehicle?.name ?? 'Cadillac Escalade ESV';
-    final category = (vehicle?.category ?? 'luxury_suv').replaceAll('_', ' ').toUpperCase();
-    final dailyRate = vehicle?.dailyRate ?? 285.0;
+    final vehicleName = vehicle?.name ?? carMap?['name'] as String? ?? 'Cadillac Escalade ESV';
+    final category = (vehicle?.category ?? carMap?['type'] as String? ?? 'luxury_suv').replaceAll('_', ' ').toUpperCase();
+    final dailyRate = vehicle?.dailyRate ?? (carMap != null ? (double.tryParse((carMap['price'] as String? ?? '').replaceAll(RegExp(r'[^0-9.]'), '')) ?? 285.0) : 285.0);
     final rating = vehicle?.rating ?? 4.97;
-    final seats = vehicle?.seatingCapacity ?? 6;
-    final bags = vehicle?.luggageCapacity ?? 4;
+    final seats = vehicle?.seatingCapacity ?? carMap?['seats'] as int? ?? 6;
+    final bags = vehicle?.luggageCapacity ?? carMap?['bags'] as int? ?? 4;
     final transmission = vehicle?.transmission ?? 'Automatic';
     final fuel = vehicle?.fuelType ?? 'Petrol';
     final vehicleDesc = vehicle?.description ??
         'Premium luxury SUV perfect for Nassau Island tours, airport transfers, and resort-to-resort travel. Features extended wheelbase, panoramic sunroof, and premium sound system.';
     final location = vehicle?.location ?? 'Cable Beach Fleet Hub, Nassau';
+
+    final imageUrl = vehicle?.displayImageUrl ??
+        carMap?['image'] as String? ??
+        getCarRentalFallbackImage(
+          name: vehicleName,
+          category: category,
+          seed: vehicle?.id ?? carMap?['id'] as int?,
+        );
 
     final totalCost = dailyRate * _rentalDays;
 
@@ -111,18 +120,48 @@ class _VehicleDetailsScreenState extends State<VehicleDetailsScreen> {
           children: [
             Container(
               height: 220,
+              clipBehavior: Clip.antiAlias,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFFE8F4F8), Color(0xFFD6EDF4)],
                 ),
               ),
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Center(
-                    child: Icon(
-                      Icons.directions_car,
-                      color: AppColors.primaryTeal.withValues(alpha: 0.4),
-                      size: 72,
+                  if (imageUrl.isNotEmpty)
+                    Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Icon(
+                          Icons.directions_car,
+                          color: AppColors.primaryTeal.withValues(alpha: 0.4),
+                          size: 72,
+                        ),
+                      ),
+                    )
+                  else
+                    Center(
+                      child: Icon(
+                        Icons.directions_car,
+                        color: AppColors.primaryTeal.withValues(alpha: 0.4),
+                        size: 72,
+                      ),
+                    ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.35),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.15),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                   Positioned(
