@@ -42,23 +42,23 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
             final now = DateTime.now();
 
             for (final r in _rides) {
-              final fare = r.finalFare ?? r.estimatedFare;
-              monthSum += fare;
+              final earnings = r.totalDriverTakeHome;
+              monthSum += earnings;
               if (r.createdAt != null) {
                 try {
                   final dt = DateTime.parse(r.createdAt!);
                   final diffDays = now.difference(dt).inDays;
                   if (diffDays <= 7) {
-                    weekSum += fare;
+                    weekSum += earnings;
                   }
                   if (diffDays == 0 && dt.day == now.day) {
-                    todaySum += fare;
+                    todaySum += earnings;
                   }
                 } catch (_) {
-                  weekSum += fare;
+                  weekSum += earnings;
                 }
               } else {
-                weekSum += fare;
+                weekSum += earnings;
               }
             }
 

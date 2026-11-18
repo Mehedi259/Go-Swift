@@ -132,7 +132,7 @@ class _DriverActiveRideScreenState extends State<DriverActiveRideScreen> {
     final pickup = r != null && r.pickupAddress.isNotEmpty ? r.pickupAddress : 'Designated Pickup Location';
     final destination = r != null && r.destinationAddress.isNotEmpty ? r.destinationAddress : 'Designated Destination';
     final fare = r != null ? '\$${(r.finalFare ?? r.estimatedFare).toStringAsFixed(2)}' : '\$0.00';
-    final dist = r?.distanceKm != null ? '${r!.distanceKm} km' : 'En Route';
+    final driverPayout = r != null ? '\$${r.effectiveDriverEarnings.toStringAsFixed(2)}' : '\$0.00';
     final eta = r?.estimatedDurationMinutes != null ? '${r!.estimatedDurationMinutes} min' : 'Active';
 
     return Scaffold(
@@ -336,11 +336,11 @@ class _DriverActiveRideScreenState extends State<DriverActiveRideScreen> {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Expanded(child: _infoBox('Est. Fare', fare, AppColors.gold)),
-                        const SizedBox(width: 12),
+                        Expanded(child: _infoBox('Your Payout (80%)', driverPayout, AppColors.gold)),
+                        const SizedBox(width: 8),
+                        Expanded(child: _infoBox('Gross Fare', fare, AppColors.textSecondary)),
+                        const SizedBox(width: 8),
                         Expanded(child: _infoBox('ETA', eta, AppColors.cyan)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _infoBox('Distance', dist, AppColors.textPrimary)),
                       ],
                     ),
                     const SizedBox(height: 24),

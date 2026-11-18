@@ -15,9 +15,12 @@ class RideCompletedScreen extends StatelessWidget {
     final dest = ride?.destinationAddress ?? 'Destination Reached';
     final finalAmount = (ride?.finalFare ?? ride?.estimatedFare ?? 0.0);
     final totalFare = '\$${finalAmount.toStringAsFixed(2)}';
-    final baseFare = (finalAmount * 0.70).toStringAsFixed(2);
-    final distFare = (finalAmount * 0.22).toStringAsFixed(2);
-    final islandFee = (finalAmount * 0.08).toStringAsFixed(2);
+    final baseRate = ride?.baseFee ?? 4.00;
+    final distRate = ride?.distanceRate ?? 1.75;
+    final distKm = ride?.distanceKm ?? 0.0;
+    final baseFareStr = baseRate.toStringAsFixed(2);
+    final distFareStr = (distKm * distRate).toStringAsFixed(2);
+    final tipVal = ride?.tipAmount ?? 0.0;
     final dateStr = (ride?.createdAt != null && ride!.createdAt!.length >= 16)
         ? ride.createdAt!.substring(0, 16).replaceAll('T', ' ')
         : 'Completed Recently';
@@ -92,9 +95,9 @@ class RideCompletedScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          _fareRow('Base Chauffeur Rate', '\$$baseFare'),
-                          _fareRow('Distance Fare ($distStr)', '\$$distFare'),
-                          _fareRow('Island Service & VAT', '\$$islandFee'),
+                          _fareRow('Base / Booking Fee', '\$$baseFareStr'),
+                          _fareRow('Distance Fare ($distStr @ \$$distRate/km)', '\$$distFareStr'),
+                          if (tipVal > 0) _fareRow('Driver Tip (100% to Driver)', '\$${tipVal.toStringAsFixed(2)}'),
                           const Divider(color: AppColors.border, height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -25,8 +25,20 @@ class RideModel {
   final DriverProfileModel? driver;
   final String? createdAt;
   final Map<String, dynamic>? review;
+  final String? serviceArea;
+  final double? baseFee;
+  final double? distanceRate;
+  final double? platformCommissionRate;
+  final double? platformCommission;
+  final double? driverPayout;
+  final String? payoutStatus;
 
   String get customerName => customerFullName ?? 'VIP Rider';
+
+  double get effectiveFare => finalFare ?? estimatedFare;
+  double get effectiveCommission => platformCommission ?? (effectiveFare * 0.20);
+  double get effectiveDriverEarnings => driverPayout ?? (effectiveFare - effectiveCommission);
+  double get totalDriverTakeHome => effectiveDriverEarnings + (tipAmount ?? 0.0);
 
   RideModel({
     required this.id,
@@ -55,6 +67,13 @@ class RideModel {
     this.driver,
     this.createdAt,
     this.review,
+    this.serviceArea,
+    this.baseFee,
+    this.distanceRate,
+    this.platformCommissionRate,
+    this.platformCommission,
+    this.driverPayout,
+    this.payoutStatus,
   });
 
   factory RideModel.fromJson(Map<String, dynamic> json) {
@@ -87,6 +106,13 @@ class RideModel {
       driver: json['driver'] is Map<String, dynamic> ? DriverProfileModel.fromJson(json['driver'] as Map<String, dynamic>) : null,
       createdAt: json['created_at']?.toString(),
       review: json['review'] is Map<String, dynamic> ? json['review'] as Map<String, dynamic> : null,
+      serviceArea: json['service_area']?.toString(),
+      baseFee: json['base_fee'] != null ? double.tryParse(json['base_fee'].toString()) : null,
+      distanceRate: json['distance_rate'] != null ? double.tryParse(json['distance_rate'].toString()) : null,
+      platformCommissionRate: json['platform_commission_rate'] != null ? double.tryParse(json['platform_commission_rate'].toString()) : null,
+      platformCommission: json['platform_commission'] != null ? double.tryParse(json['platform_commission'].toString()) : null,
+      driverPayout: json['driver_payout'] != null ? double.tryParse(json['driver_payout'].toString()) : null,
+      payoutStatus: json['payout_status']?.toString(),
     );
   }
 }
